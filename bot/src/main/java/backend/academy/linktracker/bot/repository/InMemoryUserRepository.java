@@ -11,6 +11,11 @@ public class InMemoryUserRepository implements UserRepository {
 
     @Override
     public void save(User user) {
-        map.put(user.getChatId(), user);
+        map.put(user.chatId(), user);
+    }
+
+    @Override
+    public boolean exists(Long chatId) {
+        return map.containsKey(chatId);
     }
 }
