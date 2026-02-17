@@ -9,19 +9,15 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class TelegramBotListener implements UpdatesListener {
     private final TelegramBot bot;
     private final UpdateHandler updateHandler;
     private final List<Command> commands;
-
-    public TelegramBotListener(TelegramBot bot, UpdateHandler updateHandler, List<Command> commands) {
-        this.bot = bot;
-        this.updateHandler = updateHandler;
-        this.commands = commands;
-    }
 
     @PostConstruct
     public void start() {

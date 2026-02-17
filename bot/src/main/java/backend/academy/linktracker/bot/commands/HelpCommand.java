@@ -2,17 +2,15 @@ package backend.academy.linktracker.bot.commands;
 
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@AllArgsConstructor
 public class HelpCommand implements Command {
     private final List<Command> commands;
-
-    public HelpCommand(List<Command> commands) {
-        this.commands = commands;
-    }
 
     @Override
     public String command() {

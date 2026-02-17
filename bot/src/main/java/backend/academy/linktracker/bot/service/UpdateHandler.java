@@ -4,15 +4,13 @@ import backend.academy.linktracker.bot.commands.Command;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class UpdateHandler {
     private final List<Command> commands;
-
-    public UpdateHandler(List<Command> commands) {
-        this.commands = commands;
-    }
 
     public SendMessage process(Update update) {
         if (update.message() == null || update.message().text() == null) {

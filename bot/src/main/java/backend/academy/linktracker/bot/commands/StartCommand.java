@@ -4,15 +4,13 @@ import backend.academy.linktracker.bot.model.User;
 import backend.academy.linktracker.bot.repository.UserRepository;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class StartCommand implements Command {
     private final UserRepository userRepository;
-
-    public StartCommand(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Override
     public String command() {
