@@ -5,8 +5,10 @@ import backend.academy.linktracker.bot.repository.UserRepository;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class StartCommand implements Command {
@@ -27,6 +29,7 @@ public class StartCommand implements Command {
         Long chatId = update.message().chat().id();
         if (!userRepository.exists(chatId)) {
             userRepository.save(new User(chatId));
+            log.info("New user registered: user_id = {}", chatId);
         }
         return new SendMessage(chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
     }

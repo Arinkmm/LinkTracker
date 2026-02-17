@@ -10,8 +10,10 @@ import com.pengrad.telegrambot.request.SetMyCommands;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class TelegramBotListener implements UpdatesListener {
@@ -24,18 +26,26 @@ public class TelegramBotListener implements UpdatesListener {
         setupMenu();
         bot.setUpdatesListener(this, e -> {
             if (e.response() != null) {
-                System.err.println("Telegram Error Code: " + e.response().errorCode());
+                log.error("Error from Telegram API: error_code = {}, description = {}", e.response().errorCode(), e.response().description());
+            } else {
+                log.error("Network error from Telegram API: {}", e.getMessage());
             }
         });
+
+        log.info("Telegram bot started successfully");
     }
 
     @Override
     public int process(List<Update> updates) {
         for (Update update : updates) {
+            try {
                 SendMessage response = updateHandler.process(update);
                 if (response != null) {
                     bot.execute(response);
                 }
+            } catch (Exception e) {
+                log.error("Error processing update id = {}: {}", update.updateId(), e.getMessage());
+            }
         }
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
     }
@@ -45,5 +55,6 @@ public class TelegramBotListener implements UpdatesListener {
             .map(c -> new BotCommand(c.command(), c.description()))
             .toArray(BotCommand[]::new);
         bot.execute(new SetMyCommands(botCommands));
+        log.info("Menu commands configured. Count: {}", botCommands.length);
     }
 }
