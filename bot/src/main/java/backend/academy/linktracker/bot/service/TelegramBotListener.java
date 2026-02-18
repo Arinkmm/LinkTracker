@@ -26,7 +26,10 @@ public class TelegramBotListener implements UpdatesListener {
         setupMenu();
         bot.setUpdatesListener(this, e -> {
             if (e.response() != null) {
-                log.error("Error from Telegram API: error_code = {}, description = {}", e.response().errorCode(), e.response().description());
+                log.error(
+                        "Error from Telegram API: error_code = {}, description = {}",
+                        e.response().errorCode(),
+                        e.response().description());
             } else {
                 log.error("Network error from Telegram API: {}", e.getMessage());
             }
@@ -52,8 +55,8 @@ public class TelegramBotListener implements UpdatesListener {
 
     private void setupMenu() {
         BotCommand[] botCommands = commands.stream()
-            .map(c -> new BotCommand(c.command(), c.description()))
-            .toArray(BotCommand[]::new);
+                .map(c -> new BotCommand(c.command(), c.description()))
+                .toArray(BotCommand[]::new);
         bot.execute(new SetMyCommands(botCommands));
         log.info("Menu commands configured. Count: {}", botCommands.length);
     }

@@ -31,6 +31,7 @@ public class UpdateHandler {
             }
         }
         log.warn("Unknown command received: chat_id = {}, text = {}", chatId, text);
-        return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
+        return new SendMessage(
+                chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
     }
 }

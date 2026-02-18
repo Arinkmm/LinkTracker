@@ -9,11 +9,11 @@ import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import java.util.List;
 
 class TelegramBotLogicIntegrationTest {
     private UpdateHandler handler;
@@ -69,12 +69,17 @@ class TelegramBotLogicIntegrationTest {
             public Message message() {
                 return new Message() {
                     @Override
-                    public String text() { return text; }
+                    public String text() {
+                        return text;
+                    }
+
                     @Override
                     public Chat chat() {
                         return new Chat() {
                             @Override
-                            public Long id() { return chatId; }
+                            public Long id() {
+                                return chatId;
+                            }
                         };
                     }
                 };
