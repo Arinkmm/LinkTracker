@@ -29,7 +29,8 @@ public class StartCommand implements Command {
         Long chatId = update.message().chat().id();
         if (!userRepository.exists(chatId)) {
             userRepository.save(new User(chatId));
-            log.info("New user registered: user_id = {}", chatId);
+
+            log.atInfo().addKeyValue("user_id", chatId).log("New user registered");
         }
         return new SendMessage(chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
     }

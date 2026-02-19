@@ -23,14 +23,20 @@ public class UpdateHandler {
         String text = update.message().text();
         String username = update.message().chat().username();
 
-        log.info("Processing message: username = {}, chat_id = {}, text = {}", username, chatId, text);
+        log.atInfo()
+                .addKeyValue("username", username)
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("text", text)
+                .log("Processing message");
 
         for (Command command : commands) {
             if (command.supports(update)) {
                 return command.handle(update);
             }
         }
-        log.warn("Unknown command received: chat_id = {}, text = {}", chatId, text);
+
+        log.atWarn().addKeyValue("chat_id", chatId).addKeyValue("text", text).log("Unknown command received");
+
         return new SendMessage(
                 chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
     }

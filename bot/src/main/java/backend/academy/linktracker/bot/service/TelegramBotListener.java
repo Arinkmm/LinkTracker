@@ -26,16 +26,16 @@ public class TelegramBotListener implements UpdatesListener {
         setupMenu();
         bot.setUpdatesListener(this, e -> {
             if (e.response() != null) {
-                log.error(
-                        "Error from Telegram API: error_code = {}, description = {}",
-                        e.response().errorCode(),
-                        e.response().description());
+                log.atError()
+                        .addKeyValue("error_code", e.response().errorCode())
+                        .addKeyValue("description", e.response().description())
+                        .log("Error from Telegram API");
             } else {
-                log.error("Network error from Telegram API: {}", e.getMessage());
+                log.atError().setCause(e).log("Network error from Telegram API");
             }
         });
 
-        log.info("Telegram bot started successfully");
+        log.atInfo().log("Telegram bot started successfully");
     }
 
     @Override
@@ -47,10 +47,13 @@ public class TelegramBotListener implements UpdatesListener {
                     bot.execute(response);
                 }
             } catch (Exception e) {
-                log.error("Error processing update id = {}: {}", update.updateId(), e.getMessage());
+                log.atError()
+                        .setCause(e)
+                        .addKeyValue("update_id", update.updateId())
+                        .log("Error processing update");
             }
         }
-        return UpdatesListener.CONFIRMED_UPDATES_ALL;
+        return CONFIRMED_UPDATES_ALL;
     }
 
     private void setupMenu() {
@@ -58,6 +61,7 @@ public class TelegramBotListener implements UpdatesListener {
                 .map(c -> new BotCommand(c.command(), c.description()))
                 .toArray(BotCommand[]::new);
         bot.execute(new SetMyCommands(botCommands));
-        log.info("Menu commands configured. Count: {}", botCommands.length);
+
+        log.atInfo().addKeyValue("commands_count", botCommands.length).log("Menu commands configured");
     }
 }
