@@ -1,37 +1,32 @@
 package backend.academy.linktracker.bot.commands;
 
-import backend.academy.linktracker.bot.model.User;
-import backend.academy.linktracker.bot.repository.UserRepository;
-import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.SendMessage;
-import lombok.AllArgsConstructor;
+import backend.academy.linktracker.bot.properties.CommandProperties;
+import backend.academy.linktracker.bot.service.bot.TelegramSender;
+import com.pengrad.telegrambot.model.Message;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class StartCommand implements Command {
-    private final UserRepository userRepository;
+    private final TelegramSender telegramSender;
+    private final CommandProperties commandProperties;
 
     @Override
     public String command() {
-        return "/start";
+        return commandProperties.getCommands().getStart().getName();
     }
 
     @Override
     public String description() {
-        return "Начать работу";
+        return commandProperties.getCommands().getStart().getDescription();
     }
 
     @Override
-    public SendMessage handle(Update update) {
-        Long chatId = update.message().chat().id();
-        if (!userRepository.exists(chatId)) {
-            userRepository.save(new User(chatId));
-
-            log.atInfo().addKeyValue("user_id", chatId).log("New user registered");
-        }
-        return new SendMessage(chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
+    public void handle(Message message) {
+        Long chatId = message.chat().id();
+        telegramSender.sendMessage(chatId, commandProperties.getMessages().getWelcome());
     }
 }

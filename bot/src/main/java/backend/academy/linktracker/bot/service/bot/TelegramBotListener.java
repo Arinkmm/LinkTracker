@@ -1,0 +1,31 @@
+package backend.academy.linktracker.bot.service.bot;
+
+import backend.academy.linktracker.bot.service.update.UpdateHandler;
+import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.Update;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class TelegramBotListener implements UpdatesListener {
+    private final UpdateHandler updateHandler;
+
+    @Override
+    public int process(List<Update> updates) {
+        for (Update update : updates) {
+            try {
+                updateHandler.process(update);
+            } catch (Exception e) {
+                log.atError()
+                        .setCause(e)
+                        .addKeyValue("update_id", update.updateId())
+                        .log("Error processing update");
+            }
+        }
+        return CONFIRMED_UPDATES_ALL;
+    }
+}

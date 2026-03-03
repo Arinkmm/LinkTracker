@@ -5,9 +5,28 @@ spring:
   application:
     name: bot
 
+bot:
+  messages:
+    welcome: "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды"
+    help-header: "Доступные команды:"
+    unknown-command: "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд"
+
+  commands:
+    start:
+      name: "/start"
+      description: "Начать работу"
+    help:
+      name: "/help"
+      description: "Вывести список доступных команд"
+
+scrapper:
+  grpc:
+    host: localhost
+    port: 9090
+
 app:
   telegram:
     url: https://api.telegram.org/bot
-    token: ${TELEGRAM_TOKEN} # Use env variable. DO NOT KEEP TOKEN HERE
+    token: ${TELEGRAM_TOKEN}
     update-listener-sleep: 1s
     debug: false
