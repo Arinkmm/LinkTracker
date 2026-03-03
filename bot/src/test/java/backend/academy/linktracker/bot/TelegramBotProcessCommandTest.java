@@ -36,25 +36,10 @@ class TelegramBotProcessCommandTest {
     @Mock
     private CommandProperties.Messages messages;
 
-    @Mock
-    private CommandProperties.Commands commands;
-
-    @Mock
-    private CommandProperties.CommandInfo startInfo;
-
-    @Mock
-    private CommandProperties.CommandInfo helpInfo;
-
     @BeforeEach
     void setUp() {
         when(commandProperties.getMessages()).thenReturn(messages);
-        when(commandProperties.getCommands()).thenReturn(commands);
-        when(commands.getStart()).thenReturn(startInfo);
-        when(commands.getHelp()).thenReturn(helpInfo);
-        when(startInfo.getName()).thenReturn("/start");
-        when(startInfo.getDescription()).thenReturn("Начать работу");
-        when(helpInfo.getName()).thenReturn("/help");
-        when(helpInfo.getDescription()).thenReturn("Вывести список доступных команд");
+
         when(messages.getWelcome())
                 .thenReturn("Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
         when(messages.getHelpHeader()).thenReturn("Доступные команды:");
