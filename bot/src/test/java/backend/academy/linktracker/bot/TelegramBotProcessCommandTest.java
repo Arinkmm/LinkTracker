@@ -1,7 +1,8 @@
 package backend.academy.linktracker.bot;
 
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,50 +37,89 @@ class TelegramBotProcessCommandTest {
     @Mock
     private CommandProperties.Messages messages;
 
+    @Mock
+    private CommandProperties.Commands commands;
+
+    @Mock
+    private CommandProperties.CommandInfo startInfo;
+
+    @Mock
+    private CommandProperties.CommandInfo helpInfo;
+
+    private final Long CHAT_ID = 123L;
+    private final Long USER_ID = 456L;
+
     @BeforeEach
     void setUp() {
-        when(commandProperties.getMessages()).thenReturn(messages);
-
         when(messages.getWelcome())
                 .thenReturn("Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
         when(messages.getHelpHeader()).thenReturn("Доступные команды:");
         when(messages.getUnknownCommand())
                 .thenReturn("Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
 
+        when(commandProperties.getMessages()).thenReturn(messages);
+        when(commandProperties.getCommands()).thenReturn(commands);
+        when(commands.getStart()).thenReturn(startInfo);
+        when(commands.getHelp()).thenReturn(helpInfo);
+        when(startInfo.getName()).thenReturn("/start");
+        when(startInfo.getDescription()).thenReturn("Начать работу");
+        when(helpInfo.getName()).thenReturn("/help");
+        when(helpInfo.getDescription()).thenReturn("Вывести список доступных команд");
+
         Command start = new StartCommand(telegramSender, commandProperties);
         Command help = new HelpCommand(telegramSender, commandProperties);
-
         handler = new UpdateHandler(new CommandRegistry(List.of(start, help)), telegramSender, commandProperties);
     }
 
     @Test
     @DisplayName("Успешный /start для нового пользователя")
     void startScenario() {
-        Update update = createStubUpdate("/start", 123L, 456L);
+        Update update = createStubUpdate(commands.getStart().getName(), CHAT_ID, USER_ID);
 
         handler.process(update);
 
-        verify(telegramSender).sendMessage(anyLong(), contains("Добро пожаловать"));
+        verify(telegramSender)
+                .sendMessage(
+                        argThat(chatId -> chatId.equals(CHAT_ID)),
+                        argThat(text -> text.contains(messages.getWelcome())));
+
+        verify(telegramSender, never())
+                .sendMessage(anyLong(), argThat(text -> text.contains(messages.getHelpHeader())));
+        verify(telegramSender, never())
+                .sendMessage(anyLong(), argThat(text -> text.contains(messages.getUnknownCommand())));
     }
 
     @Test
     @DisplayName("Вызов /help возвращает описание команд")
     void helpScenario() {
-        Update update = createStubUpdate("/help", 123L, 456L);
+        Update update = createStubUpdate(commands.getHelp().getName(), CHAT_ID, USER_ID);
 
         handler.process(update);
 
-        verify(telegramSender).sendMessage(anyLong(), contains("Доступные команды"));
+        verify(telegramSender)
+                .sendMessage(
+                        argThat(chatId -> chatId.equals(CHAT_ID)),
+                        argThat(text -> text.contains(messages.getHelpHeader())));
+
+        verify(telegramSender, never()).sendMessage(anyLong(), argThat(text -> text.contains(messages.getWelcome())));
     }
 
     @Test
     @DisplayName("Ввод неизвестной команды")
     void unknownCommandScenario() {
-        Update update = createStubUpdate("какой-то текст", 123L, 456L);
+        String unknownText = "какой-то текст";
+        Update update = createStubUpdate(unknownText, CHAT_ID, USER_ID);
 
         handler.process(update);
 
-        verify(telegramSender).sendMessage(anyLong(), contains("Неизвестная команда"));
+        verify(telegramSender)
+                .sendMessage(
+                        argThat(chatId -> chatId.equals(CHAT_ID)),
+                        argThat(text -> text.equals(messages.getUnknownCommand())));
+
+        verify(telegramSender, never()).sendMessage(anyLong(), argThat(text -> text.contains(messages.getWelcome())));
+        verify(telegramSender, never())
+                .sendMessage(anyLong(), argThat(text -> text.contains(messages.getHelpHeader())));
     }
 
     private Update createStubUpdate(String text, Long chatId, Long userId) {
