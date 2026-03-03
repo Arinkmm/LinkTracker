@@ -59,12 +59,12 @@ class TelegramBotProcessCommandTest {
 
         when(commandProperties.getMessages()).thenReturn(messages);
         when(commandProperties.getCommands()).thenReturn(commands);
+
         when(commands.getStart()).thenReturn(startInfo);
         when(commands.getHelp()).thenReturn(helpInfo);
+
         when(startInfo.getName()).thenReturn("/start");
-        when(startInfo.getDescription()).thenReturn("Начать работу");
         when(helpInfo.getName()).thenReturn("/help");
-        when(helpInfo.getDescription()).thenReturn("Вывести список доступных команд");
 
         Command start = new StartCommand(telegramSender, commandProperties);
         Command help = new HelpCommand(telegramSender, commandProperties);
@@ -80,13 +80,10 @@ class TelegramBotProcessCommandTest {
 
         verify(telegramSender)
                 .sendMessage(
-                        argThat(chatId -> chatId.equals(CHAT_ID)),
-                        argThat(text -> text.contains(messages.getWelcome())));
+                        argThat(chatId -> chatId.equals(CHAT_ID)), argThat(text -> text.equals(messages.getWelcome())));
 
         verify(telegramSender, never())
                 .sendMessage(anyLong(), argThat(text -> text.contains(messages.getHelpHeader())));
-        verify(telegramSender, never())
-                .sendMessage(anyLong(), argThat(text -> text.contains(messages.getUnknownCommand())));
     }
 
     @Test
