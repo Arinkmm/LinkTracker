@@ -7,12 +7,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.commands.Command;
-import backend.academy.linktracker.bot.commands.impl.HelpCommand;
-import backend.academy.linktracker.bot.commands.impl.StartCommand;
-import backend.academy.linktracker.bot.handler.UpdateHandler;
+import backend.academy.linktracker.bot.commands.HelpCommand;
+import backend.academy.linktracker.bot.commands.StartCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.command.CommandRegistry;
+import backend.academy.linktracker.bot.service.update.UpdateHandler;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.utility.BotUtils;
 import java.util.List;
