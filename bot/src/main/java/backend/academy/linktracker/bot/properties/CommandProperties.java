@@ -1,5 +1,7 @@
 package backend.academy.linktracker.bot.properties;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -9,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "bot")
 public class CommandProperties {
     private Messages messages;
-    private Commands commands;
+    private Map<String, CommandInfo> commands = new HashMap<>();
 
     @Getter
     @Setter
@@ -17,13 +19,6 @@ public class CommandProperties {
         private String welcome;
         private String helpHeader;
         private String unknownCommand;
-    }
-
-    @Getter
-    @Setter
-    public static class Commands {
-        private CommandInfo start;
-        private CommandInfo help;
     }
 
     @Getter

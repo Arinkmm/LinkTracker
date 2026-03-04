@@ -7,15 +7,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.commands.Command;
-import backend.academy.linktracker.bot.commands.HelpCommand;
-import backend.academy.linktracker.bot.commands.StartCommand;
+import backend.academy.linktracker.bot.commands.impl.HelpCommand;
+import backend.academy.linktracker.bot.commands.impl.StartCommand;
+import backend.academy.linktracker.bot.handler.UpdateHandler;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.command.CommandRegistry;
-import backend.academy.linktracker.bot.service.update.UpdateHandler;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.utility.BotUtils;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ class TelegramBotProcessCommandTest {
     private CommandProperties.Messages messages;
 
     @Mock
-    private CommandProperties.Commands commands;
+    private Map<String, CommandProperties.CommandInfo> commandsMap;
 
     @Mock
     private CommandProperties.CommandInfo startInfo;
@@ -61,10 +62,10 @@ class TelegramBotProcessCommandTest {
                 .thenReturn("Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
 
         when(commandProperties.getMessages()).thenReturn(messages);
-        when(commandProperties.getCommands()).thenReturn(commands);
+        when(commandProperties.getCommands()).thenReturn(commandsMap);
 
-        when(commands.getStart()).thenReturn(startInfo);
-        when(commands.getHelp()).thenReturn(helpInfo);
+        when(commandsMap.get("start")).thenReturn(startInfo);
+        when(commandsMap.get("help")).thenReturn(helpInfo);
 
         when(startInfo.getName()).thenReturn("/start");
         when(helpInfo.getName()).thenReturn("/help");
@@ -77,7 +78,7 @@ class TelegramBotProcessCommandTest {
     @Test
     @DisplayName("Успешный /start для нового пользователя")
     void startScenario() {
-        Update update = createStubUpdate(commands.getStart().getName(), CHAT_ID, USER_ID);
+        Update update = createStubUpdate(commandsMap.get("start").getName(), CHAT_ID, USER_ID);
 
         handler.process(update);
 
@@ -92,7 +93,7 @@ class TelegramBotProcessCommandTest {
     @Test
     @DisplayName("Вызов /help возвращает описание команд")
     void helpScenario() {
-        Update update = createStubUpdate(commands.getHelp().getName(), CHAT_ID, USER_ID);
+        Update update = createStubUpdate(commandsMap.get("help").getName(), CHAT_ID, USER_ID);
 
         handler.process(update);
 
