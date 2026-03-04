@@ -25,14 +25,4 @@ public class CommandRegistry {
 
         return commandMap.get(commandName);
     }
-
-    public List<Command> getCommands() {
-        return List.copyOf(commandMap.values());
-    }
-
-    public String buildCommandList() {
-        return commandMap.values().stream()
-                .map(c -> c.command() + " - " + c.description())
-                .collect(Collectors.joining("\n"));
-    }
 }

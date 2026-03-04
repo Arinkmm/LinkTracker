@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.service.bot;
 
-import backend.academy.linktracker.bot.service.command.CommandRegistry;
+import backend.academy.linktracker.bot.properties.CommandProperties;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.request.SetMyCommands;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class BotInitializer implements CommandLineRunner {
     private final TelegramBot bot;
     private final TelegramBotListener telegramBotListener;
-    private final CommandRegistry commandRegistry;
+    private final CommandProperties commandProperties;
 
     @Override
     public void run(String... args) {
@@ -35,8 +35,8 @@ public class BotInitializer implements CommandLineRunner {
     }
 
     private void setupMenu() {
-        BotCommand[] botCommands = commandRegistry.getCommands().stream()
-                .map(c -> new BotCommand(c.command(), c.description()))
+        BotCommand[] botCommands = commandProperties.getCommands().values().stream()
+                .map(info -> new BotCommand(info.getName(), info.getDescription()))
                 .toArray(BotCommand[]::new);
         bot.execute(new SetMyCommands(botCommands));
 
