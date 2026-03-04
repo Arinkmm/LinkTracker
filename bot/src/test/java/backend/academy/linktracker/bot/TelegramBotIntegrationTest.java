@@ -66,7 +66,7 @@ class TelegramBotIntegrationTest implements WithAssertions {
         assertEquals(404, getUpdatesResponse.errorCode());
 
         verify(
-                1,
+                2,
                 postRequestedFor(urlPathTemplate("/bot{token}/getUpdates"))
                         .withPathParam("token", equalTo(telegramProperties.getToken())));
     }
