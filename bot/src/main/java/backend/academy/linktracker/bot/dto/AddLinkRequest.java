@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.client.dto;
+package backend.academy.linktracker.bot.dto;
 
 import java.util.List;
 

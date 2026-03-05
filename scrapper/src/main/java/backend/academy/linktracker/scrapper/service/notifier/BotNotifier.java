@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.service.notifier;
 
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
-import backend.academy.linktracker.scrapper.client.bot.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

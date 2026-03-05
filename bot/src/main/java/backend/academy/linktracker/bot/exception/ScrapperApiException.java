@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.exception;
 
-import backend.academy.linktracker.bot.client.dto.ApiErrorResponse;
+import backend.academy.linktracker.bot.dto.ApiErrorResponse;
 import lombok.Getter;
 
 @Getter

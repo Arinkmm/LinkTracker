@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.grpc.BotServiceGrpc;
-import backend.academy.linktracker.scrapper.client.bot.dto.ApiErrorResponse;
+import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
 import backend.academy.linktracker.scrapper.exception.ScrapperApiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

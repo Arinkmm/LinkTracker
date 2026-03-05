@@ -32,7 +32,7 @@ public class StateHandler {
                     trackHandler.handle(userId, text, state);
                 case WAITING_UNTRACKING_URL ->
                     untrackHandler.handle(userId, text);
-                default -> handleUnknownState(userId, state);
+                default -> handleUnknownState(userId);
             }
         } catch (ScrapperApiException e) {
             telegramSender.sendMessage(userId, e.getApiError().description());
@@ -40,7 +40,7 @@ public class StateHandler {
         }
     }
 
-    private void handleUnknownState(Long userId, State state) {
+    private void handleUnknownState(Long userId) {
         telegramSender.sendMessage(userId, properties.getMessages().getStateError());
         userService.deleteState(userId);
     }

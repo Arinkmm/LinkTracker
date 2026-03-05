@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class LinkNotifier {
+public class NotificationBuilder {
     private final NotificationProperties properties;
 
     public String buildMessage(String url) {

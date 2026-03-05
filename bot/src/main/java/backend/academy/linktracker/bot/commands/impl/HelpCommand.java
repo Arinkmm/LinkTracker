@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.commands.impl;
 
 import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import com.pengrad.telegrambot.model.Message;
@@ -15,12 +16,12 @@ public class HelpCommand implements Command {
 
     @Override
     public String command() {
-        return commandProperties.getCommands().get("help").getName();
+        return commandProperties.getCommands().get(InternalCommand.HELP.configKey).getName();
     }
 
     @Override
     public String description() {
-        return commandProperties.getCommands().get("help").getDescription();
+        return commandProperties.getCommands().get(InternalCommand.HELP.configKey).getDescription();
     }
 
     @Override

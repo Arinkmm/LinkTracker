@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.client.bot.impl;
 
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
-import backend.academy.linktracker.scrapper.client.bot.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;

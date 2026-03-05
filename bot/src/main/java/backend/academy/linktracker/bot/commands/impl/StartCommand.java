@@ -2,6 +2,7 @@ package backend.academy.linktracker.bot.commands.impl;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import com.pengrad.telegrambot.model.Message;
@@ -19,12 +20,14 @@ public class StartCommand implements Command {
 
     @Override
     public String command() {
-        return commandProperties.getCommands().get("start").getName();
+        return commandProperties.getCommands()
+            .get(InternalCommand.START.configKey)
+            .getName();
     }
 
     @Override
     public String description() {
-        return commandProperties.getCommands().get("start").getDescription();
+        return commandProperties.getCommands().get(InternalCommand.START.configKey).getDescription();
     }
 
     @Override

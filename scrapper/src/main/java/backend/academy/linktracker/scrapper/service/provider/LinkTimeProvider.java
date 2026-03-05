@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.service.notifier;
+package backend.academy.linktracker.scrapper.service.provider;
 
 import java.time.Instant;
 

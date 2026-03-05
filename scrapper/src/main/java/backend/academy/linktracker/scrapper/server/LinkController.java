@@ -1,6 +1,9 @@
-package backend.academy.linktracker.scrapper.server.controller;
+package backend.academy.linktracker.scrapper.server;
 
-import backend.academy.linktracker.scrapper.client.bot.dto.*;  // ✅ client.bot!
+import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.service.ScrapperService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

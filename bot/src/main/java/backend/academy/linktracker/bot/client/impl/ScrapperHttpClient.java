@@ -1,10 +1,10 @@
 package backend.academy.linktracker.bot.client.impl;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
-import backend.academy.linktracker.bot.client.dto.AddLinkRequest;
-import backend.academy.linktracker.bot.client.dto.LinkResponse;
-import backend.academy.linktracker.bot.client.dto.ListLinksResponse;
-import backend.academy.linktracker.bot.client.dto.RemoveLinkRequest;
+import backend.academy.linktracker.bot.dto.AddLinkRequest;
+import backend.academy.linktracker.bot.dto.LinkResponse;
+import backend.academy.linktracker.bot.dto.ListLinksResponse;
+import backend.academy.linktracker.bot.dto.RemoveLinkRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

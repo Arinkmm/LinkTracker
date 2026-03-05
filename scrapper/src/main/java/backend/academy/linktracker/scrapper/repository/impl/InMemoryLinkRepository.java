@@ -1,6 +1,6 @@
 package backend.academy.linktracker.scrapper.repository.impl;
 
-import backend.academy.linktracker.scrapper.dto.LinkDto;
+import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.util.ArrayList;
 import java.util.List;

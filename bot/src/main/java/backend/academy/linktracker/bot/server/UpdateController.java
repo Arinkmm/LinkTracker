@@ -1,6 +1,6 @@
-package backend.academy.linktracker.bot.server.controller;
+package backend.academy.linktracker.bot.server;
 
-import backend.academy.linktracker.bot.client.dto.LinkUpdate;
+import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

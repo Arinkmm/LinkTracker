@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.service;
 
-import backend.academy.linktracker.scrapper.client.bot.dto.*;
-import backend.academy.linktracker.scrapper.dto.LinkDto;
+import backend.academy.linktracker.scrapper.dto.*;
+import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
 import backend.academy.linktracker.scrapper.exception.*;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.UserRepository;

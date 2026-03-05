@@ -1,7 +1,7 @@
 package backend.academy.linktracker.bot.client;
 
-import backend.academy.linktracker.bot.client.dto.LinkResponse;
-import backend.academy.linktracker.bot.client.dto.ListLinksResponse;
+import backend.academy.linktracker.bot.dto.LinkResponse;
+import backend.academy.linktracker.bot.dto.ListLinksResponse;
 import java.util.List;
 
 public interface ScrapperClient {

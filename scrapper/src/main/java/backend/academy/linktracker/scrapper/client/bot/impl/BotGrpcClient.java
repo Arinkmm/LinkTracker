@@ -2,8 +2,8 @@ package backend.academy.linktracker.scrapper.client.bot.impl;
 
 import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
-import backend.academy.linktracker.scrapper.client.bot.dto.ApiErrorResponse;
-import backend.academy.linktracker.scrapper.client.bot.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
+import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.exception.ScrapperApiException;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;

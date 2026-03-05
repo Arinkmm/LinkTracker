@@ -1,6 +1,6 @@
 package backend.academy.linktracker.scrapper.repository;
 
-import backend.academy.linktracker.scrapper.dto.LinkDto;
+import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
 import java.util.List;
 
 public interface LinkRepository {

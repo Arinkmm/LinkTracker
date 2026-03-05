@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.server.controller;
+package backend.academy.linktracker.scrapper.server;
 
 import backend.academy.linktracker.scrapper.service.ScrapperService;
 import lombok.RequiredArgsConstructor;

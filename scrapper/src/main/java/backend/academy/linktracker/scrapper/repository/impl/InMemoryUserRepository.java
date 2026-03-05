@@ -1,6 +1,6 @@
 package backend.academy.linktracker.scrapper.repository.impl;
 
-import backend.academy.linktracker.scrapper.dto.UserDto;
+import backend.academy.linktracker.scrapper.dto.bot.UserDto;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
 import java.util.HashMap;
 import java.util.List;
@@ -24,10 +24,5 @@ public class InMemoryUserRepository implements UserRepository {
     @Override
     public void delete(Long userId) {
         map.remove(userId);
-    }
-
-    @Override
-    public List<UserDto> findAll() {
-        return map.values().stream().toList();
     }
 }

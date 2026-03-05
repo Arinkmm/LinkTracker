@@ -1,9 +1,9 @@
-package backend.academy.linktracker.bot.server;
+package backend.academy.linktracker.bot.exception;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import backend.academy.linktracker.bot.client.dto.ApiErrorResponse;
+import backend.academy.linktracker.bot.dto.ApiErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleError(Exception e) {

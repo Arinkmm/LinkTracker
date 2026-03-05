@@ -1,9 +1,6 @@
-package backend.academy.linktracker.scrapper.server;
+package backend.academy.linktracker.scrapper.exception;
 
-import backend.academy.linktracker.scrapper.client.bot.dto.ApiErrorResponse;
-import backend.academy.linktracker.scrapper.exception.ChatAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
-import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
+import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;

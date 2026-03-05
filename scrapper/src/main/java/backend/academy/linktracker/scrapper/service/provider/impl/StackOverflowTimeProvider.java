@@ -1,6 +1,7 @@
-package backend.academy.linktracker.scrapper.service.notifier;
+package backend.academy.linktracker.scrapper.service.provider.impl;
 
 import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowClient;
+import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.time.Instant;

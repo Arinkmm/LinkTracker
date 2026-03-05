@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.commands.impl;
 
 import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
@@ -17,12 +18,12 @@ public class CancelCommand implements Command {
 
     @Override
     public String command() {
-        return commandProperties.getCommands().get("cancel").getName();
+        return commandProperties.getCommands().get(InternalCommand.CANCEL.configKey).getName();
     }
 
     @Override
     public String description() {
-        return commandProperties.getCommands().get("cancel").getDescription();
+        return commandProperties.getCommands().get(InternalCommand.CANCEL.configKey).getDescription();
     }
 
     @Override
