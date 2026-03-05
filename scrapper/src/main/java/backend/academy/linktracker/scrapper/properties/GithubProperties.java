@@ -15,6 +15,8 @@ import org.springframework.validation.annotation.Validated;
 @EqualsAndHashCode
 @NoArgsConstructor
 public class GithubProperties {
+    @NotEmpty
+    private String url;
 
     @NotEmpty
     private String token;

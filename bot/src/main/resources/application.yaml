@@ -4,13 +4,45 @@ server:
 spring:
   application:
     name: bot
+  grpc:
+    server:
+      port: 9091
+
+app:
+  client:
+    type: grpc
+  scrapper:
+    url: "http://localhost:8081"
+  grpc:
+    host: localhost
+    port: 9090
+  telegram:
+    url: https://api.telegram.org/bot
+    token: ${TELEGRAM_TOKEN}
+    update-listener-sleep: 1s
+    debug: false
 
 bot:
   messages:
     welcome: "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды"
     help-header: "Доступные команды:"
     unknown-command: "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд"
+    tracking: "Пришли ссылку для отслеживания. Если ты передумал пришли /cancel"
+    untracking: "Пришли ссылку для прекращения отслеживания. Если ты передумал пришли /cancel"
+    list: "Отслеживаемые ссылки:"
+    canceling: "Действие отменено"
 
+    tags-offer: "Хочешь добавить теги? (да/нет)"
+    invalid-url: "Неверный формат ссылки (GitHub/StackOverflow)"
+    tags-prompt: "Теги через запятую (/cancel для отмены)"
+    invalid-tags-answer: "Ответь да/нет"
+    links: "Ваши ссылки: "
+    link-added: "Ссылка добавлена"
+    link-added-with-tags: "Ссылка добавлена с тегами"
+    link-deleted: "Ссылка удалена из отслеживания"
+    link-not-found: "Ссылка не найдена в отслеживании"
+    link-is-empty: "Ссылок не обнаружено"
+    state-error: "Ошибка состояния. /track заново"
   commands:
     start:
       name: "/start"
@@ -18,15 +50,15 @@ bot:
     help:
       name: "/help"
       description: "Вывести список доступных команд"
-
-scrapper:
-  grpc:
-    host: localhost
-    port: 9090
-
-app:
-  telegram:
-    url: https://api.telegram.org/bot
-    token: ${TELEGRAM_TOKEN}
-    update-listener-sleep: 1s
-    debug: false
+    track:
+      name: "/track"
+      description: "Начать отслеживание ссылки"
+    untrack:
+      name: "/untrack"
+      description: "Прекратить отслеживание ссылки"
+    list:
+      name: "/list"
+      description: "Вывести список отслеживаемых ссылок (опционально по тегу)"
+    cancel:
+      name: "/cancel"
+      description: "Отменить действие"

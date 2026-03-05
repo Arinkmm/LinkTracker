@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.service.bot;
 
-import backend.academy.linktracker.bot.service.update.UpdateHandler;
+import backend.academy.linktracker.bot.service.handler.UpdateHandler;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import java.util.List;

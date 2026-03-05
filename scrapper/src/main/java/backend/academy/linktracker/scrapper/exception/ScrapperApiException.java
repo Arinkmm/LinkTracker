@@ -1,0 +1,20 @@
+package backend.academy.linktracker.scrapper.exception;
+
+import backend.academy.linktracker.scrapper.client.bot.dto.ApiErrorResponse;
+import lombok.Getter;
+import java.util.List;
+
+@Getter
+public class ScrapperApiException extends RuntimeException {
+    private final ApiErrorResponse apiError;
+
+    public ScrapperApiException(ApiErrorResponse apiError) {
+        super(apiError.description());
+        this.apiError = apiError;
+    }
+
+    public ScrapperApiException(String message, Throwable cause) {
+        super(message, cause);
+        this.apiError = new ApiErrorResponse(message, "500", "Unknown", message, List.of());
+    }
+}
