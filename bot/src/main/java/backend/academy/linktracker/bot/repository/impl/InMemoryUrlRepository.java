@@ -1,14 +1,14 @@
 package backend.academy.linktracker.bot.repository.impl;
 
 import backend.academy.linktracker.bot.repository.UrlRepository;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class InMemoryUrlRepository implements UrlRepository {
-    private final Map<Long, String> map = new HashMap<>();
+    private final Map<Long, String> map = new ConcurrentHashMap<>();
 
     @Override
     public void save(Long id, String url) {

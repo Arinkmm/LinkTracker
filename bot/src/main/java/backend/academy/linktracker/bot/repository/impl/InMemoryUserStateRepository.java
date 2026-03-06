@@ -2,14 +2,14 @@ package backend.academy.linktracker.bot.repository.impl;
 
 import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.repository.UserStateRepository;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class InMemoryUserStateRepository implements UserStateRepository {
-    private final Map<Long, State> map = new HashMap<>();
+    private final Map<Long, State> map = new ConcurrentHashMap<>();
 
     @Override
     public void save(Long id, State state) {
