@@ -23,12 +23,21 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
     @Override
     public void registerChat(RegisterChatRequest request,
                              StreamObserver<EmptyResponse> responseObserver) {
+        Long id = request.getId();
+
+        log.atDebug()
+            .addKeyValue("id", id)
+            .log("gRPC registerChat");
+
         try {
-            service.registerChat(request.getId());
+            service.registerChat(id);
             responseObserver.onNext(EmptyResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ChatAlreadyExistsException e) {
-            log.warn("Chat already exists: {}", request.getId());
+            log.atWarn()
+                .addKeyValue("id", id)
+                .log("gRPC registerChat: chat already exists");
+
             responseObserver.onError(
                 Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
         }
@@ -37,12 +46,21 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
     @Override
     public void deleteChat(DeleteChatRequest request,
                            StreamObserver<EmptyResponse> responseObserver) {
+        Long id = request.getId();
+
+        log.atDebug()
+            .addKeyValue("id", id)
+            .log("gRPC deleteChat");
+
         try {
-            service.deleteChat(request.getId());
+            service.deleteChat(id);
             responseObserver.onNext(EmptyResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ChatNotFoundException e) {
-            log.warn("Chat not found: {}", request.getId());
+            log.atWarn()
+                .addKeyValue("id", id)
+                .log("gRPC deleteChat: chat not found");
+
             responseObserver.onError(
                 Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException());
         }
@@ -51,15 +69,32 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
     @Override
     public void addLink(AddLinkRequest request,
                         StreamObserver<LinkResponse> responseObserver) {
+        Long id = request.getTgChatId();
+
+        log.atDebug()
+            .addKeyValue("id", id)
+            .addKeyValue("url", request.getLink())
+            .addKeyValue("tags_count", request.getTagsCount())
+            .log("gRPC addLink");
+
         try {
             backend.academy.linktracker.scrapper.dto.AddLinkRequest dtoReq = mapper.grpcToDto(request);
-            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = service.addLink(request.getTgChatId(), dtoReq);
+            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = service.addLink(id, dtoReq);
             LinkResponse grpcRes = mapper.dtoToGrpc(dtoRes);
             responseObserver.onNext(grpcRes);
             responseObserver.onCompleted();
         } catch (ChatNotFoundException e) {
+            log.atWarn()
+                .addKeyValue("id", id)
+                .log("gRPC addLink: chat not found");
+
             responseObserver.onError(Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException());
         } catch (LinkAlreadyTrackedException e) {
+            log.atWarn()
+                .addKeyValue("id", id)
+                .addKeyValue("url", request.getLink())
+                .log("gRPC addLink: link already tracked");
+
             responseObserver.onError(Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
         }
     }
@@ -67,13 +102,24 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
     @Override
     public void removeLink(RemoveLinkRequest request,
                            StreamObserver<LinkResponse> responseObserver) {
+        Long id = request.getTgChatId();
+
+        log.atDebug()
+            .addKeyValue("id", id)
+            .addKeyValue("url", request.getLink())
+            .log("gRPC removeLink");
+
         try {
             backend.academy.linktracker.scrapper.dto.RemoveLinkRequest dtoReq = mapper.grpcToDto(request);
-            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = service.removeLink(request.getTgChatId(), dtoReq);
+            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = service.removeLink(id, dtoReq);
             LinkResponse grpcRes = mapper.dtoToGrpc(dtoRes);
             responseObserver.onNext(grpcRes);
             responseObserver.onCompleted();
         } catch (ChatNotFoundException e) {
+            log.atWarn()
+                .addKeyValue("id", id)
+                .log("gRPC removeLink: chat not found");
+
             responseObserver.onError(Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException());
         }
     }
@@ -81,12 +127,22 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
     @Override
     public void getLinks(GetLinksRequest request,
                          StreamObserver<ListLinksResponse> responseObserver) {
+        Long id = request.getTgChatId();
+
+        log.atDebug()
+            .addKeyValue("id", id)
+            .log("gRPC getLinks");
+
         try {
-            backend.academy.linktracker.scrapper.dto.ListLinksResponse dtoRes = service.getLinks(request.getTgChatId());
+            backend.academy.linktracker.scrapper.dto.ListLinksResponse dtoRes = service.getLinks(id);
             ListLinksResponse grpcRes = mapper.dtoToGrpc(dtoRes);
             responseObserver.onNext(grpcRes);
             responseObserver.onCompleted();
         } catch (ChatNotFoundException e) {
+            log.atWarn()
+                .addKeyValue("id", id)
+                .log("gRPC getLinks: chat not found");
+
             responseObserver.onError(Status.NOT_FOUND.withDescription(e.getMessage()).asRuntimeException());
         }
     }

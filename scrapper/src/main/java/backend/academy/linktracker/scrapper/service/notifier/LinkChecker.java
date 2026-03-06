@@ -20,6 +20,9 @@ public class LinkChecker {
 
     public void checkAllLinks() {
         linkRepository.findAll().forEach(this::checkSingleLink);
+
+        log.atInfo()
+            .log("Link check cycle completed");
     }
 
     private void checkSingleLink(LinkDto link) {
@@ -32,6 +35,11 @@ public class LinkChecker {
     }
 
     private void notifyAndUpdate(LinkDto link, Instant newTime) {
+        log.atInfo()
+            .addKeyValue("id", link.id())
+            .addKeyValue("url", link.url())
+            .log("Link changed, notifying");
+
         String message = builder.buildMessage(link.url());
 
         botNotifier.notify(

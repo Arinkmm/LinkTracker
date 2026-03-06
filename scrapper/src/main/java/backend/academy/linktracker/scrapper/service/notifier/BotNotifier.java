@@ -3,19 +3,24 @@ package backend.academy.linktracker.scrapper.service.notifier;
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class BotNotifier {
     private final BotClient botClient;
 
-    public BotNotifier(BotClient botClient) {
-        this.botClient = botClient;
-    }
-
     public void notify(Long id, String url, String description, List<Long> tgChatIds) {
-        botClient.sendUpdate(new LinkUpdate(id, url, description, tgChatIds));
+        log.atInfo()
+            .addKeyValue("id", id)
+            .addKeyValue("url", url)
+            .addKeyValue("chat_count", tgChatIds.size())
+            .log("Notifying bot about link update");
+
+        LinkUpdate update = new LinkUpdate(id, url, description, tgChatIds);
+        botClient.sendUpdate(update);
     }
 }

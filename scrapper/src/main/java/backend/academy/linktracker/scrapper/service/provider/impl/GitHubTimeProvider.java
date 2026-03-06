@@ -3,11 +3,13 @@ package backend.academy.linktracker.scrapper.service.provider.impl;
 import backend.academy.linktracker.scrapper.client.github.GitHubClient;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import java.time.Instant;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class GitHubTimeProvider implements LinkTimeProvider {
     private final GitHubClient client;
 
@@ -20,8 +22,21 @@ public class GitHubTimeProvider implements LinkTimeProvider {
     public Instant getCurrentTime(String url) {
         try {
             String[] parts = parseRepo(url);
-            return client.getRepository(parts[0], parts[1]).updatedAt();
+            String owner = parts[0];
+            String repo = parts[1];
+
+            log.atDebug()
+                .addKeyValue("owner", owner)
+                .addKeyValue("repo", repo)
+                .log("Fetching GitHub repo time");
+
+            return client.getRepository(owner, repo).updatedAt();
         } catch (Exception e) {
+            log.atWarn()
+                .addKeyValue("url", url)
+                .addKeyValue("error", e.getClass().getSimpleName())
+                .log("Failed to get GitHub time");
+
             return Instant.EPOCH;
         }
     }
@@ -30,4 +45,3 @@ public class GitHubTimeProvider implements LinkTimeProvider {
         return url.split("github\\.com/")[1].split("/", 2);
     }
 }
-

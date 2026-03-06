@@ -6,10 +6,12 @@ import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StateHandler {
     private final UserService userService;
     private final TrackStateHandler trackHandler;
@@ -26,6 +28,12 @@ public class StateHandler {
     public void handle(Long id, String text) {
         State state = userService.findStateById(id).orElse(State.OK);
 
+        log.atDebug()
+            .addKeyValue("id", id)
+            .addKeyValue("state", state)
+            .addKeyValue("text", text)
+            .log("Processing State Machine state");
+
         try {
             switch (state) {
                 case WAITING_URL, NEEDED_TAGS, WAITING_TAGS ->
@@ -35,6 +43,14 @@ public class StateHandler {
                 default -> handleUnknownState(id);
             }
         } catch (ApiException e) {
+            log.atError()
+                .addKeyValue("id", id)
+                .addKeyValue("state", state)
+                .addKeyValue("text", text)
+                .addKeyValue("error_code", e.getApiError().code())
+                .addKeyValue("description", e.getApiError().description())
+                .log("State Machine failed");
+
             telegramSender.sendMessage(id, e.getApiError().description());
             userService.deleteState(id);
         }

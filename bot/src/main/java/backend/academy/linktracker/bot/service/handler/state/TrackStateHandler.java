@@ -24,6 +24,12 @@ public class TrackStateHandler {
     private final TagsParser tagsParser;
 
     public void handle(Long id, String text, State state) {
+        log.atDebug()
+            .addKeyValue("id", id)
+            .addKeyValue("state", state)
+            .addKeyValue("text", text)
+            .log("Track State Machine step");
+
         switch (state) {
             case WAITING_URL -> handleWaitingUrl(id, text);
             case NEEDED_TAGS -> handleNeededTags(id, text);
@@ -59,6 +65,12 @@ public class TrackStateHandler {
     }
 
     private void saveLink(Long id, List<String> tags) {
+        log.atInfo()
+            .addKeyValue("id", id)
+            .addKeyValue("url", userService.findUrlById(id))
+            .addKeyValue("tags_count", tags.size())
+            .log("Saving link to scrapper");
+
         String url = userService.findUrlById(id).orElseThrow();
         client.addLink(id, url, tags, List.of());
         userService.deleteState(id);

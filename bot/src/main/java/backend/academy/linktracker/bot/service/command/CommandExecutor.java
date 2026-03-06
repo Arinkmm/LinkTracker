@@ -7,11 +7,13 @@ import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CommandExecutor {
     private final CommandProperties commandProperties;
     private final TelegramSender telegramSender;
@@ -19,6 +21,10 @@ public class CommandExecutor {
     private final ScrapperClient client;
 
     public void executeStart(Long id) {
+        log.atInfo()
+            .addKeyValue("id", id)
+            .log("Registering new chat");
+
         client.registerChat(id);
         telegramSender.sendMessage(id, commandProperties.getMessages().getWelcome());
     }
@@ -27,19 +33,27 @@ public class CommandExecutor {
         StringBuilder helpText =
             new StringBuilder(commandProperties.getMessages().getHelpHeader());
 
-        commandProperties.getCommands().values().forEach(cmd -> helpText.append("\n- ")
-            .append(cmd.getName())
-            .append(" — ")
-            .append(cmd.getDescription()));
+        commandProperties.getCommands().values().forEach(cmd ->
+            helpText.append("\n- ")
+                .append(cmd.getName())
+                .append(" — ")
+                .append(cmd.getDescription()));
 
         telegramSender.sendMessage(id, helpText.toString());
     }
 
     public void executeList(Long id, String tag) {
+        log.atDebug()
+            .addKeyValue("id", id)
+            .addKeyValue("tag", tag)
+            .log("Fetching user links");
+
         List<LinkResponse> links = client.getLinks(id).links();
 
         if (tag != null) {
-            links = links.stream().filter(link -> link.tags().contains(tag)).toList();
+            links = links.stream()
+                .filter(link -> link.tags().contains(tag))
+                .toList();
         }
 
         if (links.isEmpty()) {
@@ -76,5 +90,4 @@ public class CommandExecutor {
         userService.saveState(id, State.WAITING_UNTRACKING_URL);
         telegramSender.sendMessage(id, commandProperties.getMessages().getUntracking());
     }
-
 }

@@ -13,27 +13,27 @@ public class UserService {
     private final UserStateRepository userStateRepository;
     private final UrlRepository urlRepository;
 
-    public void saveState(Long userId, State state) {
-        userStateRepository.save(userId, state);
+    public void saveState(Long id, State state) {
+        userStateRepository.save(id, state);
     }
 
-    public Optional<State> findStateById(Long userId) {
-        return userStateRepository.findById(userId);
+    public Optional<State> findStateById(Long id) {
+        return userStateRepository.findById(id);
     }
 
-    public Optional<String> findUrlById(Long userId) {
-        return urlRepository.findById(userId);
+    public Optional<String> findUrlById(Long id) {
+        return urlRepository.findById(id);
     }
 
-    public void saveUrl(Long userId, String url) {
-        urlRepository.save(userId, url);
+    public void saveUrl(Long id, String url) {
+        urlRepository.save(id, url);
     }
 
-    public void deleteState(Long userId) {
-        userStateRepository.delete(userId);
+    public void deleteState(Long id) {
+        userStateRepository.delete(id);
     }
 
-    public void deleteUrl(Long userId) {
-        urlRepository.delete(userId);
+    public void deleteUrl(Long id) {
+        urlRepository.delete(id);
     }
 }
