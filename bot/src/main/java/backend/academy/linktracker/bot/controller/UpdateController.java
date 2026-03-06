@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.server;
+package backend.academy.linktracker.bot.controller;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
@@ -19,8 +19,8 @@ public class UpdateController {
 
     @PostMapping
     public ResponseEntity<Void> sendUpdate(@RequestBody LinkUpdate update) {
-            update.tgChatIds().forEach(chatId ->
-                telegramSender.sendMessage(chatId, update.description()));
+            update.tgChatIds().forEach(id ->
+                telegramSender.sendMessage(id, update.description()));
             return ResponseEntity.ok().build();
     }
 }

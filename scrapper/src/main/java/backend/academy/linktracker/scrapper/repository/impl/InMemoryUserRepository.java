@@ -3,7 +3,6 @@ package backend.academy.linktracker.scrapper.repository.impl;
 import backend.academy.linktracker.scrapper.dto.bot.UserDto;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Repository;
 
@@ -12,17 +11,17 @@ public class InMemoryUserRepository implements UserRepository {
     private final Map<Long, UserDto> map = new HashMap<>();
 
     @Override
-    public void save(Long userId) {
-        map.put(userId, new UserDto(userId));
+    public void save(Long id) {
+        map.put(id, new UserDto(id));
     }
 
     @Override
-    public boolean exists(Long userId) {
-        return map.containsKey(userId);
+    public boolean exists(Long id) {
+        return map.containsKey(id);
     }
 
     @Override
-    public void delete(Long userId) {
-        map.remove(userId);
+    public void delete(Long id) {
+        map.remove(id);
     }
 }

@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.service.handler;
+package backend.academy.linktracker.bot.service.handler.command;
 
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
@@ -11,7 +11,7 @@ public class UnknownCommandHandler {
     private final TelegramSender telegramSender;
     private final CommandProperties properties;
 
-    public void handle(Long chatId) {
-        telegramSender.sendMessage(chatId, properties.getMessages().getUnknownCommand());
+    public void handle(Long id) {
+        telegramSender.sendMessage(id, properties.getMessages().getUnknownCommand());
     }
 }

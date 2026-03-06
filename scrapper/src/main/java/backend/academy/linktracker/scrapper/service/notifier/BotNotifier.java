@@ -15,7 +15,7 @@ public class BotNotifier {
         this.botClient = botClient;
     }
 
-    public void notify(Long chatId, String url, String description, List<Long> tgChatIds) {
-        botClient.sendUpdate(new LinkUpdate(chatId, url, description, tgChatIds));
+    public void notify(Long id, String url, String description, List<Long> tgChatIds) {
+        botClient.sendUpdate(new LinkUpdate(id, url, description, tgChatIds));
     }
 }

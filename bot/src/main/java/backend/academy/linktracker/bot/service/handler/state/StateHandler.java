@@ -1,6 +1,6 @@
-package backend.academy.linktracker.bot.service.handler;
+package backend.academy.linktracker.bot.service.handler.state;
 
-import backend.academy.linktracker.bot.exception.ScrapperApiException;
+import backend.academy.linktracker.bot.exception.ApiException;
 import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
@@ -17,31 +17,31 @@ public class StateHandler {
     private final TelegramSender telegramSender;
     private final CommandProperties properties;
 
-    public boolean hasState(Long userId) {
-        return userService.findStateById(userId)
+    public boolean hasState(Long id) {
+        return userService.findStateById(id)
             .filter(s -> s != State.OK)
             .isPresent();
     }
 
-    public void handle(Long userId, String text) {
-        State state = userService.findStateById(userId).orElse(State.OK);
+    public void handle(Long id, String text) {
+        State state = userService.findStateById(id).orElse(State.OK);
 
         try {
             switch (state) {
                 case WAITING_URL, NEEDED_TAGS, WAITING_TAGS ->
-                    trackHandler.handle(userId, text, state);
+                    trackHandler.handle(id, text, state);
                 case WAITING_UNTRACKING_URL ->
-                    untrackHandler.handle(userId, text);
-                default -> handleUnknownState(userId);
+                    untrackHandler.handle(id, text);
+                default -> handleUnknownState(id);
             }
-        } catch (ScrapperApiException e) {
-            telegramSender.sendMessage(userId, e.getApiError().description());
-            userService.deleteState(userId);
+        } catch (ApiException e) {
+            telegramSender.sendMessage(id, e.getApiError().description());
+            userService.deleteState(id);
         }
     }
 
-    private void handleUnknownState(Long userId) {
-        telegramSender.sendMessage(userId, properties.getMessages().getStateError());
-        userService.deleteState(userId);
+    private void handleUnknownState(Long id) {
+        telegramSender.sendMessage(id, properties.getMessages().getStateError());
+        userService.deleteState(id);
     }
 }

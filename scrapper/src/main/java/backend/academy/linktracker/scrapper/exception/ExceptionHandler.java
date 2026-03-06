@@ -5,13 +5,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
-    @ExceptionHandler(ChatNotFoundException.class)
+public class ExceptionHandler {
+    @org.springframework.web.bind.annotation.ExceptionHandler(ChatNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleChatNotFound(ChatNotFoundException e) {
         return new ApiErrorResponse(
@@ -22,7 +21,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler({ChatAlreadyExistsException.class, LinkAlreadyTrackedException.class})
+    @org.springframework.web.bind.annotation.ExceptionHandler({ChatAlreadyExistsException.class, LinkAlreadyTrackedException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiErrorResponse handleConflict(RuntimeException e) {
         return new ApiErrorResponse(
@@ -33,7 +32,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
+    @org.springframework.web.bind.annotation.ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleGenericError(Exception e) {
         return new ApiErrorResponse(

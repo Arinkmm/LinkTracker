@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.server;
+package backend.academy.linktracker.bot.service.grpc;
 
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.grpc.BotServiceGrpc;
@@ -19,8 +19,8 @@ public class BotGrpcService extends BotServiceGrpc.BotServiceImplBase {
     @Override
     public void sendUpdate(LinkUpdate req, StreamObserver<EmptyResponse> resp) {
         try {
-            req.getTgChatIdsList().forEach(chatId ->
-                telegramSender.sendMessage(chatId, req.getDescription()));
+            req.getTgChatIdsList().forEach(id ->
+                telegramSender.sendMessage(id, req.getDescription()));
             resp.onNext(EmptyResponse.getDefaultInstance());
             resp.onCompleted();
         } catch (Exception e) {

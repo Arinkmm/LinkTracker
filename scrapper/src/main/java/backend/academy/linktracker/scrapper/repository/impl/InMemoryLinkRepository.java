@@ -14,26 +14,26 @@ public class InMemoryLinkRepository implements LinkRepository {
     private final Map<Long, List<LinkDto>> map = new ConcurrentHashMap<>();
 
     @Override
-    public LinkDto save(Long userId, LinkDto linkDto) {
+    public LinkDto save(Long id, LinkDto linkDto) {
         LinkDto link =
-                new LinkDto(userId, linkDto.url(), linkDto.tags(), linkDto.filters(), linkDto.lastChecked(), userId);
-        map.computeIfAbsent(userId, k -> new ArrayList<>()).add(link);
+                new LinkDto(id, linkDto.url(), linkDto.tags(), linkDto.filters(), linkDto.lastChecked(), id);
+        map.computeIfAbsent(id, k -> new ArrayList<>()).add(link);
         return link;
     }
 
     @Override
-    public List<LinkDto> findByUserId(Long userId) {
-        return map.getOrDefault(userId, List.of());
+    public List<LinkDto> findByUserId(Long id) {
+        return map.getOrDefault(id, List.of());
     }
 
     @Override
-    public boolean exists(Long userId, String url) {
-        return findByUserId(userId).stream().anyMatch(l -> l.url().equals(url));
+    public boolean exists(Long id, String url) {
+        return findByUserId(id).stream().anyMatch(l -> l.url().equals(url));
     }
 
     @Override
-    public LinkDto delete(Long userId, String url) {
-        List<LinkDto> links = map.getOrDefault(userId, new ArrayList<>());
+    public LinkDto delete(Long id, String url) {
+        List<LinkDto> links = map.getOrDefault(id, new ArrayList<>());
         LinkDto found =
                 links.stream().filter(l -> l.url().equals(url)).findFirst().orElseThrow();
         links.remove(found);
@@ -41,8 +41,8 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public void deleteAllByUserId(Long userId) {
-        map.remove(userId);
+    public void deleteAllById(Long id) {
+        map.remove(id);
     }
 
     @Override

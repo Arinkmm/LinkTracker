@@ -2,9 +2,9 @@ package backend.academy.linktracker.scrapper.repository;
 
 
 public interface UserRepository {
-    void save(Long userId);
+    void save(Long id);
 
-    boolean exists(Long userId);
+    boolean exists(Long id);
 
-    void delete(Long userId);
+    void delete(Long id);
 }

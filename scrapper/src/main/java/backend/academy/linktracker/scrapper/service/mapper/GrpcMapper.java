@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.mapper;
+package backend.academy.linktracker.scrapper.service.mapper;
 
 import backend.academy.linktracker.grpc.*;
 import backend.academy.linktracker.grpc.AddLinkRequest;

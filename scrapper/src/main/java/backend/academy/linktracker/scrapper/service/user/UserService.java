@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.service;
+package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.dto.*;
 import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
@@ -15,55 +15,55 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ScrapperService {
+public class UserService {
     private final LinkRepository linkRepository;
     private final UserRepository userRepository;
 
-    public void registerChat(long chatId) {
-        if (userRepository.exists(chatId)) {
+    public void registerChat(Long id) {
+        if (userRepository.exists(id)) {
             throw new ChatAlreadyExistsException();
         }
-        userRepository.save(chatId);
+        userRepository.save(id);
     }
 
-    public void deleteChat(long chatId) {
-        if (!userRepository.exists(chatId)) {
+    public void deleteChat(Long id) {
+        if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        linkRepository.deleteAllByUserId(chatId);
-        userRepository.delete(chatId);
+        linkRepository.deleteAllById(id);
+        userRepository.delete(id);
     }
 
-    public LinkResponse addLink(long chatId, AddLinkRequest request) {
-        if (!userRepository.exists(chatId)) {
+    public LinkResponse addLink(Long id, AddLinkRequest request) {
+        if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        if (linkRepository.exists(chatId, request.link())) {
+        if (linkRepository.exists(id, request.link())) {
             throw new LinkAlreadyTrackedException();
         }
         LinkDto saved = linkRepository.save(
-            chatId,
-            new LinkDto(null, request.link(), request.tags(), request.filters(), Instant.EPOCH, chatId)
+            id,
+            new LinkDto(id, request.link(), request.tags(), request.filters(), Instant.EPOCH)
         );
         return new LinkResponse(saved.id(), saved.url(), saved.tags(), saved.filters());
     }
 
-    public LinkResponse removeLink(long chatId, RemoveLinkRequest request) {
-        if (!userRepository.exists(chatId)) {
+    public LinkResponse removeLink(Long id, RemoveLinkRequest request) {
+        if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        if (!linkRepository.exists(chatId, request.link())) {
+        if (!linkRepository.exists(id, request.link())) {
             throw new ChatNotFoundException();
         }
-        LinkDto deleted = linkRepository.delete(chatId, request.link());
+        LinkDto deleted = linkRepository.delete(id, request.link());
         return new LinkResponse(deleted.id(), deleted.url(), deleted.tags(), deleted.filters());
     }
 
-    public ListLinksResponse getLinks(long chatId) {
-        if (!userRepository.exists(chatId)) {
+    public ListLinksResponse getLinks(Long id) {
+        if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        List<LinkResponse> links = linkRepository.findByUserId(chatId).stream()
+        List<LinkResponse> links = linkRepository.findByUserId(id).stream()
             .map(l -> new LinkResponse(l.id(), l.url(), l.tags(), l.filters()))
             .toList();
         return new ListLinksResponse(links, links.size());

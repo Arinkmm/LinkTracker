@@ -35,10 +35,10 @@ public class LinkChecker {
         String message = builder.buildMessage(link.url());
 
         botNotifier.notify(
-            link.userId(), link.url(), message, List.of(link.userId())
+            link.id(), link.url(), message, List.of(link.id())
         );
 
-        linkRepository.save(link.userId(),
+        linkRepository.save(link.id(),
             link.withLastChecked(newTime));
     }
 }

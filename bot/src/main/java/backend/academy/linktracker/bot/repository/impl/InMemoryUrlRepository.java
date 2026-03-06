@@ -11,17 +11,17 @@ public class InMemoryUrlRepository implements UrlRepository {
     private final Map<Long, String> map = new HashMap<>();
 
     @Override
-    public void save(Long userId, String url) {
-        map.put(userId, url);
+    public void save(Long id, String url) {
+        map.put(id, url);
     }
 
     @Override
-    public void delete(Long userId) {
-        map.remove(userId);
+    public void delete(Long id) {
+        map.remove(id);
     }
 
     @Override
-    public Optional<String> findById(Long userId) {
-        return Optional.ofNullable(map.get(userId));
+    public Optional<String> findById(Long id) {
+        return Optional.ofNullable(map.get(id));
     }
 }

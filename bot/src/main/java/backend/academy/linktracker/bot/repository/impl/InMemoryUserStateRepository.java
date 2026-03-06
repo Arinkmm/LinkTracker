@@ -12,17 +12,17 @@ public class InMemoryUserStateRepository implements UserStateRepository {
     private final Map<Long, State> map = new HashMap<>();
 
     @Override
-    public void save(Long userId, State state) {
-        map.put(userId, state);
+    public void save(Long id, State state) {
+        map.put(id, state);
     }
 
     @Override
-    public void delete(Long userId) {
-        map.remove(userId);
+    public void delete(Long id) {
+        map.remove(id);
     }
 
     @Override
-    public Optional<State> findById(Long chatId) {
-        return Optional.ofNullable(map.get(chatId));
+    public Optional<State> findById(Long id) {
+        return Optional.ofNullable(map.get(id));
     }
 }

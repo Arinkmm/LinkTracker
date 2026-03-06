@@ -4,7 +4,7 @@ import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
 import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
-import backend.academy.linktracker.scrapper.exception.ScrapperApiException;
+import backend.academy.linktracker.scrapper.exception.ApiException;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,7 +27,7 @@ public class BotGrpcClient implements BotClient {
                 .addAllTgChatIds(linkUpdate.tgChatIds())
                 .build());
         } catch (StatusRuntimeException e) {
-            throw new ScrapperApiException(toApiError(e));
+            throw new ApiException(toApiError(e));
         }
     }
 

@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 public class TelegramSender {
     private final TelegramBot bot;
 
-    public void sendMessage(Long chatId, String text) {
-        SendResponse response = bot.execute(new SendMessage(chatId, text));
+    public void sendMessage(Long id, String text) {
+        SendResponse response = bot.execute(new SendMessage(id, text));
         if (!response.isOk()) {
             log.atError()
                     .addKeyValue("error_code", response.errorCode())

@@ -19,51 +19,51 @@ public class ScrapperHttpClient implements ScrapperClient {
     private final RestClient restClient;
 
     @Override
-    public void registerChat(Long chatId) {
+    public void registerChat(Long id) {
         restClient
             .method(HttpMethod.POST)
-            .uri("/tg-chat/{id}", chatId)
+            .uri("/tg-chat/{id}", id)
             .retrieve()
             .toBodilessEntity();
     }
 
     @Override
-    public void deleteChat(Long chatId) {
+    public void deleteChat(Long id) {
         restClient
             .method(HttpMethod.DELETE)
-            .uri("/tg-chat/{id}", chatId)
+            .uri("/tg-chat/{id}", id)
             .retrieve()
             .toBodilessEntity();
     }
 
     @Override
-    public LinkResponse addLink(Long chatId, String url, List<String> tags, List<String> filters) {
+    public LinkResponse addLink(Long id, String url, List<String> tags, List<String> filters) {
         return restClient
             .method(HttpMethod.POST)
             .uri("/links")
-            .header("Tg-Chat-Id", String.valueOf(chatId))
+            .header("Tg-Chat-Id", String.valueOf(id))
             .body(new AddLinkRequest(url, tags, filters))
             .retrieve()
             .body(LinkResponse.class);
     }
 
     @Override
-    public LinkResponse removeLink(Long chatId, String url) {
+    public LinkResponse removeLink(Long id, String url) {
         return restClient
             .method(HttpMethod.DELETE)
             .uri("/links")
-            .header("Tg-Chat-Id", String.valueOf(chatId))
+            .header("Tg-Chat-Id", String.valueOf(id))
             .body(new RemoveLinkRequest(url))
             .retrieve()
             .body(LinkResponse.class);
     }
 
     @Override
-    public ListLinksResponse getLinks(Long chatId) {
+    public ListLinksResponse getLinks(Long id) {
         return restClient
             .method(HttpMethod.GET)
             .uri("/links")
-            .header("Tg-Chat-Id", String.valueOf(chatId))
+            .header("Tg-Chat-Id", String.valueOf(id))
             .retrieve()
             .body(ListLinksResponse.class);
     }

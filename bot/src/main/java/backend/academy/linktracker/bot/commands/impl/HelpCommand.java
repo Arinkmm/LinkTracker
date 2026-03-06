@@ -1,9 +1,9 @@
 package backend.academy.linktracker.bot.commands.impl;
 
 import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.service.command.CommandExecutor;
 import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
-import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class HelpCommand implements Command {
-    private final TelegramSender telegramSender;
+    private final CommandExecutor commandExecutor;
     private final CommandProperties commandProperties;
 
     @Override
@@ -26,15 +26,7 @@ public class HelpCommand implements Command {
 
     @Override
     public void handle(Message message) {
-        Long chatId = message.chat().id();
-        StringBuilder helpText =
-                new StringBuilder(commandProperties.getMessages().getHelpHeader());
-
-        commandProperties.getCommands().values().forEach(cmd -> helpText.append("\n- ")
-                .append(cmd.getName())
-                .append(" — ")
-                .append(cmd.getDescription()));
-
-        telegramSender.sendMessage(chatId, helpText.toString());
+        Long id = message.chat().id();
+        commandExecutor.executeHelp(id);
     }
 }

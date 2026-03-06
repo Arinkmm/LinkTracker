@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.service.handler;
+package backend.academy.linktracker.bot.service.handler.state;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.properties.CommandProperties;
@@ -17,9 +17,9 @@ public class UntrackStateHandler {
     private final ScrapperClient client;
     private final CommandProperties properties;
 
-    public void handle(Long userId, String text) {
-        client.removeLink(userId, text);
-        userService.deleteState(userId);
-        telegramSender.sendMessage(userId, properties.getMessages().getLinkDeleted());
+    public void handle(Long id, String text) {
+        client.removeLink(id, text);
+        userService.deleteState(id);
+        telegramSender.sendMessage(id, properties.getMessages().getLinkDeleted());
     }
 }

@@ -5,13 +5,13 @@ import backend.academy.linktracker.bot.dto.ListLinksResponse;
 import java.util.List;
 
 public interface ScrapperClient {
-    void registerChat(Long chatId);
+    void registerChat(Long id);
 
-    void deleteChat(Long chatId);
+    void deleteChat(Long id);
 
-    LinkResponse addLink(Long chatId, String url, List<String> tags, List<String> filters);
+    LinkResponse addLink(Long id, String url, List<String> tags, List<String> filters);
 
-    LinkResponse removeLink(Long chatId, String url);
+    LinkResponse removeLink(Long id, String url);
 
-    ListLinksResponse getLinks(Long chatId);
+    ListLinksResponse getLinks(Long id);
 }

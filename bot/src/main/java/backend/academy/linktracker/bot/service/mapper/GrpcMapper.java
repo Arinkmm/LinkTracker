@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.mapper;
+package backend.academy.linktracker.bot.service.mapper;
 
 import backend.academy.linktracker.bot.dto.LinkResponse;
 import backend.academy.linktracker.bot.dto.ListLinksResponse;

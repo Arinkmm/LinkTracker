@@ -1,7 +1,7 @@
 package backend.academy.linktracker.bot.configuration;
 
 import backend.academy.linktracker.bot.dto.ApiErrorResponse;
-import backend.academy.linktracker.bot.exception.ScrapperApiException;
+import backend.academy.linktracker.bot.exception.ApiException;
 import backend.academy.linktracker.grpc.ScrapperServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ManagedChannelBuilder;
@@ -30,7 +30,7 @@ public class HttpConfiguration {
             .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
                 ApiErrorResponse error = objectMapper.readValue(
                     response.getBody(), ApiErrorResponse.class);
-                throw new ScrapperApiException(error);
+                throw new ApiException(error);
             })
             .build();
     }

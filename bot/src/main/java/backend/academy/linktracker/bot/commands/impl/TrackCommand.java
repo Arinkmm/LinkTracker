@@ -1,11 +1,9 @@
 package backend.academy.linktracker.bot.commands.impl;
 
 import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.service.command.CommandExecutor;
 import backend.academy.linktracker.bot.model.InternalCommand;
-import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.properties.CommandProperties;
-import backend.academy.linktracker.bot.service.bot.TelegramSender;
-import backend.academy.linktracker.bot.service.user.UserService;
 import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,8 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TrackCommand implements Command {
     private final CommandProperties commandProperties;
-    private final TelegramSender telegramSender;
-    private final UserService userService;
+    private final CommandExecutor commandExecutor;
 
     @Override
     public String command() {
@@ -29,9 +26,7 @@ public class TrackCommand implements Command {
 
     @Override
     public void handle(Message message) {
-        Long userId = message.from().id();
-        Long chatId = message.chat().id();
-        userService.saveState(userId, State.WAITING_URL);
-        telegramSender.sendMessage(chatId, commandProperties.getMessages().getTracking());
+        Long id = message.chat().id();
+        commandExecutor.executeTrack(id);
     }
 }

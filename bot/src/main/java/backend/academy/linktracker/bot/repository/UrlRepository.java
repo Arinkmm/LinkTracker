@@ -3,9 +3,9 @@ package backend.academy.linktracker.bot.repository;
 import java.util.Optional;
 
 public interface UrlRepository {
-    void save(Long userId, String url);
+    void save(Long id, String url);
 
-    void delete(Long userId);
+    void delete(Long id);
 
-    Optional<String> findById(Long userId);
+    Optional<String> findById(Long id);
 }

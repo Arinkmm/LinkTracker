@@ -1,5 +1,8 @@
 package backend.academy.linktracker.bot.service.handler;
 
+import backend.academy.linktracker.bot.service.handler.command.CommandHandler;
+import backend.academy.linktracker.bot.service.handler.command.UnknownCommandHandler;
+import backend.academy.linktracker.bot.service.handler.state.StateHandler;
 import backend.academy.linktracker.bot.util.MessageValidator;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -20,22 +23,20 @@ public class UpdateHandler {
         Message message = validator.validate(update);
         if (message == null) return;
 
-        Long userId = message.from().id();
-        Long chatId = message.chat().id();
+        Long id = message.chat().id();
         String text = message.text();
 
         log.atInfo()
-            .addKeyValue("user_id", userId)
-            .addKeyValue("chat_id", chatId)
+            .addKeyValue("id", id)
             .addKeyValue("text", text)
             .log("Processing message");
 
         if (commandHandler.tryHandle(message)) return;
-        if (stateHandler.hasState(userId)) {
-            stateHandler.handle(userId, text);
+        if (stateHandler.hasState(id)) {
+            stateHandler.handle(id, text);
             return;
         }
 
-        unknownHandler.handle(chatId);
+        unknownHandler.handle(id);
     }
 }

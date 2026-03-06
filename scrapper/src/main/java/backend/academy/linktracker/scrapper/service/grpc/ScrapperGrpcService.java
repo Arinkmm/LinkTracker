@@ -1,12 +1,12 @@
-package backend.academy.linktracker.scrapper.server;
+package backend.academy.linktracker.scrapper.service.grpc;
 
 import backend.academy.linktracker.grpc.*;
 import backend.academy.linktracker.grpc.AddLinkRequest;
 import backend.academy.linktracker.grpc.LinkResponse;
 import backend.academy.linktracker.grpc.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.exception.*;
-import backend.academy.linktracker.scrapper.mapper.GrpcMapper;
-import backend.academy.linktracker.scrapper.service.ScrapperService;
+import backend.academy.linktracker.scrapper.service.mapper.GrpcMapper;
+import backend.academy.linktracker.scrapper.service.user.UserService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.grpc.server.service.GrpcService;
 @Slf4j
 @RequiredArgsConstructor
 public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImplBase {
-    private final ScrapperService service;
+    private final UserService service;
     private final GrpcMapper mapper;
 
     @Override
