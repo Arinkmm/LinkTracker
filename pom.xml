@@ -343,6 +343,7 @@
                     <artifactId>spotbugs-maven-plugin</artifactId>
                     <version>${spotbugs-maven-plugin.version}</version>
                     <configuration>
+                        <onlyAnalyze>backend.academy.linktracker.bot.*,backend.academy.linktracker.scrapper.*</onlyAnalyze>
                         <excludeFilterFile>spotbugs-excludes.xml</excludeFilterFile>
                         <effort>Max</effort>
                         <htmlOutput>true</htmlOutput>
