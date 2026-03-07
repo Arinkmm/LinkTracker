@@ -20,7 +20,7 @@ class TestcontainersConfiguration {
     public GenericContainer<?> botContainer(Network network) {
         Path jarPath = Paths.get("target/bot-0.0.1.jar");
 
-        return new GenericContainer<>(new ImageFromDockerfile("link-tracker-bot:latest", false)
+        return new GenericContainer<>(new ImageFromDockerfile("localhost/link-tracker-bot:latest", false)
                         .withFileFromPath("Dockerfile", Paths.get("Dockerfile"))
                         .withFileFromPath("target/bot-0.0.1.jar", jarPath))
                 .withNetwork(network)
