@@ -21,7 +21,7 @@ class TestcontainersConfiguration {
         Path jarPath = Paths.get("target/scrapper-0.0.1.jar");
 
         return new GenericContainer<>(new ImageFromDockerfile("link-tracker-scrapper:latest", false)
-                        .withDockerfile(Paths.get("Dockerfile"))
+                        .withFileFromPath("Dockerfile", Paths.get("Dockerfile"))
                         .withFileFromPath("target/scrapper-0.0.1.jar", jarPath))
                 .withNetwork(network)
                 .withExposedPorts(8081)

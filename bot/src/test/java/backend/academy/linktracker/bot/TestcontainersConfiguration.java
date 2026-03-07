@@ -21,7 +21,7 @@ class TestcontainersConfiguration {
         Path jarPath = Paths.get("target/bot-0.0.1.jar");
 
         return new GenericContainer<>(new ImageFromDockerfile("link-tracker-bot:latest", false)
-                        .withDockerfile(Paths.get("Dockerfile"))
+                        .withFileFromPath("Dockerfile", Paths.get("Dockerfile"))
                         .withFileFromPath("target/bot-0.0.1.jar", jarPath))
                 .withNetwork(network)
                 .withExposedPorts(8080)
