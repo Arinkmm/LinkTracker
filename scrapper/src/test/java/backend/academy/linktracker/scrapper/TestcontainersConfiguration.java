@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -17,14 +18,13 @@ class TestcontainersConfiguration {
 
     @Bean(name = "scrapperContainer")
     public GenericContainer<?> scrapperContainer(Network network) {
-        GenericContainer<?> scrapper = new GenericContainer<>(
-                        new ImageFromDockerfile("link-tracker-scrapper:latest", false)
-                                .withDockerfile(Paths.get("./Dockerfile")))
+        Path jarPath = Paths.get("target/scrapper-0.0.1.jar");
+
+        return new GenericContainer<>(new ImageFromDockerfile("link-tracker-scrapper:latest", false)
+                        .withDockerfile(Paths.get("Dockerfile"))
+                        .withFileFromPath("target/scrapper-0.0.1.jar", jarPath))
                 .withNetwork(network)
                 .withExposedPorts(8081)
                 .waitingFor(Wait.forHttp("/actuator/health").forPort(8081));
-
-        scrapper.start();
-        return scrapper;
     }
 }

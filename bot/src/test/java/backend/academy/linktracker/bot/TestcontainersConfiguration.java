@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -17,13 +18,13 @@ class TestcontainersConfiguration {
 
     @Bean(name = "botContainer")
     public GenericContainer<?> botContainer(Network network) {
-        GenericContainer<?> bot = new GenericContainer<>(new ImageFromDockerfile("link-tracker-bot:latest", false)
-                        .withDockerfile(Paths.get("./Dockerfile")))
+        Path jarPath = Paths.get("target/bot-0.0.1.jar");
+
+        return new GenericContainer<>(new ImageFromDockerfile("link-tracker-bot:latest", false)
+                        .withDockerfile(Paths.get("Dockerfile"))
+                        .withFileFromPath("target/bot-0.0.1.jar", jarPath))
                 .withNetwork(network)
                 .withExposedPorts(8080)
                 .waitingFor(Wait.forHttp("/actuator/health").forPort(8080));
-
-        bot.start();
-        return bot;
     }
 }
