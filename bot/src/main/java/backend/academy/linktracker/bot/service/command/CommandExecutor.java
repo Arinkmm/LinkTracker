@@ -6,10 +6,10 @@ import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -21,9 +21,7 @@ public class CommandExecutor {
     private final ScrapperClient client;
 
     public void executeStart(Long id) {
-        log.atInfo()
-            .addKeyValue("id", id)
-            .log("Registering new chat");
+        log.atInfo().addKeyValue("id", id).log("Registering new chat");
 
         client.registerChat(id);
         telegramSender.sendMessage(id, commandProperties.getMessages().getWelcome());
@@ -31,10 +29,9 @@ public class CommandExecutor {
 
     public void executeHelp(Long id) {
         StringBuilder helpText =
-            new StringBuilder(commandProperties.getMessages().getHelpHeader());
+                new StringBuilder(commandProperties.getMessages().getHelpHeader());
 
-        commandProperties.getCommands().values().forEach(cmd ->
-            helpText.append("\n- ")
+        commandProperties.getCommands().values().forEach(cmd -> helpText.append("\n- ")
                 .append(cmd.getName())
                 .append(" — ")
                 .append(cmd.getDescription()));
@@ -43,17 +40,12 @@ public class CommandExecutor {
     }
 
     public void executeList(Long id, String tag) {
-        log.atDebug()
-            .addKeyValue("id", id)
-            .addKeyValue("tag", tag)
-            .log("Fetching user links");
+        log.atDebug().addKeyValue("id", id).addKeyValue("tag", tag).log("Fetching user links");
 
         List<LinkResponse> links = client.getLinks(id).links();
 
         if (tag != null) {
-            links = links.stream()
-                .filter(link -> link.tags().contains(tag))
-                .toList();
+            links = links.stream().filter(link -> link.tags().contains(tag)).toList();
         }
 
         if (links.isEmpty()) {
@@ -65,12 +57,12 @@ public class CommandExecutor {
         for (int i = 0; i < links.size(); i++) {
             LinkResponse link = links.get(i);
             list.append((i + 1))
-                .append(". ")
-                .append(link.url())
-                .append(" [")
-                .append(String.join(", ", link.tags()))
-                .append("]")
-                .append("\n");
+                    .append(". ")
+                    .append(link.url())
+                    .append(" [")
+                    .append(String.join(", ", link.tags()))
+                    .append("]")
+                    .append("\n");
         }
         telegramSender.sendMessage(id, list.toString());
     }

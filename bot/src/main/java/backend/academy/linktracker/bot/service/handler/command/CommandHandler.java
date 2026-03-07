@@ -25,10 +25,7 @@ public class CommandHandler {
         Long id = message.chat().id();
         String commandText = message.text();
 
-        log.atDebug()
-            .addKeyValue("id", id)
-            .addKeyValue("command", commandText)
-            .log("Executing command");
+        log.atDebug().addKeyValue("id", id).addKeyValue("command", commandText).log("Executing command");
 
         userService.deleteState(id);
         userService.deleteUrl(id);
@@ -37,11 +34,11 @@ public class CommandHandler {
             command.handle(message);
         } catch (ApiException e) {
             log.atError()
-                .addKeyValue("id", id)
-                .addKeyValue("command", commandText)
-                .addKeyValue("error_code", e.getApiError().code())
-                .addKeyValue("description", e.getApiError().description())
-                .log("Command failed");
+                    .addKeyValue("id", id)
+                    .addKeyValue("command", commandText)
+                    .addKeyValue("error_code", e.getApiError().code())
+                    .addKeyValue("description", e.getApiError().description())
+                    .log("Command failed");
 
             telegramSender.sendMessage(id, e.getApiError().description());
         }

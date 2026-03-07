@@ -7,9 +7,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class MessageValidator {
     public Message validate(Update update) {
-        return update.message() != null && update.message().text() != null
-            ? update.message()
-            : null;
+        return update.message() != null && update.message().text() != null ? update.message() : null;
     }
 }
-

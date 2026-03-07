@@ -14,4 +14,3 @@ public enum InternalCommand {
         this.configKey = configKey;
     }
 }
-

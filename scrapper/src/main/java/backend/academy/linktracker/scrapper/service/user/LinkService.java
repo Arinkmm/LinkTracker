@@ -9,10 +9,10 @@ import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +28,7 @@ public class LinkService {
             throw new LinkAlreadyTrackedException();
         }
         LinkDto saved = linkRepository.save(
-            id,
-            new LinkDto(id, request.link(), request.tags(), request.filters(), Instant.EPOCH)
-        );
+                id, new LinkDto(id, request.link(), request.tags(), request.filters(), Instant.EPOCH));
         return new LinkResponse(saved.id(), saved.url(), saved.tags(), saved.filters());
     }
 
@@ -50,8 +48,8 @@ public class LinkService {
             throw new ChatNotFoundException();
         }
         List<LinkResponse> links = linkRepository.findByUserId(id).stream()
-            .map(l -> new LinkResponse(l.id(), l.url(), l.tags(), l.filters()))
-            .toList();
+                .map(l -> new LinkResponse(l.id(), l.url(), l.tags(), l.filters()))
+                .toList();
         return new ListLinksResponse(links, links.size());
     }
 }

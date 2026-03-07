@@ -2,18 +2,14 @@ package backend.academy.linktracker.scrapper.service.mapper;
 
 import backend.academy.linktracker.grpc.*;
 import backend.academy.linktracker.grpc.AddLinkRequest;
-import org.springframework.stereotype.Component;
-
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
 
 @Component
 public class GrpcMapper {
     public backend.academy.linktracker.scrapper.dto.AddLinkRequest grpcToDto(AddLinkRequest grpc) {
         return new backend.academy.linktracker.scrapper.dto.AddLinkRequest(
-            grpc.getLink(),
-            grpc.getTagsList(),
-            grpc.getFiltersList()
-        );
+                grpc.getLink(), grpc.getTagsList(), grpc.getFiltersList());
     }
 
     public backend.academy.linktracker.scrapper.dto.RemoveLinkRequest grpcToDto(RemoveLinkRequest grpc) {
@@ -22,19 +18,17 @@ public class GrpcMapper {
 
     public LinkResponse dtoToGrpc(backend.academy.linktracker.scrapper.dto.LinkResponse dto) {
         return LinkResponse.newBuilder()
-            .setId(dto.id())
-            .setUrl(dto.url())
-            .addAllTags(dto.tags())
-            .addAllFilters(dto.filters())
-            .build();
+                .setId(dto.id())
+                .setUrl(dto.url())
+                .addAllTags(dto.tags())
+                .addAllFilters(dto.filters())
+                .build();
     }
 
     public ListLinksResponse dtoToGrpc(backend.academy.linktracker.scrapper.dto.ListLinksResponse dto) {
         return ListLinksResponse.newBuilder()
-            .addAllLinks(dto.links().stream()
-                .map(this::dtoToGrpc)
-                .collect(Collectors.toList()))
-            .setSize(dto.size())
-            .build();
+                .addAllLinks(dto.links().stream().map(this::dtoToGrpc).collect(Collectors.toList()))
+                .setSize(dto.size())
+                .build();
     }
 }

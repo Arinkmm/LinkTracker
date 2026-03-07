@@ -16,9 +16,7 @@ public class ChatController {
 
     @PostMapping("/{id}")
     public ResponseEntity<Void> register(@PathVariable Long id) {
-        log.atInfo()
-            .addKeyValue("id", id)
-            .log("Registering telegram chat");
+        log.atInfo().addKeyValue("id", id).log("Registering telegram chat");
 
         service.registerChat(id);
         return ResponseEntity.ok().build();
@@ -26,9 +24,7 @@ public class ChatController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        log.atInfo()
-            .addKeyValue("id", id)
-            .log("Deleting telegram chat");
+        log.atInfo().addKeyValue("id", id).log("Deleting telegram chat");
 
         service.deleteChat(id);
         return ResponseEntity.ok().build();

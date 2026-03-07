@@ -1,5 +1,8 @@
 package backend.academy.linktracker.bot.command;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.ApiErrorResponse;
 import backend.academy.linktracker.bot.exception.ApiException;
@@ -10,6 +13,8 @@ import backend.academy.linktracker.bot.service.handler.state.TrackStateHandler;
 import backend.academy.linktracker.bot.service.user.UserService;
 import backend.academy.linktracker.bot.util.TagsParser;
 import backend.academy.linktracker.bot.util.UrlValidator;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,21 +25,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TrackCommandTest {
-    @Mock private UserService userService;
-    @Mock private TelegramSender telegramSender;
-    @Mock private ScrapperClient scrapperClient;
-    @Mock private CommandProperties properties;
-    @Mock private UrlValidator urlValidator;
-    @Mock private TagsParser tagsParser;
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private TelegramSender telegramSender;
+
+    @Mock
+    private ScrapperClient scrapperClient;
+
+    @Mock
+    private CommandProperties properties;
+
+    @Mock
+    private UrlValidator urlValidator;
+
+    @Mock
+    private TagsParser tagsParser;
 
     @InjectMocks
     private TrackStateHandler trackStateHandler;
@@ -95,11 +105,10 @@ class TrackCommandTest {
 
         when(userService.findUrlById(userId)).thenReturn(Optional.of(url));
 
-        ApiErrorResponse error = new ApiErrorResponse("Conflict", "409", "Test error", "Вы уже подписаны на эту ссылку", List.of());
+        ApiErrorResponse error =
+                new ApiErrorResponse("Conflict", "409", "Test error", "Вы уже подписаны на эту ссылку", List.of());
         doThrow(new ApiException(error)).when(scrapperClient).addLink(any(), any(), any(), any());
 
-        assertThrows(ApiException.class, () ->
-            trackStateHandler.handle(userId, "нет", State.NEEDED_TAGS)
-        );
+        assertThrows(ApiException.class, () -> trackStateHandler.handle(userId, "нет", State.NEEDED_TAGS));
     }
 }

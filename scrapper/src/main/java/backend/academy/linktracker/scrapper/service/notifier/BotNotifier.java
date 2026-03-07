@@ -15,10 +15,10 @@ public class BotNotifier {
 
     public void notify(Long id, String url, String description, List<Long> tgChatIds) {
         log.atInfo()
-            .addKeyValue("id", id)
-            .addKeyValue("url", url)
-            .addKeyValue("chat_count", tgChatIds.size())
-            .log("Notifying bot about link update");
+                .addKeyValue("id", id)
+                .addKeyValue("url", url)
+                .addKeyValue("chat_count", tgChatIds.size())
+                .log("Notifying bot about link update");
 
         LinkUpdate update = new LinkUpdate(id, url, description, tgChatIds);
         botClient.sendUpdate(update);

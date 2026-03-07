@@ -25,10 +25,10 @@ public class TrackStateHandler {
 
     public void handle(Long id, String text, State state) {
         log.atDebug()
-            .addKeyValue("id", id)
-            .addKeyValue("state", state)
-            .addKeyValue("text", text)
-            .log("Track State Machine step");
+                .addKeyValue("id", id)
+                .addKeyValue("state", state)
+                .addKeyValue("text", text)
+                .log("Track State Machine step");
 
         switch (state) {
             case WAITING_URL -> handleWaitingUrl(id, text);
@@ -66,10 +66,10 @@ public class TrackStateHandler {
 
     private void saveLink(Long id, List<String> tags) {
         log.atInfo()
-            .addKeyValue("id", id)
-            .addKeyValue("url", userService.findUrlById(id))
-            .addKeyValue("tags_count", tags.size())
-            .log("Saving link to scrapper");
+                .addKeyValue("id", id)
+                .addKeyValue("url", userService.findUrlById(id))
+                .addKeyValue("tags_count", tags.size())
+                .log("Saving link to scrapper");
 
         String url = userService.findUrlById(id).orElseThrow();
         client.addLink(id, url, tags, List.of());
@@ -77,8 +77,8 @@ public class TrackStateHandler {
         userService.deleteUrl(id);
 
         String message = tags.isEmpty()
-            ? properties.getMessages().getLinkAdded()
-            : properties.getMessages().getLinkAddedWithTags();
+                ? properties.getMessages().getLinkAdded()
+                : properties.getMessages().getLinkAddedWithTags();
 
         telegramSender.sendMessage(id, message);
     }

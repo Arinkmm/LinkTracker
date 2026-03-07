@@ -5,7 +5,6 @@ import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.service.user.LinkService;
-import backend.academy.linktracker.scrapper.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,32 +19,28 @@ public class LinkController {
 
     @GetMapping
     public ResponseEntity<ListLinksResponse> getLinks(@RequestHeader("Tg-Chat-Id") long chatId) {
-        log.atDebug()
-            .addKeyValue("id", chatId)
-            .log("Getting links");
+        log.atDebug().addKeyValue("id", chatId).log("Getting links");
 
         return ResponseEntity.ok(service.getLinks(chatId));
     }
 
     @PostMapping
     public ResponseEntity<LinkResponse> addLink(
-        @RequestHeader("Tg-Chat-Id") Long id, @RequestBody AddLinkRequest request) {
+            @RequestHeader("Tg-Chat-Id") Long id, @RequestBody AddLinkRequest request) {
         log.atInfo()
-            .addKeyValue("id", id)
-            .addKeyValue("url", request.link())
-            .addKeyValue("tags_count", (request.tags() != null) ? request.tags().size() : 0)
-            .log("Adding link");
+                .addKeyValue("id", id)
+                .addKeyValue("url", request.link())
+                .addKeyValue(
+                        "tags_count", (request.tags() != null) ? request.tags().size() : 0)
+                .log("Adding link");
 
         return ResponseEntity.ok(service.addLink(id, request));
     }
 
     @DeleteMapping
     public ResponseEntity<LinkResponse> removeLink(
-        @RequestHeader("Tg-Chat-Id") Long id, @RequestBody RemoveLinkRequest request) {
-        log.atInfo()
-            .addKeyValue("id", id)
-            .addKeyValue("url", request.link())
-            .log("Removing link");
+            @RequestHeader("Tg-Chat-Id") Long id, @RequestBody RemoveLinkRequest request) {
+        log.atInfo().addKeyValue("id", id).addKeyValue("url", request.link()).log("Removing link");
 
         return ResponseEntity.ok(service.removeLink(id, request));
     }

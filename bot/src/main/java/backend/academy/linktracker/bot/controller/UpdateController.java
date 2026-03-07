@@ -20,12 +20,11 @@ public class UpdateController {
     @PostMapping
     public ResponseEntity<Void> sendUpdate(@RequestBody LinkUpdate update) {
         log.atInfo()
-            .addKeyValue("chat_count", update.tgChatIds().size())
-            .addKeyValue("description", update.description())
-            .log("Sending link update");
+                .addKeyValue("chat_count", update.tgChatIds().size())
+                .addKeyValue("description", update.description())
+                .log("Sending link update");
 
-        update.tgChatIds().forEach(id ->
-            telegramSender.sendMessage(id, update.description()));
+        update.tgChatIds().forEach(id -> telegramSender.sendMessage(id, update.description()));
 
         return ResponseEntity.ok().build();
     }

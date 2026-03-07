@@ -11,4 +11,3 @@ public class NotificationProperties {
     private String title;
     private String body;
 }
-

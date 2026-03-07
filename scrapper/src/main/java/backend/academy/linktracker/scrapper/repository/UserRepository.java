@@ -1,6 +1,5 @@
 package backend.academy.linktracker.scrapper.repository;
 
-
 public interface UserRepository {
     void save(Long id);
 

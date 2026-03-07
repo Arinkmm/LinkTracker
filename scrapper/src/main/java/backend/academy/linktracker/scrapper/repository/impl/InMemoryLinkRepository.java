@@ -15,8 +15,7 @@ public class InMemoryLinkRepository implements LinkRepository {
 
     @Override
     public LinkDto save(Long id, LinkDto linkDto) {
-        LinkDto link =
-                new LinkDto(id, linkDto.url(), linkDto.tags(), linkDto.filters(), linkDto.lastChecked());
+        LinkDto link = new LinkDto(id, linkDto.url(), linkDto.tags(), linkDto.filters(), linkDto.lastChecked());
         map.computeIfAbsent(id, k -> new ArrayList<>()).add(link);
         return link;
     }

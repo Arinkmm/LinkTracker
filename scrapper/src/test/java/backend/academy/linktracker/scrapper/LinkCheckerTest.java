@@ -1,11 +1,16 @@
 package backend.academy.linktracker.scrapper;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
 import backend.academy.linktracker.scrapper.service.notifier.LinkChecker;
 import backend.academy.linktracker.scrapper.service.notifier.NotificationBuilder;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
+import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,20 +21,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.Instant;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class LinkCheckerTest {
-    @Mock private LinkRepository linkRepository;
-    @Mock private BotNotifier botNotifier;
-    @Mock private NotificationBuilder notificationBuilder;
+    @Mock
+    private LinkRepository linkRepository;
 
-    @Spy private List<LinkTimeProvider> providers = List.of(mock(LinkTimeProvider.class));
+    @Mock
+    private BotNotifier botNotifier;
+
+    @Mock
+    private NotificationBuilder notificationBuilder;
+
+    @Spy
+    private List<LinkTimeProvider> providers = List.of(mock(LinkTimeProvider.class));
 
     @InjectMocks
     private LinkChecker linkChecker;
@@ -59,19 +64,9 @@ class LinkCheckerTest {
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier, times(1)).notify(
-            eq(10L),
-            eq(linkWithUpdate.url()),
-            anyString(),
-            eq(List.of(10L))
-        );
+        verify(botNotifier, times(1)).notify(eq(10L), eq(linkWithUpdate.url()), anyString(), eq(List.of(10L)));
 
-        verify(botNotifier, never()).notify(
-            eq(20L),
-            anyString(),
-            anyString(),
-            any()
-        );
+        verify(botNotifier, never()).notify(eq(20L), anyString(), anyString(), any());
 
         verify(linkRepository).save(eq(10L), argThat(l -> l.lastChecked().equals(newTime)));
         verify(linkRepository, never()).save(eq(20L), any());

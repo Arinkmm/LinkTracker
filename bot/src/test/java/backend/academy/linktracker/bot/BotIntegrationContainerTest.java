@@ -1,6 +1,9 @@
 package backend.academy.linktracker.bot;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import backend.academy.linktracker.bot.dto.LinkUpdate;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +18,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(TestcontainersConfiguration.class)
 class BotIntegrationContainerTest {
@@ -29,27 +28,21 @@ class BotIntegrationContainerTest {
     private RestClient restClient() {
         String host = botContainer.getHost();
         Integer port = botContainer.getMappedPort(8080);
-        return RestClient.builder()
-            .baseUrl("http://" + host + ":" + port)
-            .build();
+        return RestClient.builder().baseUrl("http://" + host + ":" + port).build();
     }
 
     @Test
     @DisplayName("Тест 1: Корректный запрос к сервису Бота")
     void test1_correctRequest() {
-        LinkUpdate update = new LinkUpdate(
-            1L,
-            "https://github.com/spring",
-            "New update",
-            List.of(1L, 2L)
-        );
+        LinkUpdate update = new LinkUpdate(1L, "https://github.com/spring", "New update", List.of(1L, 2L));
 
-        ResponseEntity<Void> response = restClient().method(HttpMethod.POST)
-            .uri("/updates")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(update)
-            .retrieve()
-            .toBodilessEntity();
+        ResponseEntity<Void> response = restClient()
+                .method(HttpMethod.POST)
+                .uri("/updates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(update)
+                .retrieve()
+                .toBodilessEntity();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
@@ -65,12 +58,13 @@ class BotIntegrationContainerTest {
             """;
 
         HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> {
-            restClient().method(HttpMethod.POST)
-                .uri("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(invalidBody)
-                .retrieve()
-                .toBodilessEntity();
+            restClient()
+                    .method(HttpMethod.POST)
+                    .uri("/updates")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(invalidBody)
+                    .retrieve()
+                    .toBodilessEntity();
         });
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());

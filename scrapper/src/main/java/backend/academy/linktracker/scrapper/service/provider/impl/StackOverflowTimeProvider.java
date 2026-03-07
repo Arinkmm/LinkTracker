@@ -2,10 +2,10 @@ package backend.academy.linktracker.scrapper.service.provider.impl;
 
 import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowClient;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.time.Instant;
 
 @Component
 @RequiredArgsConstructor
@@ -23,16 +23,14 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
         try {
             String questionId = extractQuestionId(url);
 
-            log.atDebug()
-                .addKeyValue("question_id", questionId)
-                .log("Fetching StackOverflow last activity");
+            log.atDebug().addKeyValue("question_id", questionId).log("Fetching StackOverflow last activity");
 
             return client.getQuestion(questionId).lastActivity();
         } catch (Exception e) {
             log.atWarn()
-                .addKeyValue("url", url)
-                .addKeyValue("error", e.getClass().getSimpleName())
-                .log("Failed to get StackOverflow time");
+                    .addKeyValue("url", url)
+                    .addKeyValue("error", e.getClass().getSimpleName())
+                    .log("Failed to get StackOverflow time");
 
             return Instant.EPOCH;
         }

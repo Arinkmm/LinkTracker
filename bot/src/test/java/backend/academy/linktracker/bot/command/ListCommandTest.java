@@ -1,11 +1,16 @@
 package backend.academy.linktracker.bot.command;
 
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.LinkResponse;
 import backend.academy.linktracker.bot.dto.ListLinksResponse;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.command.CommandExecutor;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,18 +21,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ListCommandTest {
-    @Mock private ScrapperClient scrapperClient;
-    @Mock private TelegramSender telegramSender;
-    @Mock private CommandProperties commandProperties;
+    @Mock
+    private ScrapperClient scrapperClient;
+
+    @Mock
+    private TelegramSender telegramSender;
+
+    @Mock
+    private CommandProperties commandProperties;
 
     @InjectMocks
     private CommandExecutor commandExecutor;

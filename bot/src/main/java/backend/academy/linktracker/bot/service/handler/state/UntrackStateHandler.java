@@ -18,10 +18,7 @@ public class UntrackStateHandler {
     private final CommandProperties properties;
 
     public void handle(Long id, String text) {
-        log.atInfo()
-            .addKeyValue("id", id)
-            .addKeyValue("url", text)
-            .log("Removing link from scrapper");
+        log.atInfo().addKeyValue("id", id).addKeyValue("url", text).log("Removing link from scrapper");
 
         client.removeLink(id, text);
         userService.deleteState(id);

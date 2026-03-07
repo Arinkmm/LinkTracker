@@ -39,26 +39,42 @@ import org.mockito.quality.Strictness;
 class TelegramBotProcessStartingCommandTest {
     private UpdateHandler handler;
 
-    @Mock private TelegramSender telegramSender;
-    @Mock private CommandProperties commandProperties;
-    @Mock private CommandProperties.Messages messages;
-    @Mock private UserService userService;
-    @Mock private Map<String, CommandProperties.CommandInfo> commandsMap;
-    @Mock private CommandProperties.CommandInfo startInfo;
-    @Mock private CommandProperties.CommandInfo helpInfo;
+    @Mock
+    private TelegramSender telegramSender;
 
-    @Mock private StateHandler stateHandler;
-    @Mock private CommandExecutor commandExecutor;
+    @Mock
+    private CommandProperties commandProperties;
+
+    @Mock
+    private CommandProperties.Messages messages;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private Map<String, CommandProperties.CommandInfo> commandsMap;
+
+    @Mock
+    private CommandProperties.CommandInfo startInfo;
+
+    @Mock
+    private CommandProperties.CommandInfo helpInfo;
+
+    @Mock
+    private StateHandler stateHandler;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     private final Long CHAT_ID = 123L;
 
     @BeforeEach
     void setUp() {
         when(messages.getWelcome())
-            .thenReturn("Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
+                .thenReturn("Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды");
         when(messages.getHelpHeader()).thenReturn("Доступные команды:");
         when(messages.getUnknownCommand())
-            .thenReturn("Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
+                .thenReturn("Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
 
         when(commandProperties.getMessages()).thenReturn(messages);
         when(commandProperties.getCommands()).thenReturn(commandsMap);
@@ -81,14 +97,18 @@ class TelegramBotProcessStartingCommandTest {
         when(stateHandler.hasState(anyLong())).thenReturn(false);
 
         doAnswer(invocation -> {
-            telegramSender.sendMessage(CHAT_ID, messages.getWelcome());
-            return null;
-        }).when(commandExecutor).executeStart(CHAT_ID);
+                    telegramSender.sendMessage(CHAT_ID, messages.getWelcome());
+                    return null;
+                })
+                .when(commandExecutor)
+                .executeStart(CHAT_ID);
 
         doAnswer(invocation -> {
-            telegramSender.sendMessage(CHAT_ID, messages.getHelpHeader());
-            return null;
-        }).when(commandExecutor).executeHelp(CHAT_ID);
+                    telegramSender.sendMessage(CHAT_ID, messages.getHelpHeader());
+                    return null;
+                })
+                .when(commandExecutor)
+                .executeHelp(CHAT_ID);
     }
 
     @Test

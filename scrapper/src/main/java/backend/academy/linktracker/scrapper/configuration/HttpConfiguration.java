@@ -18,32 +18,25 @@ public class HttpConfiguration {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+        return new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Bean
-    public RestClient scrapperRestClient(
-        @Value("${app.bot.url}") String url,
-        ObjectMapper objectMapper) {
+    public RestClient scrapperRestClient(@Value("${app.bot.url}") String url, ObjectMapper objectMapper) {
         return RestClient.builder()
-            .baseUrl(url)
-            .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
-                ApiErrorResponse error = objectMapper.readValue(
-                    response.getBody(), ApiErrorResponse.class);
-                throw new ApiException(error);
-            })
-            .build();
+                .baseUrl(url)
+                .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
+                    ApiErrorResponse error = objectMapper.readValue(response.getBody(), ApiErrorResponse.class);
+                    throw new ApiException(error);
+                })
+                .build();
     }
 
     @Bean
     @ConditionalOnProperty(name = "app.client.type", havingValue = "grpc")
     public BotServiceGrpc.BotServiceBlockingStub scrapperGrpcStub(
-        @Value("${app.grpc.host}") String host,
-        @Value("${app.grpc.port}") int port) {
+            @Value("${app.grpc.host}") String host, @Value("${app.grpc.port}") int port) {
         return BotServiceGrpc.newBlockingStub(
-            ManagedChannelBuilder.forAddress(host, port)
-                .usePlaintext()
-                .build());
+                ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
     }
 }

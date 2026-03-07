@@ -26,10 +26,7 @@ public class UpdateHandler {
         Long id = message.chat().id();
         String text = message.text();
 
-        log.atInfo()
-            .addKeyValue("id", id)
-            .addKeyValue("text", text)
-            .log("Processing message");
+        log.atInfo().addKeyValue("id", id).addKeyValue("text", text).log("Processing message");
 
         if (commandHandler.tryHandle(message)) return;
         if (stateHandler.hasState(id)) {

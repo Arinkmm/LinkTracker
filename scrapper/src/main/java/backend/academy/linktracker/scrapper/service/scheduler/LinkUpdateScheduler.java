@@ -14,8 +14,7 @@ public class LinkUpdateScheduler {
 
     @Scheduled(fixedDelayString = "${scheduler.interval}")
     public void checkUpdates() {
-        log.atInfo()
-            .log("Starting scheduled link check");
+        log.atInfo().log("Starting scheduled link check");
 
         linkChecker.checkAllLinks();
     }

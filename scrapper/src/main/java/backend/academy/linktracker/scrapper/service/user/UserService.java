@@ -1,16 +1,12 @@
 package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.dto.*;
-import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
 import backend.academy.linktracker.scrapper.exception.*;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
 
 @Service
 @Slf4j

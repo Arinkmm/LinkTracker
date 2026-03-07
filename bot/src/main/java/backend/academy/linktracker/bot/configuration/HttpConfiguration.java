@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.RestClient;
 
-
 @Configuration
 public class HttpConfiguration {
     @Bean
@@ -22,17 +21,14 @@ public class HttpConfiguration {
 
     @Bean
     @ConditionalOnProperty(name = "app.client.type", havingValue = "http", matchIfMissing = true)
-    public RestClient scrapperRestClient(
-        @Value("${app.scrapper.url}") String url,
-        ObjectMapper objectMapper) {
+    public RestClient scrapperRestClient(@Value("${app.scrapper.url}") String url, ObjectMapper objectMapper) {
         return RestClient.builder()
-            .baseUrl(url)
-            .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
-                ApiErrorResponse error = objectMapper.readValue(
-                    response.getBody(), ApiErrorResponse.class);
-                throw new ApiException(error);
-            })
-            .build();
+                .baseUrl(url)
+                .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
+                    ApiErrorResponse error = objectMapper.readValue(response.getBody(), ApiErrorResponse.class);
+                    throw new ApiException(error);
+                })
+                .build();
     }
 
     @Bean

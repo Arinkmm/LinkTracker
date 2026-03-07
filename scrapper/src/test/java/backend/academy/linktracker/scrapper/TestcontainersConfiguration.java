@@ -7,7 +7,6 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
-
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
     @Bean(name = "customNetwork")
@@ -18,9 +17,9 @@ class TestcontainersConfiguration {
     @Bean(name = "scrapperContainer")
     public GenericContainer<?> scrapperContainer(Network network) {
         GenericContainer<?> scrapper = new GenericContainer<>(DockerImageName.parse("link-tracker-scrapper:latest"))
-            .withNetwork(network)
-            .withExposedPorts(8081)
-            .waitingFor(Wait.forHttp("/actuator/health").forPort(8081));
+                .withNetwork(network)
+                .withExposedPorts(8081)
+                .waitingFor(Wait.forHttp("/actuator/health").forPort(8081));
 
         scrapper.start();
         return scrapper;

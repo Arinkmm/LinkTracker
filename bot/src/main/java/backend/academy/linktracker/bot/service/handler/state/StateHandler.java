@@ -20,36 +20,32 @@ public class StateHandler {
     private final CommandProperties properties;
 
     public boolean hasState(Long id) {
-        return userService.findStateById(id)
-            .filter(s -> s != State.OK)
-            .isPresent();
+        return userService.findStateById(id).filter(s -> s != State.OK).isPresent();
     }
 
     public void handle(Long id, String text) {
         State state = userService.findStateById(id).orElse(State.OK);
 
         log.atDebug()
-            .addKeyValue("id", id)
-            .addKeyValue("state", state)
-            .addKeyValue("text", text)
-            .log("Processing State Machine state");
+                .addKeyValue("id", id)
+                .addKeyValue("state", state)
+                .addKeyValue("text", text)
+                .log("Processing State Machine state");
 
         try {
             switch (state) {
-                case WAITING_URL, NEEDED_TAGS, WAITING_TAGS ->
-                    trackHandler.handle(id, text, state);
-                case WAITING_UNTRACKING_URL ->
-                    untrackHandler.handle(id, text);
+                case WAITING_URL, NEEDED_TAGS, WAITING_TAGS -> trackHandler.handle(id, text, state);
+                case WAITING_UNTRACKING_URL -> untrackHandler.handle(id, text);
                 default -> handleUnknownState(id);
             }
         } catch (ApiException e) {
             log.atError()
-                .addKeyValue("id", id)
-                .addKeyValue("state", state)
-                .addKeyValue("text", text)
-                .addKeyValue("error_code", e.getApiError().code())
-                .addKeyValue("description", e.getApiError().description())
-                .log("State Machine failed");
+                    .addKeyValue("id", id)
+                    .addKeyValue("state", state)
+                    .addKeyValue("text", text)
+                    .addKeyValue("error_code", e.getApiError().code())
+                    .addKeyValue("description", e.getApiError().description())
+                    .log("State Machine failed");
 
             telegramSender.sendMessage(id, e.getApiError().description());
             userService.deleteState(id);
