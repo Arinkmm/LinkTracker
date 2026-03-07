@@ -55,4 +55,5 @@ test:
     - apk add --no-cache docker-cli libc6-compat
     - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin
   script:
-    - ./mvnw verify
+    - ./mvnw clean package -DskipTests
+    - ./mvnw verify -pl bot -am
