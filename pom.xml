@@ -307,6 +307,10 @@
                     <artifactId>maven-pmd-plugin</artifactId>
                     <version>${maven-pmd-plugin.version}</version>
                     <configuration>
+                        <excludeRoots>
+                            <excludeRoot>target/generated-sources/protobuf</excludeRoot>
+                            <excludeRoot>target/generated-sources/annotations</excludeRoot>
+                        </excludeRoots>
                         <targetJdk>${java.version}</targetJdk>
                         <printFailingErrors>true</printFailingErrors>
                         <linkXRef>false</linkXRef>

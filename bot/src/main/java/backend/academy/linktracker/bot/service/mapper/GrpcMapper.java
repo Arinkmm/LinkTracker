@@ -7,10 +7,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class GrpcMapper {
-    public backend.academy.linktracker.bot.dto.LinkResponse fromProto(
-            backend.academy.linktracker.grpc.LinkResponse proto) {
-        return new backend.academy.linktracker.bot.dto.LinkResponse(
-                proto.getId(), proto.getUrl(), proto.getTagsList(), proto.getFiltersList());
+    public LinkResponse fromProto(backend.academy.linktracker.grpc.LinkResponse proto) {
+        return new LinkResponse(proto.getId(), proto.getUrl(), proto.getTagsList(), proto.getFiltersList());
     }
 
     public ListLinksResponse fromProto(backend.academy.linktracker.grpc.ListLinksResponse proto) {

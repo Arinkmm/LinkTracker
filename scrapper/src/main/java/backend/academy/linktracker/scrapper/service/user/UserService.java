@@ -1,6 +1,5 @@
 package backend.academy.linktracker.scrapper.service.user;
 
-import backend.academy.linktracker.scrapper.dto.*;
 import backend.academy.linktracker.scrapper.exception.*;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.UserRepository;

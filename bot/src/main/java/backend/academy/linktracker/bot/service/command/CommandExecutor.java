@@ -56,7 +56,7 @@ public class CommandExecutor {
         StringBuilder list = new StringBuilder(commandProperties.getMessages().getLinks() + "\n");
         for (int i = 0; i < links.size(); i++) {
             LinkResponse link = links.get(i);
-            list.append((i + 1))
+            list.append(i + 1)
                     .append(". ")
                     .append(link.url())
                     .append(" [")
