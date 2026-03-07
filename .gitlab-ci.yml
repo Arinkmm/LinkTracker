@@ -56,4 +56,4 @@ test:
     - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin
   script:
     - ./mvnw clean package -DskipTests
-    - ./mvnw verify -pl bot -am
+    - ./mvnw verify
