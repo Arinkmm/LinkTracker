@@ -6,6 +6,7 @@ import backend.academy.linktracker.grpc.LinkResponse;
 import backend.academy.linktracker.grpc.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.exception.*;
 import backend.academy.linktracker.scrapper.service.mapper.GrpcMapper;
+import backend.academy.linktracker.scrapper.service.user.LinkService;
 import backend.academy.linktracker.scrapper.service.user.UserService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -17,7 +18,8 @@ import org.springframework.grpc.server.service.GrpcService;
 @Slf4j
 @RequiredArgsConstructor
 public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImplBase {
-    private final UserService service;
+    private final UserService userService;
+    private final LinkService linkService;
     private final GrpcMapper mapper;
 
     @Override
@@ -30,7 +32,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
             .log("gRPC registerChat");
 
         try {
-            service.registerChat(id);
+            userService.registerChat(id);
             responseObserver.onNext(EmptyResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ChatAlreadyExistsException e) {
@@ -53,7 +55,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
             .log("gRPC deleteChat");
 
         try {
-            service.deleteChat(id);
+            userService.deleteChat(id);
             responseObserver.onNext(EmptyResponse.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (ChatNotFoundException e) {
@@ -79,7 +81,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
 
         try {
             backend.academy.linktracker.scrapper.dto.AddLinkRequest dtoReq = mapper.grpcToDto(request);
-            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = service.addLink(id, dtoReq);
+            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = linkService.addLink(id, dtoReq);
             LinkResponse grpcRes = mapper.dtoToGrpc(dtoRes);
             responseObserver.onNext(grpcRes);
             responseObserver.onCompleted();
@@ -111,7 +113,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
 
         try {
             backend.academy.linktracker.scrapper.dto.RemoveLinkRequest dtoReq = mapper.grpcToDto(request);
-            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = service.removeLink(id, dtoReq);
+            backend.academy.linktracker.scrapper.dto.LinkResponse dtoRes = linkService.removeLink(id, dtoReq);
             LinkResponse grpcRes = mapper.dtoToGrpc(dtoRes);
             responseObserver.onNext(grpcRes);
             responseObserver.onCompleted();
@@ -134,7 +136,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
             .log("gRPC getLinks");
 
         try {
-            backend.academy.linktracker.scrapper.dto.ListLinksResponse dtoRes = service.getLinks(id);
+            backend.academy.linktracker.scrapper.dto.ListLinksResponse dtoRes = linkService.getLinks(id);
             ListLinksResponse grpcRes = mapper.dtoToGrpc(dtoRes);
             responseObserver.onNext(grpcRes);
             responseObserver.onCompleted();

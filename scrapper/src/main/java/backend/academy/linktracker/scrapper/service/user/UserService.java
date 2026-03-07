@@ -33,39 +33,4 @@ public class UserService {
         linkRepository.deleteAllById(id);
         userRepository.delete(id);
     }
-
-    public LinkResponse addLink(Long id, AddLinkRequest request) {
-        if (!userRepository.exists(id)) {
-            throw new ChatNotFoundException();
-        }
-        if (linkRepository.exists(id, request.link())) {
-            throw new LinkAlreadyTrackedException();
-        }
-        LinkDto saved = linkRepository.save(
-            id,
-            new LinkDto(id, request.link(), request.tags(), request.filters(), Instant.EPOCH)
-        );
-        return new LinkResponse(saved.id(), saved.url(), saved.tags(), saved.filters());
-    }
-
-    public LinkResponse removeLink(Long id, RemoveLinkRequest request) {
-        if (!userRepository.exists(id)) {
-            throw new ChatNotFoundException();
-        }
-        if (!linkRepository.exists(id, request.link())) {
-            throw new ChatNotFoundException();
-        }
-        LinkDto deleted = linkRepository.delete(id, request.link());
-        return new LinkResponse(deleted.id(), deleted.url(), deleted.tags(), deleted.filters());
-    }
-
-    public ListLinksResponse getLinks(Long id) {
-        if (!userRepository.exists(id)) {
-            throw new ChatNotFoundException();
-        }
-        List<LinkResponse> links = linkRepository.findByUserId(id).stream()
-            .map(l -> new LinkResponse(l.id(), l.url(), l.tags(), l.filters()))
-            .toList();
-        return new ListLinksResponse(links, links.size());
-    }
 }

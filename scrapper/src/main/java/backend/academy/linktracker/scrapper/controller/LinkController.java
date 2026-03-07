@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
+import backend.academy.linktracker.scrapper.service.user.LinkService;
 import backend.academy.linktracker.scrapper.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class LinkController {
-    private final UserService service;
+    private final LinkService service;
 
     @GetMapping
     public ResponseEntity<ListLinksResponse> getLinks(@RequestHeader("Tg-Chat-Id") long chatId) {
@@ -32,7 +33,7 @@ public class LinkController {
         log.atInfo()
             .addKeyValue("id", id)
             .addKeyValue("url", request.link())
-            .addKeyValue("tags_count", request.tags().size())
+            .addKeyValue("tags_count", (request.tags() != null) ? request.tags().size() : 0)
             .log("Adding link");
 
         return ResponseEntity.ok(service.addLink(id, request));
