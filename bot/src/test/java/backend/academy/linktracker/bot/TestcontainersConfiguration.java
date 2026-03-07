@@ -1,32 +1,27 @@
 package backend.academy.linktracker.bot;
 
-import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.testcontainers.kafka.KafkaContainer;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.springframework.context.annotation.Bean;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
-
-    // Uncomment to start PostgreSQLContainer
-    // @Bean
-    // @ServiceConnection
-    PostgreSQLContainer postgresContainer() {
-        return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
+    @Bean(name = "customNetwork")
+    public Network network() {
+        return Network.newNetwork();
     }
 
-    // Uncomment to start RedisContainer
-    // @Bean
-    // @ServiceConnection
-    RedisContainer redisContainer() {
-        return new RedisContainer(DockerImageName.parse("redis:8.2-alpine"));
-    }
+    @Bean(name = "botContainer")
+    public GenericContainer<?> botContainer(Network network) {
+        GenericContainer<?> bot = new GenericContainer<>(DockerImageName.parse("link-tracker-bot:latest"))
+            .withNetwork(network)
+            .withExposedPorts(8080)
+            .waitingFor(Wait.forHttp("/actuator/health").forPort(8080));
 
-    // Uncomment to start KafkaContainer
-    // @Bean
-    // @ServiceConnection
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.1.1"));
+        bot.start();
+        return bot;
     }
 }
