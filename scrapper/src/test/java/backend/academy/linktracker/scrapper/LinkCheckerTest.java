@@ -1,6 +1,9 @@
 package backend.academy.linktracker.scrapper;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.scrapper.dto.LinkDto;
@@ -63,12 +66,12 @@ class LinkCheckerTest {
         when(provider.supports(linkWithoutUpdate.url())).thenReturn(true);
         when(provider.getCurrentTime(linkWithoutUpdate.url())).thenReturn(oldTime);
 
-        when(notificationBuilder.buildMessage(URI.create(anyString()))).thenReturn("New Update!");
+        when(notificationBuilder.buildMessage(any(URI.class))).thenReturn("New Update!");
 
         linkChecker.checkAllLinks();
 
         verify(botNotifier).notify(eq(10L), eq(linkWithUpdate.url()), anyString(), anyList());
-        verify(linkRepository).save(eq(10L), argThat(time -> time.equals(newTime)));
+        verify(linkRepository).save(eq(10L), argThat(link -> link.lastChecked().equals(newTime)));
 
         verify(botNotifier, never()).notify(eq(20L), any(), anyString(), any());
         verify(linkRepository, never()).save(eq(20L), any());
