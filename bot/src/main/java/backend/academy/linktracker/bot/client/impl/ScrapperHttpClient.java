@@ -1,7 +1,6 @@
 package backend.academy.linktracker.bot.client.impl;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
-// ВАЖНО: Импортируем сгенерированные DTO из модуля api-common
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;

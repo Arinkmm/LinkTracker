@@ -3,7 +3,6 @@ package backend.academy.linktracker.scrapper.client.bot.impl;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
-// ВАЖНО: импортируем DTO из сгенерированного пакета (api-common)
 import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
 import backend.academy.linktracker.scrapper.exception.ApiException;
 import io.grpc.StatusRuntimeException;
