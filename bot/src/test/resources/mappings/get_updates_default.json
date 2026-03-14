@@ -1,0 +1,14 @@
+{
+    "priority": 10,
+    "request": {
+        "method": "POST",
+        "urlPattern": "/bot.*/getUpdates"
+    },
+    "response": {
+        "status": 200,
+        "body": "{\"ok\":true,\"result\":[]}",
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+}
