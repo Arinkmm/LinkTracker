@@ -1,10 +1,10 @@
 package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
+import backend.academy.linktracker.scrapper.dto.LinkDto; // Твой внутренний рекорд/класс
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
-import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
 import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
@@ -24,23 +24,26 @@ public class LinkService {
         if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        if (linkRepository.exists(id, request.link())) {
+        if (linkRepository.exists(id, request.getLink())) {
             throw new LinkAlreadyTrackedException();
         }
-        LinkDto saved = linkRepository.save(
-                id, new LinkDto(id, request.link(), request.tags(), request.filters(), Instant.EPOCH));
-        return new LinkResponse(saved.id(), saved.url(), saved.tags(), saved.filters());
+
+        LinkDto saved =
+                linkRepository.save(id, new LinkDto(id, request.getLink(), request.getTags(), null, Instant.EPOCH));
+
+        return mapToResponse(saved);
     }
 
     public LinkResponse removeLink(Long id, RemoveLinkRequest request) {
         if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        if (!linkRepository.exists(id, request.link())) {
+        if (!linkRepository.exists(id, request.getLink())) {
             throw new ChatNotFoundException();
         }
-        LinkDto deleted = linkRepository.delete(id, request.link());
-        return new LinkResponse(deleted.id(), deleted.url(), deleted.tags(), deleted.filters());
+        LinkDto deleted = linkRepository.delete(id, request.getLink());
+
+        return mapToResponse(deleted);
     }
 
     public ListLinksResponse getLinks(Long id) {
@@ -48,8 +51,22 @@ public class LinkService {
             throw new ChatNotFoundException();
         }
         List<LinkResponse> links = linkRepository.findByUserId(id).stream()
-                .map(l -> new LinkResponse(l.id(), l.url(), l.tags(), l.filters()))
+                .map(this::mapToResponse)
                 .toList();
-        return new ListLinksResponse(links, links.size());
+
+        ListLinksResponse response = new ListLinksResponse();
+        response.setLinks(links);
+        response.setSize(links.size());
+
+        return response;
+    }
+
+    private LinkResponse mapToResponse(LinkDto dto) {
+        LinkResponse response = new LinkResponse();
+        response.setId(dto.id());
+        response.setUrl(dto.url());
+        response.setTags(dto.tags());
+        response.setFilters(dto.filters());
+        return response;
     }
 }

@@ -43,11 +43,11 @@ public class StateHandler {
                     .addKeyValue("id", id)
                     .addKeyValue("state", state)
                     .addKeyValue("text", text)
-                    .addKeyValue("error_code", e.getApiError().code())
-                    .addKeyValue("description", e.getApiError().description())
+                    .addKeyValue("error_code", e.getApiError().getCode())
+                    .addKeyValue("description", e.getApiError().getDescription())
                     .log("State Machine failed");
 
-            telegramSender.sendMessage(id, e.getApiError().description());
+            telegramSender.sendMessage(id, e.getApiError().getDescription());
             userService.deleteState(id);
         }
     }

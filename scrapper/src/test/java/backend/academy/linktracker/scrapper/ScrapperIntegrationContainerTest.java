@@ -2,7 +2,8 @@ package backend.academy.linktracker.scrapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
+import backend.academy.linktracker.scrapper.dto.AddLinkRequest; // Сгенерированный DTO
+import java.net.URI;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,14 @@ class ScrapperIntegrationContainerTest {
         return RestClient.builder().baseUrl("http://" + host + ":" + port).build();
     }
 
+    private AddLinkRequest createAddLinkBody(String link) {
+        AddLinkRequest request = new AddLinkRequest();
+        request.setLink(URI.create(link));
+        request.setTags(null);
+        request.setFilters(null);
+        return request;
+    }
+
     @Test
     @DisplayName("Тест 3.1: Добавление и получение ссылки")
     void test3_1_addAndGetLink() {
@@ -46,7 +55,7 @@ class ScrapperIntegrationContainerTest {
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AddLinkRequest(link, null, null))
+                .body(createAddLinkBody(link))
                 .retrieve()
                 .toBodilessEntity();
 
@@ -78,7 +87,7 @@ class ScrapperIntegrationContainerTest {
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AddLinkRequest(link, null, null))
+                .body(createAddLinkBody(link))
                 .retrieve()
                 .toBodilessEntity();
 
@@ -87,7 +96,7 @@ class ScrapperIntegrationContainerTest {
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AddLinkRequest(link, null, null))
+                .body(createAddLinkBody(link))
                 .retrieve()
                 .toBodilessEntity();
 
@@ -110,7 +119,7 @@ class ScrapperIntegrationContainerTest {
                     .uri("/links")
                     .header("Tg-Chat-Id", "999")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(new AddLinkRequest("https://yandex.ru", null, null))
+                    .body(createAddLinkBody("https://yandex.ru"))
                     .retrieve()
                     .toBodilessEntity();
         });
@@ -126,7 +135,7 @@ class ScrapperIntegrationContainerTest {
                     .uri("/links")
                     .header("Tg-Chat-Id", "2")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(new AddLinkRequest("https://github.com", null, null))
+                    .body(createAddLinkBody("https://github.com"))
                     .retrieve()
                     .toBodilessEntity();
         });
@@ -155,7 +164,7 @@ class ScrapperIntegrationContainerTest {
                     .uri("/links")
                     .header("Tg-Chat-Id", String.valueOf(chatId))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(new AddLinkRequest("https://github.com", null, null))
+                    .body(createAddLinkBody("https://github.com"))
                     .retrieve()
                     .toBodilessEntity();
         });

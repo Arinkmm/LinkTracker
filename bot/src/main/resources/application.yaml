@@ -43,6 +43,7 @@ bot:
     link-not-found: "Ссылка не найдена в отслеживании"
     link-is-empty: "Ссылок не обнаружено"
     state-error: "Ошибка состояния. /track заново"
+    invalid-response: "Ошибка при обращении к сервису Scrapper"
   commands:
     start:
       name: "/start"

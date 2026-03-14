@@ -4,6 +4,7 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,8 +20,8 @@ public class UntrackStateHandler {
 
     public void handle(Long id, String text) {
         log.atInfo().addKeyValue("id", id).addKeyValue("url", text).log("Removing link from scrapper");
-
-        client.removeLink(id, text);
+        URI uri = URI.create(text);
+        client.removeLink(id, uri);
         userService.deleteState(id);
         telegramSender.sendMessage(id, properties.getMessages().getLinkDeleted());
     }

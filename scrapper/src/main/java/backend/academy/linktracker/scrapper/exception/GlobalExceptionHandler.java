@@ -3,7 +3,6 @@ package backend.academy.linktracker.scrapper.exception;
 import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(ChatNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleChatNotFound(ChatNotFoundException e) {
@@ -21,8 +21,7 @@ public class GlobalExceptionHandler {
                 .addKeyValue("message", e.getMessage())
                 .log("Chat not found");
 
-        return new ApiErrorResponse(
-                e.getMessage(), "404", e.getClass().getSimpleName(), e.getMessage(), getStackTrace(e));
+        return createError(e, "404", e.getMessage());
     }
 
     @ExceptionHandler({ChatAlreadyExistsException.class, LinkAlreadyTrackedException.class})
@@ -33,8 +32,7 @@ public class GlobalExceptionHandler {
                 .addKeyValue("message", e.getMessage())
                 .log("Conflict error");
 
-        return new ApiErrorResponse(
-                e.getMessage(), "409", e.getClass().getSimpleName(), e.getMessage(), getStackTrace(e));
+        return createError(e, "409", e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
@@ -45,14 +43,23 @@ public class GlobalExceptionHandler {
                 .addKeyValue("message", e.getMessage())
                 .log("Controller error");
 
-        return new ApiErrorResponse(
-                e.getMessage(), "400", e.getClass().getSimpleName(), e.getMessage(), getStackTrace(e));
+        return createError(e, "400", e.getMessage());
+    }
+
+    private ApiErrorResponse createError(Exception e, String code, String description) {
+        ApiErrorResponse error = new ApiErrorResponse();
+        error.setCode(code);
+        error.setDescription(description);
+        error.setExceptionName(e.getClass().getSimpleName());
+        error.setExceptionMessage(e.getMessage());
+        error.setStacktrace(getStackTrace(e));
+        return error;
     }
 
     private List<String> getStackTrace(Exception e) {
         return Arrays.stream(e.getStackTrace())
                 .map(StackTraceElement::toString)
                 .limit(10)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

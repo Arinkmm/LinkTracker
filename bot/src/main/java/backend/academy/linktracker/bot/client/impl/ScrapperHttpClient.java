@@ -1,10 +1,12 @@
 package backend.academy.linktracker.bot.client.impl;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
-import backend.academy.linktracker.bot.dto.AddLinkRequest;
-import backend.academy.linktracker.bot.dto.LinkResponse;
-import backend.academy.linktracker.bot.dto.ListLinksResponse;
-import backend.academy.linktracker.bot.dto.RemoveLinkRequest;
+// ВАЖНО: Импортируем сгенерированные DTO из модуля api-common
+import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
+import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,23 +31,30 @@ public class ScrapperHttpClient implements ScrapperClient {
     }
 
     @Override
-    public LinkResponse addLink(Long id, String url, List<String> tags, List<String> filters) {
+    public LinkResponse addLink(Long id, URI url, List<String> tags, List<String> filters) {
+        AddLinkRequest request = new AddLinkRequest();
+        request.setLink(url);
+        request.setTags(tags);
+
         return restClient
                 .method(HttpMethod.POST)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(id))
-                .body(new AddLinkRequest(url, tags, filters))
+                .body(request)
                 .retrieve()
                 .body(LinkResponse.class);
     }
 
     @Override
-    public LinkResponse removeLink(Long id, String url) {
+    public LinkResponse removeLink(Long id, URI url) {
+        RemoveLinkRequest request = new RemoveLinkRequest();
+        request.setLink(url);
+
         return restClient
                 .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(id))
-                .body(new RemoveLinkRequest(url))
+                .body(request)
                 .retrieve()
                 .body(LinkResponse.class);
     }

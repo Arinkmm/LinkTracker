@@ -1,7 +1,8 @@
 package backend.academy.linktracker.bot.client;
 
-import backend.academy.linktracker.bot.dto.LinkResponse;
-import backend.academy.linktracker.bot.dto.ListLinksResponse;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import java.net.URI;
 import java.util.List;
 
 public interface ScrapperClient {
@@ -9,9 +10,9 @@ public interface ScrapperClient {
 
     void deleteChat(Long id);
 
-    LinkResponse addLink(Long id, String url, List<String> tags, List<String> filters);
+    LinkResponse addLink(Long id, URI url, List<String> tags, List<String> filters);
 
-    LinkResponse removeLink(Long id, String url);
+    LinkResponse removeLink(Long id, URI url);
 
     ListLinksResponse getLinks(Long id);
 }

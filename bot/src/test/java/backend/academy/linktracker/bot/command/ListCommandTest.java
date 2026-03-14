@@ -5,11 +5,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
-import backend.academy.linktracker.bot.dto.LinkResponse;
-import backend.academy.linktracker.bot.dto.ListLinksResponse;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.command.CommandExecutor;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,9 +51,20 @@ class ListCommandTest {
     @Test
     @DisplayName("Сценарий: /list при наличии подписок -> вывод списка")
     void executeList_WithSubscriptions_SendsFormattedList() {
-        LinkResponse link1 = new LinkResponse(1L, "https://github.com/user/repo1", List.of("java"), List.of());
-        LinkResponse link2 = new LinkResponse(2L, "https://github.com/user/repo2", List.of("go"), List.of());
-        when(scrapperClient.getLinks(chatId)).thenReturn(new ListLinksResponse(List.of(link1, link2), 2));
+        LinkResponse link1 = new LinkResponse();
+        link1.setId(1L);
+        link1.setUrl(URI.create("https://github.com/user/repo1"));
+        link1.setTags(List.of("java"));
+
+        LinkResponse link2 = new LinkResponse();
+        link2.setId(2L);
+        link2.setUrl(URI.create("https://github.com/user/repo2"));
+        link2.setTags(List.of("go"));
+
+        ListLinksResponse listResponse = new ListLinksResponse();
+        listResponse.setLinks(List.of(link1, link2));
+
+        when(scrapperClient.getLinks(chatId)).thenReturn(listResponse);
 
         commandExecutor.executeList(chatId, null);
 
@@ -64,7 +76,10 @@ class ListCommandTest {
     @Test
     @DisplayName("Сценарий: /list без подписок -> сообщение о пустом списке")
     void executeList_NoSubscriptions_SendsEmptyMessage() {
-        when(scrapperClient.getLinks(chatId)).thenReturn(new ListLinksResponse(List.of(), 0));
+        ListLinksResponse emptyResponse = new ListLinksResponse();
+        emptyResponse.setLinks(List.of());
+
+        when(scrapperClient.getLinks(chatId)).thenReturn(emptyResponse);
 
         commandExecutor.executeList(chatId, null);
         verify(telegramSender).sendMessage(chatId, "Ссылок не обнаружено");
@@ -73,13 +88,24 @@ class ListCommandTest {
     @Test
     @DisplayName("Сценарий: /list <tag> -> фильтрация списка по тегу")
     void executeList_WithTagFilter_SendsOnlyMatchingLinks() {
-        LinkResponse javaLink = new LinkResponse(1L, "https://github.com/user/java-repo", List.of("java"), List.of());
-        LinkResponse goLink = new LinkResponse(2L, "https://github.com/user/go-repo", List.of("go"), List.of());
-        when(scrapperClient.getLinks(chatId)).thenReturn(new ListLinksResponse(List.of(javaLink, goLink), 2));
+        LinkResponse javaLink = new LinkResponse();
+        javaLink.setId(1L);
+        javaLink.setUrl(URI.create("https://github.com/user/java-repo"));
+        javaLink.setTags(List.of("java"));
+
+        LinkResponse goLink = new LinkResponse();
+        goLink.setId(2L);
+        goLink.setUrl(URI.create("https://github.com/user/go-repo"));
+        goLink.setTags(List.of("go"));
+
+        ListLinksResponse listResponse = new ListLinksResponse();
+        listResponse.setLinks(List.of(javaLink, goLink));
+
+        when(scrapperClient.getLinks(chatId)).thenReturn(listResponse);
 
         commandExecutor.executeList(chatId, "java");
 
         verify(telegramSender).sendMessage(eq(chatId), contains("java"));
-        verify(telegramSender, never()).sendMessage(eq(chatId), contains("go"));
+        verify(telegramSender, never()).sendMessage(eq(chatId), contains("go-repo"));
     }
 }

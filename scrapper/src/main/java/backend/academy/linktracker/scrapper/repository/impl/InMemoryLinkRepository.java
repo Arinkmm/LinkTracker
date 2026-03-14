@@ -1,7 +1,8 @@
 package backend.academy.linktracker.scrapper.repository.impl;
 
-import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
+import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +27,12 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public boolean exists(Long id, String url) {
+    public boolean exists(Long id, URI url) {
         return findByUserId(id).stream().anyMatch(l -> l.url().equals(url));
     }
 
     @Override
-    public LinkDto delete(Long id, String url) {
+    public LinkDto delete(Long id, URI url) {
         List<LinkDto> links = map.getOrDefault(id, new ArrayList<>());
         LinkDto found =
                 links.stream().filter(l -> l.url().equals(url)).findFirst().orElseThrow();

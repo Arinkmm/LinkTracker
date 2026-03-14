@@ -1,9 +1,10 @@
 package backend.academy.linktracker.scrapper.service.provider;
 
+import java.net.URI;
 import java.time.Instant;
 
 public interface LinkTimeProvider {
-    boolean supports(String url);
+    boolean supports(URI url);
 
-    Instant getCurrentTime(String url);
+    Instant getCurrentTime(URI url);
 }

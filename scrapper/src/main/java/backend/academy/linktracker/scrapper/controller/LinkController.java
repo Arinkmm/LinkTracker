@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper.controller;
 
+import backend.academy.linktracker.scrapper.api.LinksApi;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
@@ -8,40 +9,43 @@ import backend.academy.linktracker.scrapper.service.user.LinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/links")
 @RequiredArgsConstructor
 @Slf4j
-public class LinkController {
+public class LinkController implements LinksApi {
     private final LinkService service;
 
-    @GetMapping
-    public ResponseEntity<ListLinksResponse> getLinks(@RequestHeader("Tg-Chat-Id") long chatId) {
-        log.atDebug().addKeyValue("id", chatId).log("Getting links");
+    @Override
+    public ResponseEntity<ListLinksResponse> linksGet(Long tgChatId) {
+        log.atDebug().addKeyValue("id", tgChatId).log("Getting links");
 
-        return ResponseEntity.ok(service.getLinks(chatId));
+        return ResponseEntity.ok(service.getLinks(tgChatId));
     }
 
-    @PostMapping
-    public ResponseEntity<LinkResponse> addLink(
-            @RequestHeader("Tg-Chat-Id") Long id, @RequestBody AddLinkRequest request) {
+    @Override
+    public ResponseEntity<LinkResponse> linksPost(Long tgChatId, AddLinkRequest addLinkRequest) {
         log.atInfo()
-                .addKeyValue("id", id)
-                .addKeyValue("url", request.link())
+                .addKeyValue("id", tgChatId)
+                .addKeyValue("url", addLinkRequest.getLink())
                 .addKeyValue(
-                        "tags_count", (request.tags() != null) ? request.tags().size() : 0)
+                        "tags_count",
+                        (addLinkRequest.getTags() != null)
+                                ? addLinkRequest.getTags().size()
+                                : 0)
                 .log("Adding link");
 
-        return ResponseEntity.ok(service.addLink(id, request));
+        return ResponseEntity.ok(service.addLink(tgChatId, addLinkRequest));
     }
 
-    @DeleteMapping
-    public ResponseEntity<LinkResponse> removeLink(
-            @RequestHeader("Tg-Chat-Id") Long id, @RequestBody RemoveLinkRequest request) {
-        log.atInfo().addKeyValue("id", id).addKeyValue("url", request.link()).log("Removing link");
+    @Override
+    public ResponseEntity<LinkResponse> linksDelete(Long tgChatId, RemoveLinkRequest removeLinkRequest) {
+        log.atInfo()
+                .addKeyValue("id", tgChatId)
+                .addKeyValue("url", removeLinkRequest.getLink())
+                .log("Removing link");
 
-        return ResponseEntity.ok(service.removeLink(id, request));
+        return ResponseEntity.ok(service.removeLink(tgChatId, removeLinkRequest));
     }
 }

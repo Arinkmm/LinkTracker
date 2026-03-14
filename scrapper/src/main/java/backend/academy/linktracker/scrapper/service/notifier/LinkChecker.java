@@ -1,6 +1,6 @@
 package backend.academy.linktracker.scrapper.service.notifier;
 
-import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
+import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.time.Instant;

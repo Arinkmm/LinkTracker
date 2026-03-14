@@ -3,6 +3,7 @@ package backend.academy.linktracker.bot;
 import static org.junit.jupiter.api.Assertions.*;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
+import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,11 @@ class BotIntegrationContainerTest {
     @Test
     @DisplayName("Тест 1: Корректный запрос к сервису Бота")
     void test1_correctRequest() {
-        LinkUpdate update = new LinkUpdate(1L, "https://github.com/spring", "New update", List.of(1L, 2L));
+        LinkUpdate update = new LinkUpdate();
+        update.setId(1L);
+        update.setUrl(URI.create("https://github.com/spring"));
+        update.setDescription("New update");
+        update.setTgChatIds(List.of(1L, 2L));
 
         ResponseEntity<Void> response = restClient()
                 .method(HttpMethod.POST)

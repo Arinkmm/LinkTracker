@@ -9,6 +9,7 @@ import backend.academy.linktracker.scrapper.client.github.GitHubClient;
 import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowClient;
 import backend.academy.linktracker.scrapper.service.provider.impl.GitHubTimeProvider;
 import backend.academy.linktracker.scrapper.service.provider.impl.StackOverflowTimeProvider;
+import java.net.URI;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ class ExternalApiErrorHandlerTest {
         when(gitHubClient.getRepository(anyString(), anyString())).thenThrow(new RestClientException("GitHub is down"));
 
         assertDoesNotThrow(() -> {
-            Instant result = gitHubTimeProvider.getCurrentTime("https://github.com/user/repo");
+            Instant result = gitHubTimeProvider.getCurrentTime(URI.create("https://github.com/user/repo"));
 
             assertEquals(Instant.EPOCH, result);
         });
@@ -53,7 +54,7 @@ class ExternalApiErrorHandlerTest {
     void gitHub_MalformedResponse_ReturnsEpoch() {
         when(gitHubClient.getRepository(anyString(), anyString())).thenReturn(null);
 
-        Instant result = gitHubTimeProvider.getCurrentTime("https://github.com/user/repo");
+        Instant result = gitHubTimeProvider.getCurrentTime(URI.create("https://github.com/user/repo"));
 
         assertEquals(Instant.EPOCH, result);
     }
@@ -64,7 +65,8 @@ class ExternalApiErrorHandlerTest {
         when(stackOverflowClient.getQuestion(anyString()))
                 .thenThrow(new RuntimeException("StackOverflow rate limit exceeded"));
 
-        Instant result = stackOverflowTimeProvider.getCurrentTime("https://stackoverflow.com/questions/123/title");
+        Instant result =
+                stackOverflowTimeProvider.getCurrentTime(URI.create("https://stackoverflow.com/questions/123/title"));
 
         assertEquals(Instant.EPOCH, result);
     }
@@ -72,7 +74,7 @@ class ExternalApiErrorHandlerTest {
     @Test
     @DisplayName("GitHub: некорректная ссылка (ошибка парсинга) -> возвращает EPOCH")
     void gitHub_InvalidUrlFormat_ReturnsEpoch() {
-        Instant result = gitHubTimeProvider.getCurrentTime("https://github.com/only_one_part");
+        Instant result = gitHubTimeProvider.getCurrentTime(URI.create("https://github.com/only_one_part"));
 
         assertEquals(Instant.EPOCH, result);
     }

@@ -1,6 +1,6 @@
 package backend.academy.linktracker.scrapper.client.bot;
 
-import backend.academy.linktracker.scrapper.dto.LinkUpdate;
+import backend.academy.linktracker.bot.dto.LinkUpdate;
 
 public interface BotClient {
     void sendUpdate(LinkUpdate linkUpdate);

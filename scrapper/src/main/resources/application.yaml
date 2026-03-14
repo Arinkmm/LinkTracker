@@ -29,6 +29,8 @@ notifications:
   default:
     title: "Обновление!"
     body: "%s"
+errors:
+  invalid-response: "Непредвиденная ошибка при обращении к внешнему сервису"
 
 scheduler:
   interval: 60000

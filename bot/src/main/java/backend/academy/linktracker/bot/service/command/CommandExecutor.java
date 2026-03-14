@@ -1,11 +1,12 @@
 package backend.academy.linktracker.bot.service.command;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
-import backend.academy.linktracker.bot.dto.LinkResponse;
 import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,13 +43,16 @@ public class CommandExecutor {
     public void executeList(Long id, String tag) {
         log.atDebug().addKeyValue("id", id).addKeyValue("tag", tag).log("Fetching user links");
 
-        List<LinkResponse> links = client.getLinks(id).links();
+        ListLinksResponse response = client.getLinks(id);
+        List<LinkResponse> links = (response != null) ? response.getLinks() : null;
 
-        if (tag != null) {
-            links = links.stream().filter(link -> link.tags().contains(tag)).toList();
+        if (tag != null && links != null) {
+            links = links.stream()
+                    .filter(link -> link.getTags() != null && link.getTags().contains(tag))
+                    .toList();
         }
 
-        if (links.isEmpty()) {
+        if (links == null || links.isEmpty()) {
             telegramSender.sendMessage(id, commandProperties.getMessages().getLinkIsEmpty());
             return;
         }
@@ -58,9 +62,9 @@ public class CommandExecutor {
             LinkResponse link = links.get(i);
             list.append(i + 1)
                     .append(". ")
-                    .append(link.url())
+                    .append(link.getUrl())
                     .append(" [")
-                    .append(String.join(", ", link.tags()))
+                    .append(link.getTags() != null ? String.join(", ", link.getTags()) : "")
                     .append("]")
                     .append("\n");
         }

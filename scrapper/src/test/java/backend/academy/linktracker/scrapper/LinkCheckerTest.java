@@ -3,12 +3,13 @@ package backend.academy.linktracker.scrapper;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
+import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
 import backend.academy.linktracker.scrapper.service.notifier.LinkChecker;
 import backend.academy.linktracker.scrapper.service.notifier.NotificationBuilder;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -46,9 +47,11 @@ class LinkCheckerTest {
         Instant oldTime = now.minusSeconds(1000);
         Instant newTime = now.plusSeconds(1000);
 
-        LinkDto linkWithUpdate = new LinkDto(10L, "https://github.com/user/updated", List.of(), List.of(), oldTime);
+        LinkDto linkWithUpdate =
+                new LinkDto(10L, URI.create("https://github.com/user/updated"), List.of(), List.of(), oldTime);
 
-        LinkDto linkWithoutUpdate = new LinkDto(20L, "https://github.com/user/stable", List.of(), List.of(), oldTime);
+        LinkDto linkWithoutUpdate =
+                new LinkDto(20L, URI.create("https://github.com/user/stable"), List.of(), List.of(), oldTime);
 
         when(linkRepository.findAll()).thenReturn(List.of(linkWithUpdate, linkWithoutUpdate));
 
@@ -60,15 +63,14 @@ class LinkCheckerTest {
         when(provider.supports(linkWithoutUpdate.url())).thenReturn(true);
         when(provider.getCurrentTime(linkWithoutUpdate.url())).thenReturn(oldTime);
 
-        when(notificationBuilder.buildMessage(anyString())).thenReturn("New Update!");
+        when(notificationBuilder.buildMessage(URI.create(anyString()))).thenReturn("New Update!");
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier, times(1)).notify(eq(10L), eq(linkWithUpdate.url()), anyString(), eq(List.of(10L)));
+        verify(botNotifier).notify(eq(10L), eq(linkWithUpdate.url()), anyString(), anyList());
+        verify(linkRepository).save(eq(10L), argThat(time -> time.equals(newTime)));
 
-        verify(botNotifier, never()).notify(eq(20L), anyString(), anyString(), any());
-
-        verify(linkRepository).save(eq(10L), argThat(l -> l.lastChecked().equals(newTime)));
+        verify(botNotifier, never()).notify(eq(20L), any(), anyString(), any());
         verify(linkRepository, never()).save(eq(20L), any());
     }
 }

@@ -13,6 +13,7 @@ import backend.academy.linktracker.bot.service.handler.state.TrackStateHandler;
 import backend.academy.linktracker.bot.service.user.UserService;
 import backend.academy.linktracker.bot.util.TagsParser;
 import backend.academy.linktracker.bot.util.UrlValidator;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,25 +60,27 @@ class TrackCommandTest {
     @DisplayName("Сценарий 1: Корректная ссылка и теги -> Сохранение")
     void track_CorrectUrlAndTags_SavesToScrapper() {
         Long userId = 1L;
-        String url = "https://github.com/user/repo";
+        String urlString = "https://github.com/user/repo";
+        URI uri = URI.create(urlString);
         String tagsText = "java, spring";
         List<String> parsedTags = List.of("java", "spring");
 
-        when(urlValidator.isValid(url)).thenReturn(true);
-        trackStateHandler.handle(userId, url, State.WAITING_URL);
+        when(urlValidator.isValid(uri)).thenReturn(true);
+        trackStateHandler.handle(userId, urlString, State.WAITING_URL);
 
-        verify(userService).saveUrl(userId, url);
+        verify(userService).saveUrl(userId, uri);
         verify(userService).saveState(userId, State.NEEDED_TAGS);
 
         trackStateHandler.handle(userId, "да", State.NEEDED_TAGS);
         verify(userService).saveState(userId, State.WAITING_TAGS);
 
-        when(userService.findUrlById(userId)).thenReturn(Optional.of(url));
+        when(userService.findUrlById(userId)).thenReturn(Optional.of(uri));
         when(tagsParser.parseTags(tagsText)).thenReturn(parsedTags);
 
         trackStateHandler.handle(userId, tagsText, State.WAITING_TAGS);
 
-        verify(scrapperClient).addLink(eq(userId), eq(url), eq(parsedTags), any());
+        verify(scrapperClient).addLink(eq(userId), eq(uri), eq(parsedTags), any());
+
         verify(userService).deleteUrl(userId);
         verify(userService).deleteState(userId);
     }
@@ -88,26 +91,31 @@ class TrackCommandTest {
         Long userId = 1L;
         String invalidUrl = "tbank://github.com/user/repo";
 
-        when(urlValidator.isValid(invalidUrl)).thenReturn(false);
         when(properties.getMessages().getInvalidUrl()).thenReturn("Ссылка некорректна");
+        when(urlValidator.isValid(any(URI.class))).thenReturn(false);
 
         trackStateHandler.handle(userId, invalidUrl, State.WAITING_URL);
 
         verify(telegramSender).sendMessage(userId, "Ссылка некорректна");
-        verify(userService, never()).saveUrl(anyLong(), anyString());
+
+        verify(userService, never()).saveUrl(anyLong(), any(URI.class));
     }
 
     @Test
     @DisplayName("Сценарий 3: Ссылка уже отслеживается -> Ошибка ApiException")
     void track_AlreadyTracked_ThrowsException() {
         Long userId = 1L;
-        String url = "https://github.com/user/repo";
+        String urlString = "https://github.com/user/repo";
+        URI uri = URI.create(urlString);
 
-        when(userService.findUrlById(userId)).thenReturn(Optional.of(url));
+        when(userService.findUrlById(userId)).thenReturn(Optional.of(uri));
 
-        ApiErrorResponse error =
-                new ApiErrorResponse("Conflict", "409", "Test error", "Вы уже подписаны на эту ссылку", List.of());
-        doThrow(new ApiException(error)).when(scrapperClient).addLink(any(), any(), any(), any());
+        ApiErrorResponse error = new ApiErrorResponse();
+        error.setCode("409");
+        error.setDescription("Conflict");
+        error.setExceptionMessage("Вы уже подписаны на эту ссылку");
+
+        doThrow(new ApiException(error)).when(scrapperClient).addLink(anyLong(), any(URI.class), any(), any());
 
         assertThrows(ApiException.class, () -> trackStateHandler.handle(userId, "нет", State.NEEDED_TAGS));
     }

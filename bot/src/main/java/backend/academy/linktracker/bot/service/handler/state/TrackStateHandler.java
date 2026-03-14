@@ -7,6 +7,7 @@ import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
 import backend.academy.linktracker.bot.util.TagsParser;
 import backend.academy.linktracker.bot.util.UrlValidator;
+import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +40,9 @@ public class TrackStateHandler {
     }
 
     private void handleWaitingUrl(Long id, String text) {
-        if (urlValidator.isValid(text)) {
-            userService.saveUrl(id, text);
+        URI uri = URI.create(text);
+        if (urlValidator.isValid(uri)) {
+            userService.saveUrl(id, uri);
             userService.saveState(id, State.NEEDED_TAGS);
             telegramSender.sendMessage(id, properties.getMessages().getTagsOffer());
         } else {
@@ -71,7 +73,7 @@ public class TrackStateHandler {
                 .addKeyValue("tags_count", tags.size())
                 .log("Saving link to scrapper");
 
-        String url = userService.findUrlById(id).orElseThrow();
+        URI url = userService.findUrlById(id).orElseThrow();
         client.addLink(id, url, tags, List.of());
         userService.deleteState(id);
         userService.deleteUrl(id);

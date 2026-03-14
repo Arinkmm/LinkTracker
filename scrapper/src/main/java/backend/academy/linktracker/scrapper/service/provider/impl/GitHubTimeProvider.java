@@ -2,6 +2,7 @@ package backend.academy.linktracker.scrapper.service.provider.impl;
 
 import backend.academy.linktracker.scrapper.client.github.GitHubClient;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
+import java.net.URI;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,12 +15,18 @@ public class GitHubTimeProvider implements LinkTimeProvider {
     private final GitHubClient client;
 
     @Override
-    public boolean supports(String url) {
-        return url.contains("github.com") && url.matches(".*github\\.com/[^/]+/[^/]+.*");
+    public boolean supports(URI url) {
+        String host = url.getHost();
+        String path = url.getPath();
+
+        return host != null
+                && (host.equals("github.com") || host.equals("www.github.com"))
+                && path != null
+                && path.split("/").length >= 3;
     }
 
     @Override
-    public Instant getCurrentTime(String url) {
+    public Instant getCurrentTime(URI url) {
         try {
             String[] parts = parseRepo(url);
             String owner = parts[0];
@@ -38,7 +45,17 @@ public class GitHubTimeProvider implements LinkTimeProvider {
         }
     }
 
-    private String[] parseRepo(String url) {
-        return url.split("github\\.com/")[1].split("/", 2);
+    private String[] parseRepo(URI url) {
+        String path = url.getPath();
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+
+        String[] segments = path.split("/");
+        if (segments.length < 2) {
+            throw new IllegalArgumentException("Invalid GitHub URL path: " + path);
+        }
+
+        return new String[] {segments[0], segments[1]};
     }
 }

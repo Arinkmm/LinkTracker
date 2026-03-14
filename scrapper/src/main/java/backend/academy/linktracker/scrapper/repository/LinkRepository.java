@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.repository;
 
-import backend.academy.linktracker.scrapper.dto.bot.LinkDto;
+import backend.academy.linktracker.scrapper.dto.LinkDto;
+import java.net.URI;
 import java.util.List;
 
 public interface LinkRepository {
@@ -8,9 +9,9 @@ public interface LinkRepository {
 
     List<LinkDto> findByUserId(Long id);
 
-    boolean exists(Long id, String url);
+    boolean exists(Long id, URI url);
 
-    LinkDto delete(Long id, String url);
+    LinkDto delete(Long id, URI url);
 
     void deleteAllById(Long id);
 

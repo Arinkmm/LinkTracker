@@ -1,9 +1,10 @@
 package backend.academy.linktracker.scrapper.client.bot.impl;
 
+import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
+// ВАЖНО: импортируем DTO из сгенерированного пакета (api-common)
 import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
-import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.exception.ApiException;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
@@ -21,10 +22,10 @@ public class BotGrpcClient implements BotClient {
     public void sendUpdate(LinkUpdate linkUpdate) {
         try {
             stub.sendUpdate(backend.academy.linktracker.grpc.LinkUpdate.newBuilder()
-                    .setId(linkUpdate.id())
-                    .setUrl(linkUpdate.url())
-                    .setDescription(linkUpdate.description())
-                    .addAllTgChatIds(linkUpdate.tgChatIds())
+                    .setId(linkUpdate.getId())
+                    .setUrl(linkUpdate.getUrl().toString())
+                    .setDescription(linkUpdate.getDescription())
+                    .addAllTgChatIds(linkUpdate.getTgChatIds())
                     .build());
         } catch (StatusRuntimeException e) {
             throw new ApiException(toApiError(e));
@@ -33,11 +34,14 @@ public class BotGrpcClient implements BotClient {
 
     private ApiErrorResponse toApiError(StatusRuntimeException e) {
         String description = e.getStatus().getDescription();
-        return new ApiErrorResponse(
-                description,
-                String.valueOf(e.getStatus().getCode().value()),
-                e.getClass().getSimpleName(),
-                e.getMessage(),
-                List.of());
+
+        ApiErrorResponse error = new ApiErrorResponse();
+        error.setDescription(description);
+        error.setCode(String.valueOf(e.getStatus().getCode().value()));
+        error.setExceptionName(e.getClass().getSimpleName());
+        error.setExceptionMessage(e.getMessage());
+        error.setStacktrace(List.of());
+
+        return error;
     }
 }

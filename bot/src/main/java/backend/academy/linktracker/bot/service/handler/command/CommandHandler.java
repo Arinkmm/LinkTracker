@@ -36,11 +36,11 @@ public class CommandHandler {
             log.atError()
                     .addKeyValue("id", id)
                     .addKeyValue("command", commandText)
-                    .addKeyValue("error_code", e.getApiError().code())
-                    .addKeyValue("description", e.getApiError().description())
+                    .addKeyValue("error_code", e.getApiError().getCode())
+                    .addKeyValue("description", e.getApiError().getDescription())
                     .log("Command failed");
 
-            telegramSender.sendMessage(id, e.getApiError().description());
+            telegramSender.sendMessage(id, e.getApiError().getDescription());
         }
         return true;
     }

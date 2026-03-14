@@ -2,12 +2,13 @@ package backend.academy.linktracker.bot.client.impl;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.ApiErrorResponse;
-import backend.academy.linktracker.bot.dto.LinkResponse;
-import backend.academy.linktracker.bot.dto.ListLinksResponse;
 import backend.academy.linktracker.bot.exception.ApiException;
 import backend.academy.linktracker.bot.service.mapper.GrpcMapper;
 import backend.academy.linktracker.grpc.*;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import io.grpc.StatusRuntimeException;
+import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -39,11 +40,11 @@ public class ScrapperGrpcClient implements ScrapperClient {
     }
 
     @Override
-    public LinkResponse addLink(Long id, String url, List<String> tags, List<String> filters) {
+    public LinkResponse addLink(Long id, URI url, List<String> tags, List<String> filters) {
         try {
             backend.academy.linktracker.grpc.LinkResponse r = blockingStub.addLink(AddLinkRequest.newBuilder()
                     .setTgChatId(id)
-                    .setLink(url)
+                    .setLink(url.toString())
                     .addAllTags(tags)
                     .addAllFilters(filters)
                     .build());
@@ -54,10 +55,12 @@ public class ScrapperGrpcClient implements ScrapperClient {
     }
 
     @Override
-    public LinkResponse removeLink(Long id, String url) {
+    public LinkResponse removeLink(Long id, URI url) {
         try {
-            backend.academy.linktracker.grpc.LinkResponse r = blockingStub.removeLink(
-                    RemoveLinkRequest.newBuilder().setTgChatId(id).setLink(url).build());
+            backend.academy.linktracker.grpc.LinkResponse r = blockingStub.removeLink(RemoveLinkRequest.newBuilder()
+                    .setTgChatId(id)
+                    .setLink(url.toString())
+                    .build());
             return mapper.fromProto(r);
         } catch (StatusRuntimeException e) {
             throw new ApiException(toApiError(e));
@@ -77,11 +80,14 @@ public class ScrapperGrpcClient implements ScrapperClient {
 
     private ApiErrorResponse toApiError(StatusRuntimeException e) {
         String description = e.getStatus().getDescription();
-        return new ApiErrorResponse(
-                description,
-                String.valueOf(e.getStatus().getCode().value()),
-                e.getClass().getSimpleName(),
-                e.getMessage(),
-                List.of());
+
+        ApiErrorResponse error = new ApiErrorResponse();
+        error.setDescription(description);
+        error.setCode(String.valueOf(e.getStatus().getCode().value()));
+        error.setExceptionName(e.getClass().getSimpleName());
+        error.setExceptionMessage(e.getMessage());
+        error.setStacktrace(List.of());
+
+        return error;
     }
 }

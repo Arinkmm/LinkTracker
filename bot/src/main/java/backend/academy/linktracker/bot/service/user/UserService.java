@@ -3,6 +3,7 @@ package backend.academy.linktracker.bot.service.user;
 import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.repository.UrlRepository;
 import backend.academy.linktracker.bot.repository.UserStateRepository;
+import java.net.URI;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,11 +22,11 @@ public class UserService {
         return userStateRepository.findById(id);
     }
 
-    public Optional<String> findUrlById(Long id) {
+    public Optional<URI> findUrlById(Long id) {
         return urlRepository.findById(id);
     }
 
-    public void saveUrl(Long id, String url) {
+    public void saveUrl(Long id, URI url) {
         urlRepository.save(id, url);
     }
 

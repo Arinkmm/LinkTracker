@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.repository.impl;
 
 import backend.academy.linktracker.bot.repository.UrlRepository;
+import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8,10 +9,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class InMemoryUrlRepository implements UrlRepository {
-    private final Map<Long, String> map = new ConcurrentHashMap<>();
+    private final Map<Long, URI> map = new ConcurrentHashMap<>();
 
     @Override
-    public void save(Long id, String url) {
+    public void save(Long id, URI url) {
         map.put(id, url);
     }
 
@@ -21,7 +22,7 @@ public class InMemoryUrlRepository implements UrlRepository {
     }
 
     @Override
-    public Optional<String> findById(Long id) {
+    public Optional<URI> findById(Long id) {
         return Optional.ofNullable(map.get(id));
     }
 }

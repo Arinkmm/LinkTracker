@@ -1,34 +1,56 @@
 package backend.academy.linktracker.scrapper.service.mapper;
 
-import backend.academy.linktracker.grpc.*;
 import backend.academy.linktracker.grpc.AddLinkRequest;
-import java.util.stream.Collectors;
+import backend.academy.linktracker.grpc.LinkResponse;
+import backend.academy.linktracker.grpc.ListLinksResponse;
+import backend.academy.linktracker.grpc.RemoveLinkRequest;
+import java.net.URI;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GrpcMapper {
     public backend.academy.linktracker.scrapper.dto.AddLinkRequest grpcToDto(AddLinkRequest grpc) {
-        return new backend.academy.linktracker.scrapper.dto.AddLinkRequest(
-                grpc.getLink(), grpc.getTagsList(), grpc.getFiltersList());
+        backend.academy.linktracker.scrapper.dto.AddLinkRequest dto =
+                new backend.academy.linktracker.scrapper.dto.AddLinkRequest();
+
+        dto.setLink(URI.create(grpc.getLink()));
+        dto.setTags(grpc.getTagsList());
+        dto.setFilters(grpc.getFiltersList());
+
+        return dto;
     }
 
     public backend.academy.linktracker.scrapper.dto.RemoveLinkRequest grpcToDto(RemoveLinkRequest grpc) {
-        return new backend.academy.linktracker.scrapper.dto.RemoveLinkRequest(grpc.getLink());
+        backend.academy.linktracker.scrapper.dto.RemoveLinkRequest dto =
+                new backend.academy.linktracker.scrapper.dto.RemoveLinkRequest();
+
+        dto.setLink(URI.create(grpc.getLink()));
+
+        return dto;
     }
 
     public LinkResponse dtoToGrpc(backend.academy.linktracker.scrapper.dto.LinkResponse dto) {
-        return LinkResponse.newBuilder()
-                .setId(dto.id())
-                .setUrl(dto.url())
-                .addAllTags(dto.tags())
-                .addAllFilters(dto.filters())
-                .build();
+        LinkResponse.Builder builder =
+                LinkResponse.newBuilder().setId(dto.getId()).setUrl(dto.getUrl().toString());
+
+        if (dto.getTags() != null) {
+            builder.addAllTags(dto.getTags());
+        }
+        if (dto.getFilters() != null) {
+            builder.addAllFilters(dto.getFilters());
+        }
+
+        return builder.build();
     }
 
     public ListLinksResponse dtoToGrpc(backend.academy.linktracker.scrapper.dto.ListLinksResponse dto) {
-        return ListLinksResponse.newBuilder()
-                .addAllLinks(dto.links().stream().map(this::dtoToGrpc).collect(Collectors.toList()))
-                .setSize(dto.size())
-                .build();
+        var builder = ListLinksResponse.newBuilder();
+
+        if (dto.getLinks() != null) {
+            builder.addAllLinks(dto.getLinks().stream().map(this::dtoToGrpc).toList());
+            builder.setSize(dto.getLinks().size());
+        }
+
+        return builder.build();
     }
 }

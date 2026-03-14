@@ -1,6 +1,6 @@
 package backend.academy.linktracker.scrapper.repository.impl;
 
-import backend.academy.linktracker.scrapper.dto.bot.UserDto;
+import backend.academy.linktracker.scrapper.dto.UserDto;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

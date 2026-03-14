@@ -35,6 +35,7 @@ public class CommandProperties {
         private String linkNotFound;
         private String linkIsEmpty;
         private String stateError;
+        private String invalidResponse;
     }
 
     @Getter
