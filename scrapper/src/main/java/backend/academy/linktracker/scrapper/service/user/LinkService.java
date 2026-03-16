@@ -1,15 +1,15 @@
 package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
-import backend.academy.linktracker.scrapper.dto.LinkDto; // Твой внутренний рекорд/класс
+import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
-import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,38 +19,50 @@ import org.springframework.stereotype.Service;
 public class LinkService {
     private final UserRepository userRepository;
     private final LinkRepository linkRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public LinkResponse addLink(Long id, AddLinkRequest request) {
-        if (!userRepository.exists(id)) {
+    public LinkResponse addLink(Long chatId, AddLinkRequest request) {
+        if (!userRepository.exists(chatId)) {
             throw new ChatNotFoundException();
         }
-        if (linkRepository.exists(id, request.getLink())) {
+
+        LinkDto link = linkRepository.getOrCreate(request.getLink(), request.getTags(), request.getFilters());
+
+        if (subscriptionRepository.exists(chatId, link.id())) {
             throw new LinkAlreadyTrackedException();
         }
 
-        LinkDto saved =
-                linkRepository.save(id, new LinkDto(id, request.getLink(), request.getTags(), null, Instant.EPOCH));
+        subscriptionRepository.add(chatId, link.id());
 
-        return mapToResponse(saved);
+        return mapToResponse(link);
     }
 
-    public LinkResponse removeLink(Long id, RemoveLinkRequest request) {
-        if (!userRepository.exists(id)) {
+    public LinkResponse removeLink(Long chatId, RemoveLinkRequest request) {
+        if (!userRepository.exists(chatId)) {
             throw new ChatNotFoundException();
         }
-        if (!linkRepository.exists(id, request.getLink())) {
-            throw new ChatNotFoundException();
-        }
-        LinkDto deleted = linkRepository.delete(id, request.getLink());
 
-        return mapToResponse(deleted);
+        LinkDto link = linkRepository.findByUrl(request.getLink());
+        if (link == null || !subscriptionRepository.exists(chatId, link.id())) {
+            throw new ChatNotFoundException();
+        }
+
+        subscriptionRepository.remove(chatId, link.id());
+
+        if (!subscriptionRepository.hasSubscribers(link.id())) {
+            linkRepository.remove(link.id());
+        }
+
+        return mapToResponse(link);
     }
 
-    public ListLinksResponse getLinks(Long id) {
-        if (!userRepository.exists(id)) {
+    public ListLinksResponse getLinks(Long chatId) {
+        if (!userRepository.exists(chatId)) {
             throw new ChatNotFoundException();
         }
-        List<LinkResponse> links = linkRepository.findByUserId(id).stream()
+
+        List<LinkResponse> links = subscriptionRepository.findLinksByUser(chatId).stream()
+                .map(linkRepository::findById)
                 .map(this::mapToResponse)
                 .toList();
 

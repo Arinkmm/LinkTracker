@@ -2,17 +2,18 @@ package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.exception.*;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class UserService {
-    private final LinkRepository linkRepository;
     private final UserRepository userRepository;
+    private final LinkRepository linkRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     public void registerChat(Long id) {
         if (userRepository.exists(id)) {
@@ -25,7 +26,17 @@ public class UserService {
         if (!userRepository.exists(id)) {
             throw new ChatNotFoundException();
         }
-        linkRepository.deleteAllById(id);
+
+        List<Long> userLinkIds = subscriptionRepository.findLinksByUser(id);
+
+        subscriptionRepository.removeUser(id);
+
+        userLinkIds.forEach(linkId -> {
+            if (!subscriptionRepository.hasSubscribers(linkId)) {
+                linkRepository.remove(linkId);
+            }
+        });
+
         userRepository.delete(id);
     }
 }

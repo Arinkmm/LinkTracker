@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.service.handler.command;
 
-import backend.academy.linktracker.bot.properties.CommandProperties;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UnknownCommandHandler {
     private final TelegramSender telegramSender;
-    private final CommandProperties properties;
+    private final MessagesProperties properties;
 
     public void handle(Long id) {
-        telegramSender.sendMessage(id, properties.getMessages().getUnknownCommand());
+        telegramSender.sendMessage(id, properties.getUnknownCommand());
     }
 }

@@ -2,6 +2,7 @@ package backend.academy.linktracker.scrapper.service.notifier;
 
 import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.time.Instant;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LinkChecker {
     private final LinkRepository linkRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final List<LinkTimeProvider> providers;
     private final BotNotifier botNotifier;
     private final NotificationBuilder builder;
@@ -28,8 +30,8 @@ public class LinkChecker {
         providers.stream()
                 .filter(provider -> provider.supports(link.url()))
                 .findFirst()
-                .map(provider -> provider.getCurrentTime(link.url()))
-                .filter(current -> current.isAfter(link.lastChecked()))
+                .flatMap(provider -> provider.getCurrentTime(link.url()))
+                .filter(current -> link.lastChecked() == null || current.isAfter(link.lastChecked()))
                 .ifPresent(current -> notifyAndUpdate(link, current));
     }
 
@@ -38,8 +40,12 @@ public class LinkChecker {
 
         String message = builder.buildMessage(link.url());
 
-        botNotifier.notify(link.id(), link.url(), message, List.of(link.id()));
+        List<Long> tgChatIds = subscriptionRepository.findUserIdsByLinkId(link.id());
 
-        linkRepository.save(link.id(), link.withLastChecked(newTime));
+        if (!tgChatIds.isEmpty()) {
+            botNotifier.notify(link.id(), link.url(), message, tgChatIds);
+        }
+
+        linkRepository.updateLastChecked(link.id(), newTime);
     }
 }

@@ -1,13 +1,12 @@
 package backend.academy.linktracker.scrapper;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
 import backend.academy.linktracker.scrapper.service.notifier.LinkChecker;
 import backend.academy.linktracker.scrapper.service.notifier.NotificationBuilder;
@@ -15,12 +14,12 @@ import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -32,48 +31,48 @@ class LinkCheckerTest {
     private LinkRepository linkRepository;
 
     @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
     private BotNotifier botNotifier;
 
     @Mock
     private NotificationBuilder notificationBuilder;
 
-    @Spy
-    private List<LinkTimeProvider> providers = List.of(mock(LinkTimeProvider.class));
+    @Mock
+    private LinkTimeProvider provider;
 
-    @InjectMocks
     private LinkChecker linkChecker;
 
+    @BeforeEach
+    void setUp() {
+        linkChecker = new LinkChecker(
+                linkRepository, subscriptionRepository, List.of(provider), botNotifier, notificationBuilder);
+    }
+
     @Test
-    @DisplayName("Сценарий: Обновление отправляется только пользователям с изменившейся ссылкой")
-    void checkAllLinks_SendsUpdatesOnlyToAffectedUsers() {
-        Instant now = Instant.now();
-        Instant oldTime = now.minusSeconds(1000);
-        Instant newTime = now.plusSeconds(1000);
+    @DisplayName("Сценарий: Время изменилось -> обновление и отправка уведомлений")
+    void checkAllLinks_WhenTimeChanged_UpdatesAndNotifies() {
+        Instant oldTime = Instant.now().minusSeconds(3600);
+        Instant newTime = Instant.now();
+        URI url = URI.create("https://github.com/user/repo");
+        Long linkId = 1L;
+        Long tgChatId = 12345L;
 
-        LinkDto linkWithUpdate =
-                new LinkDto(10L, URI.create("https://github.com/user/updated"), List.of(), List.of(), oldTime);
+        LinkDto link = new LinkDto(linkId, url, null, null, oldTime);
 
-        LinkDto linkWithoutUpdate =
-                new LinkDto(20L, URI.create("https://github.com/user/stable"), List.of(), List.of(), oldTime);
+        when(linkRepository.findAll()).thenReturn(List.of(link));
 
-        when(linkRepository.findAll()).thenReturn(List.of(linkWithUpdate, linkWithoutUpdate));
+        when(provider.supports(url)).thenReturn(true);
+        when(provider.getCurrentTime(url)).thenReturn(Optional.of(newTime));
 
-        LinkTimeProvider provider = providers.get(0);
-
-        when(provider.supports(linkWithUpdate.url())).thenReturn(true);
-        when(provider.getCurrentTime(linkWithUpdate.url())).thenReturn(newTime);
-
-        when(provider.supports(linkWithoutUpdate.url())).thenReturn(true);
-        when(provider.getCurrentTime(linkWithoutUpdate.url())).thenReturn(oldTime);
-
-        when(notificationBuilder.buildMessage(any(URI.class))).thenReturn("New Update!");
+        when(subscriptionRepository.findUserIdsByLinkId(linkId)).thenReturn(List.of(tgChatId));
+        when(notificationBuilder.buildMessage(url)).thenReturn("Link updated!");
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier).notify(eq(10L), eq(linkWithUpdate.url()), anyString(), anyList());
-        verify(linkRepository).save(eq(10L), argThat(link -> link.lastChecked().equals(newTime)));
+        verify(linkRepository).updateLastChecked(linkId, newTime);
 
-        verify(botNotifier, never()).notify(eq(20L), any(), anyString(), any());
-        verify(linkRepository, never()).save(eq(20L), any());
+        verify(botNotifier).notify(eq(tgChatId), eq(url), eq("Link updated!"), any());
     }
 }

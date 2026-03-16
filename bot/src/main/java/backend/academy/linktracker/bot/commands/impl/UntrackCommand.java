@@ -1,38 +1,35 @@
 package backend.academy.linktracker.bot.commands.impl;
 
-import backend.academy.linktracker.bot.commands.Command;
 import backend.academy.linktracker.bot.model.InternalCommand;
+import backend.academy.linktracker.bot.model.State;
 import backend.academy.linktracker.bot.properties.CommandProperties;
-import backend.academy.linktracker.bot.service.command.CommandExecutor;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
+import backend.academy.linktracker.bot.service.bot.TelegramSender;
+import backend.academy.linktracker.bot.service.user.UserService;
 import com.pengrad.telegrambot.model.Message;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
 @Component
-public class UntrackCommand implements Command {
-    private final CommandProperties commandProperties;
-    private final CommandExecutor commandExecutor;
+public class UntrackCommand extends AbstractCommand {
+    private final UserService userService;
+    private final TelegramSender telegramSender;
+    private final MessagesProperties messagesProperties;
 
-    @Override
-    public String command() {
-        return commandProperties
-                .getCommands()
-                .get(InternalCommand.UNTRACK.configKey)
-                .getName();
-    }
-
-    @Override
-    public String description() {
-        return commandProperties
-                .getCommands()
-                .get(InternalCommand.UNTRACK.configKey)
-                .getDescription();
+    public UntrackCommand(
+            CommandProperties commandProperties,
+            UserService userService,
+            TelegramSender telegramSender,
+            MessagesProperties messagesProperties) {
+        super(commandProperties, InternalCommand.UNTRACK.configKey);
+        this.userService = userService;
+        this.telegramSender = telegramSender;
+        this.messagesProperties = messagesProperties;
     }
 
     @Override
     public void handle(Message message) {
         Long id = message.chat().id();
-        commandExecutor.executeUntrack(id);
+        userService.saveState(id, State.WAITING_UNTRACKING_URL);
+        telegramSender.sendMessage(id, messagesProperties.getUntracking());
     }
 }

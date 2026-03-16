@@ -7,12 +7,13 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.ApiErrorResponse;
 import backend.academy.linktracker.bot.exception.ApiException;
 import backend.academy.linktracker.bot.model.State;
-import backend.academy.linktracker.bot.properties.CommandProperties;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
+import backend.academy.linktracker.bot.properties.ResponsesProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.handler.state.TrackStateHandler;
 import backend.academy.linktracker.bot.service.user.UserService;
 import backend.academy.linktracker.bot.util.TagsParser;
-import backend.academy.linktracker.bot.util.UrlValidator;
+import backend.academy.linktracker.bot.util.url.validator.UrlValidator;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +40,10 @@ class TrackCommandTest {
     private ScrapperClient scrapperClient;
 
     @Mock
-    private CommandProperties properties;
+    private MessagesProperties messagesProperties;
+
+    @Mock
+    private ResponsesProperties responsesProperties;
 
     @Mock
     private UrlValidator urlValidator;
@@ -50,16 +54,22 @@ class TrackCommandTest {
     @InjectMocks
     private TrackStateHandler trackStateHandler;
 
+    private final Long userId = 1L;
+
     @BeforeEach
     void setUp() {
-        CommandProperties.Messages messages = mock(CommandProperties.Messages.class);
-        when(properties.getMessages()).thenReturn(messages);
+        when(messagesProperties.getInvalidUrl()).thenReturn("Ссылка некорректна");
+        when(messagesProperties.getTagsOffer()).thenReturn("Хотите добавить теги?");
+        when(messagesProperties.getTagsPrompt()).thenReturn("Введите теги через запятую");
+        when(messagesProperties.getLinkAdded()).thenReturn("Ссылка успешно добавлена!");
+
+        when(responsesProperties.getNeededTags()).thenReturn("да");
+        when(responsesProperties.getNotNeededTags()).thenReturn("нет");
     }
 
     @Test
     @DisplayName("Сценарий 1: Корректная ссылка и теги -> Сохранение")
     void track_CorrectUrlAndTags_SavesToScrapper() {
-        Long userId = 1L;
         String urlString = "https://github.com/user/repo";
         URI uri = URI.create(urlString);
         String tagsText = "java, spring";
@@ -71,7 +81,7 @@ class TrackCommandTest {
         verify(userService).saveUrl(userId, uri);
         verify(userService).saveState(userId, State.NEEDED_TAGS);
 
-        trackStateHandler.handle(userId, "да", State.NEEDED_TAGS);
+        trackStateHandler.handle(userId, responsesProperties.getNeededTags(), State.NEEDED_TAGS);
         verify(userService).saveState(userId, State.WAITING_TAGS);
 
         when(userService.findUrlById(userId)).thenReturn(Optional.of(uri));
@@ -80,7 +90,6 @@ class TrackCommandTest {
         trackStateHandler.handle(userId, tagsText, State.WAITING_TAGS);
 
         verify(scrapperClient).addLink(eq(userId), eq(uri), eq(parsedTags), any());
-
         verify(userService).deleteUrl(userId);
         verify(userService).deleteState(userId);
     }
@@ -88,35 +97,29 @@ class TrackCommandTest {
     @Test
     @DisplayName("Сценарий 2: Некорректная ссылка -> Уведомление об ошибке")
     void track_InvalidUrl_NotifiesUser() {
-        Long userId = 1L;
-        String invalidUrl = "tbank://github.com/user/repo";
+        String invalidUrl = "bad-url";
 
-        when(properties.getMessages().getInvalidUrl()).thenReturn("Ссылка некорректна");
-        when(urlValidator.isValid(any(URI.class))).thenReturn(false);
+        when(urlValidator.isValid(any())).thenReturn(false);
 
         trackStateHandler.handle(userId, invalidUrl, State.WAITING_URL);
 
-        verify(telegramSender).sendMessage(userId, "Ссылка некорректна");
-
-        verify(userService, never()).saveUrl(anyLong(), any(URI.class));
+        verify(telegramSender).sendMessage(userId, messagesProperties.getInvalidUrl());
+        verify(userService, never()).saveUrl(any(), any());
     }
 
     @Test
-    @DisplayName("Сценарий 3: Ссылка уже отслеживается -> Ошибка ApiException")
+    @DisplayName("Сценарий 3: Ссылка уже отслеживается -> Conflict")
     void track_AlreadyTracked_ThrowsException() {
-        Long userId = 1L;
-        String urlString = "https://github.com/user/repo";
-        URI uri = URI.create(urlString);
-
+        URI uri = URI.create("https://github.com/user/repo");
         when(userService.findUrlById(userId)).thenReturn(Optional.of(uri));
 
         ApiErrorResponse error = new ApiErrorResponse();
         error.setCode("409");
-        error.setDescription("Conflict");
-        error.setExceptionMessage("Вы уже подписаны на эту ссылку");
 
-        doThrow(new ApiException(error)).when(scrapperClient).addLink(anyLong(), any(URI.class), any(), any());
+        doThrow(new ApiException(error)).when(scrapperClient).addLink(anyLong(), any(), any(), any());
 
-        assertThrows(ApiException.class, () -> trackStateHandler.handle(userId, "нет", State.NEEDED_TAGS));
+        assertThrows(
+                ApiException.class,
+                () -> trackStateHandler.handle(userId, responsesProperties.getNotNeededTags(), State.NEEDED_TAGS));
     }
 }

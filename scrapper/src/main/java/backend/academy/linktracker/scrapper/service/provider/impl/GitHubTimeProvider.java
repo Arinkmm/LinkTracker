@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.client.github.GitHubClient;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ public class GitHubTimeProvider implements LinkTimeProvider {
     }
 
     @Override
-    public Instant getCurrentTime(URI url) {
+    public Optional<Instant> getCurrentTime(URI url) {
         try {
             String[] parts = parseRepo(url);
             String owner = parts[0];
@@ -34,14 +35,14 @@ public class GitHubTimeProvider implements LinkTimeProvider {
 
             log.atDebug().addKeyValue("owner", owner).addKeyValue("repo", repo).log("Fetching GitHub repo time");
 
-            return client.getRepository(owner, repo).updatedAt();
+            return Optional.ofNullable(client.getRepository(owner, repo).updatedAt());
         } catch (Exception e) {
             log.atWarn()
                     .addKeyValue("url", url)
                     .addKeyValue("error", e.getClass().getSimpleName())
                     .log("Failed to get GitHub time");
 
-            return Instant.EPOCH;
+            return Optional.empty();
         }
     }
 

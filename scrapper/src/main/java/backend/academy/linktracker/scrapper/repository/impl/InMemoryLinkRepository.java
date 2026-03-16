@@ -3,50 +3,53 @@ package backend.academy.linktracker.scrapper.repository.impl;
 import backend.academy.linktracker.scrapper.dto.LinkDto;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class InMemoryLinkRepository implements LinkRepository {
-
-    private final Map<Long, List<LinkDto>> map = new ConcurrentHashMap<>();
+    private final Map<Long, LinkDto> links = new ConcurrentHashMap<>();
+    private final Map<URI, Long> urlToId = new ConcurrentHashMap<>();
+    private final AtomicLong idGenerator = new AtomicLong(1);
 
     @Override
-    public LinkDto save(Long id, LinkDto linkDto) {
-        LinkDto link = new LinkDto(id, linkDto.url(), linkDto.tags(), linkDto.filters(), linkDto.lastChecked());
-        map.computeIfAbsent(id, k -> new ArrayList<>()).add(link);
-        return link;
+    public LinkDto getOrCreate(URI url, List<String> tags, List<String> filters) {
+        Long id = urlToId.computeIfAbsent(url, u -> {
+            long newId = idGenerator.getAndIncrement();
+            links.put(newId, new LinkDto(newId, u, tags, filters, null));
+            return newId;
+        });
+        return links.get(id);
     }
 
     @Override
-    public List<LinkDto> findByUserId(Long id) {
-        return map.getOrDefault(id, List.of());
+    public LinkDto findById(Long id) {
+        return links.get(id);
     }
 
     @Override
-    public boolean exists(Long id, URI url) {
-        return findByUserId(id).stream().anyMatch(l -> l.url().equals(url));
+    public LinkDto findByUrl(URI url) {
+        Long id = urlToId.get(url);
+        return id != null ? links.get(id) : null;
     }
 
     @Override
-    public LinkDto delete(Long id, URI url) {
-        List<LinkDto> links = map.getOrDefault(id, new ArrayList<>());
-        LinkDto found =
-                links.stream().filter(l -> l.url().equals(url)).findFirst().orElseThrow();
-        links.remove(found);
-        return found;
-    }
-
-    @Override
-    public void deleteAllById(Long id) {
-        map.remove(id);
+    public void remove(Long id) {
+        LinkDto removed = links.remove(id);
+        if (removed != null) urlToId.remove(removed.url());
     }
 
     @Override
     public List<LinkDto> findAll() {
-        return map.values().stream().flatMap(List::stream).toList();
+        return List.copyOf(links.values());
+    }
+
+    @Override
+    public void updateLastChecked(Long id, Instant newTime) {
+        links.computeIfPresent(id, (k, v) -> v.withLastChecked(newTime));
     }
 }

@@ -1,33 +1,31 @@
 package backend.academy.linktracker.bot.commands.impl;
 
-import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
-import backend.academy.linktracker.bot.service.command.CommandExecutor;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
+import backend.academy.linktracker.bot.service.bot.TelegramSender;
+import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import com.pengrad.telegrambot.model.Message;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
 @Component
-public class ListCommand implements Command {
-    private final CommandProperties commandProperties;
-    private final CommandExecutor commandExecutor;
+public class ListCommand extends AbstractCommand {
+    private final ScrapperClient client;
+    private final TelegramSender telegramSender;
+    private final MessagesProperties messagesProperties;
 
-    @Override
-    public String command() {
-        return commandProperties
-                .getCommands()
-                .get(InternalCommand.LIST.configKey)
-                .getName();
-    }
-
-    @Override
-    public String description() {
-        return commandProperties
-                .getCommands()
-                .get(InternalCommand.LIST.configKey)
-                .getDescription();
+    public ListCommand(
+            CommandProperties commandProperties,
+            ScrapperClient scrapperClient,
+            TelegramSender telegramSender,
+            MessagesProperties messagesProperties) {
+        super(commandProperties, InternalCommand.LIST.configKey);
+        this.client = scrapperClient;
+        this.telegramSender = telegramSender;
+        this.messagesProperties = messagesProperties;
     }
 
     @Override
@@ -38,6 +36,31 @@ public class ListCommand implements Command {
         String[] parts = text.split(" ", 2);
         String tag = parts.length > 1 ? parts[1] : null;
 
-        commandExecutor.executeList(id, tag);
+        ListLinksResponse response = client.getLinks(id);
+        List<LinkResponse> links = (response != null) ? response.getLinks() : null;
+
+        if (tag != null && links != null) {
+            links = links.stream()
+                    .filter(link -> link.getTags() != null && link.getTags().contains(tag))
+                    .toList();
+        }
+
+        if (links == null || links.isEmpty()) {
+            telegramSender.sendMessage(id, messagesProperties.getLinkIsEmpty());
+            return;
+        }
+
+        StringBuilder list = new StringBuilder(messagesProperties.getLinks() + "\n");
+        for (int i = 0; i < links.size(); i++) {
+            LinkResponse link = links.get(i);
+            list.append(i + 1)
+                    .append(". ")
+                    .append(link.getUrl())
+                    .append(" [")
+                    .append(link.getTags() != null ? String.join(", ", link.getTags()) : "")
+                    .append("]")
+                    .append("\n");
+        }
+        telegramSender.sendMessage(id, list.toString());
     }
 }

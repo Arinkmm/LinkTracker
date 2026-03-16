@@ -57,9 +57,6 @@ public class GlobalExceptionHandler {
     }
 
     private List<String> getStackTrace(Exception e) {
-        return Arrays.stream(e.getStackTrace())
-                .map(StackTraceElement::toString)
-                .limit(10)
-                .toList();
+        return Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).toList();
     }
 }

@@ -2,12 +2,13 @@ package backend.academy.linktracker.bot.configuration;
 
 import backend.academy.linktracker.bot.dto.ApiErrorResponse;
 import backend.academy.linktracker.bot.exception.ApiException;
-import backend.academy.linktracker.bot.properties.CommandProperties;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
 import backend.academy.linktracker.grpc.ScrapperServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ManagedChannelBuilder;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -16,9 +17,10 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.RestClient;
 
 @Configuration
+@Slf4j
 @RequiredArgsConstructor
 public class HttpConfiguration {
-    private final CommandProperties commandProperties;
+    private final MessagesProperties properties;
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -32,19 +34,17 @@ public class HttpConfiguration {
                 .baseUrl(url)
                 .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
                     String rawBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                    ApiErrorResponse error;
                     try {
-                        ApiErrorResponse error = objectMapper.readValue(rawBody, ApiErrorResponse.class);
-                        throw new ApiException(error);
+                        error = objectMapper.readValue(rawBody, ApiErrorResponse.class);
                     } catch (Exception e) {
-                        ApiErrorResponse fallbackError = new ApiErrorResponse();
-                        fallbackError.setCode(
-                                String.valueOf(response.getStatusCode().value()));
-                        fallbackError.setDescription(
-                                commandProperties.getMessages().getInvalidResponse());
-                        fallbackError.setExceptionMessage(rawBody);
+                        log.error("Failed to parse Scrapper error response: {}", rawBody, e);
 
-                        throw new ApiException(fallbackError);
+                        error = new ApiErrorResponse();
+                        error.setCode(String.valueOf(response.getStatusCode().value()));
+                        error.setDescription(properties.getInvalidResponse());
                     }
+                    throw new ApiException(error);
                 })
                 .build();
     }

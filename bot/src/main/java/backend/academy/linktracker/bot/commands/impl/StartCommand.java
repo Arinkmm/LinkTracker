@@ -1,40 +1,34 @@
 package backend.academy.linktracker.bot.commands.impl;
 
-import backend.academy.linktracker.bot.commands.Command;
+import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
-import backend.academy.linktracker.bot.service.command.CommandExecutor;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
+import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import com.pengrad.telegrambot.model.Message;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
-public class StartCommand implements Command {
-    private final CommandExecutor commandExecutor;
-    private final CommandProperties commandProperties;
+public class StartCommand extends AbstractCommand {
+    private final ScrapperClient scrapperClient;
+    private final TelegramSender telegramSender;
+    private final MessagesProperties messagesProperties;
 
-    @Override
-    public String command() {
-        return commandProperties
-                .getCommands()
-                .get(InternalCommand.START.configKey)
-                .getName();
-    }
-
-    @Override
-    public String description() {
-        return commandProperties
-                .getCommands()
-                .get(InternalCommand.START.configKey)
-                .getDescription();
+    public StartCommand(
+            CommandProperties commandProperties,
+            ScrapperClient scrapperClient,
+            TelegramSender telegramSender,
+            MessagesProperties messagesProperties) {
+        super(commandProperties, InternalCommand.START.configKey);
+        this.scrapperClient = scrapperClient;
+        this.telegramSender = telegramSender;
+        this.messagesProperties = messagesProperties;
     }
 
     @Override
     public void handle(Message message) {
         Long id = message.chat().id();
-        commandExecutor.executeStart(id);
+        scrapperClient.registerChat(id);
+        telegramSender.sendMessage(id, messagesProperties.getWelcome());
     }
 }

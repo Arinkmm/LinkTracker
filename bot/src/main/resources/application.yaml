@@ -10,7 +10,7 @@ spring:
 
 app:
   client:
-    type: grpc
+    type: http
   scrapper:
     url: "http://localhost:8081"
   grpc:
@@ -63,3 +63,6 @@ bot:
     cancel:
       name: "/cancel"
       description: "Отменить действие"
+  responses:
+    needed-tags: "да"
+    not-needed-tags: "нет"

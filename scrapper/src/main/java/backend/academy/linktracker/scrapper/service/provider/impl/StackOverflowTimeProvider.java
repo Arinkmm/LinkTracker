@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowCl
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,23 +24,23 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
     }
 
     @Override
-    public Instant getCurrentTime(URI url) {
+    public Optional<Instant> getCurrentTime(URI url) {
         try {
             String questionId = extractQuestionId(url);
             if (questionId == null) {
-                return Instant.EPOCH;
+                return Optional.empty();
             }
 
             log.atDebug().addKeyValue("question_id", questionId).log("Fetching StackOverflow last activity");
 
-            return client.getQuestion(questionId).lastActivity();
+            return Optional.ofNullable(client.getQuestion(questionId).lastActivity());
         } catch (Exception e) {
             log.atWarn()
                     .addKeyValue("url", url)
                     .addKeyValue("error", e.getClass().getSimpleName())
                     .log("Failed to get StackOverflow time");
 
-            return Instant.EPOCH;
+            return Optional.empty();
         }
     }
 

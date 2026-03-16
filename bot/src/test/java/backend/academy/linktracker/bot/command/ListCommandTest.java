@@ -5,13 +5,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.commands.impl.ListCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
-import backend.academy.linktracker.bot.service.command.CommandExecutor;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.Message;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,23 +39,32 @@ class ListCommandTest {
     @Mock
     private CommandProperties commandProperties;
 
+    @Mock
+    private MessagesProperties messagesProperties;
+
     @InjectMocks
-    private CommandExecutor commandExecutor;
+    private ListCommand listCommand;
 
     private final Long chatId = 12345L;
 
     @BeforeEach
     void setUp() {
-        CommandProperties.Messages messages = mock(CommandProperties.Messages.class);
-        when(commandProperties.getMessages()).thenReturn(messages);
+        CommandProperties.CommandInfo listInfo = new CommandProperties.CommandInfo();
+        listInfo.setName("/list");
+        listInfo.setDescription("Показать список ссылок");
 
-        when(messages.getLinkIsEmpty()).thenReturn("Ссылок не обнаружено");
-        when(messages.getLinks()).thenReturn("Ваши ссылки: ");
+        Map<String, CommandProperties.CommandInfo> commandMap = new HashMap<>();
+        commandMap.put("list", listInfo);
+
+        when(commandProperties.getCommands()).thenReturn(commandMap);
+
+        when(messagesProperties.getLinkIsEmpty()).thenReturn("Ссылок не обнаружено");
+        when(messagesProperties.getLinks()).thenReturn("Ваши ссылки:");
     }
 
     @Test
     @DisplayName("Сценарий: /list при наличии подписок -> вывод списка")
-    void executeList_WithSubscriptions_SendsFormattedList() {
+    void handle_WithSubscriptions_SendsFormattedList() {
         LinkResponse link1 = new LinkResponse();
         link1.setId(1L);
         link1.setUrl(URI.create("https://github.com/user/repo1"));
@@ -63,10 +77,16 @@ class ListCommandTest {
 
         ListLinksResponse listResponse = new ListLinksResponse();
         listResponse.setLinks(List.of(link1, link2));
+        listResponse.setSize(2);
+
+        Message message = mock(Message.class);
+        Chat chat = mock(Chat.class);
+        when(message.chat()).thenReturn(chat);
+        when(chat.id()).thenReturn(chatId);
 
         when(scrapperClient.getLinks(chatId)).thenReturn(listResponse);
 
-        commandExecutor.executeList(chatId, null);
+        listCommand.handle(message);
 
         verify(telegramSender).sendMessage(eq(chatId), contains("Ваши ссылки:"));
         verify(telegramSender).sendMessage(eq(chatId), contains("https://github.com/user/repo1"));
@@ -75,19 +95,26 @@ class ListCommandTest {
 
     @Test
     @DisplayName("Сценарий: /list без подписок -> сообщение о пустом списке")
-    void executeList_NoSubscriptions_SendsEmptyMessage() {
+    void handle_NoSubscriptions_SendsEmptyMessage() {
         ListLinksResponse emptyResponse = new ListLinksResponse();
         emptyResponse.setLinks(List.of());
+        emptyResponse.setSize(0);
+
+        Message message = mock(Message.class);
+        Chat chat = mock(Chat.class);
+        when(message.chat()).thenReturn(chat);
+        when(chat.id()).thenReturn(chatId);
 
         when(scrapperClient.getLinks(chatId)).thenReturn(emptyResponse);
 
-        commandExecutor.executeList(chatId, null);
+        listCommand.handle(message);
+
         verify(telegramSender).sendMessage(chatId, "Ссылок не обнаружено");
     }
 
     @Test
     @DisplayName("Сценарий: /list <tag> -> фильтрация списка по тегу")
-    void executeList_WithTagFilter_SendsOnlyMatchingLinks() {
+    void handle_WithTagFilter_SendsOnlyMatchingLinks() {
         LinkResponse javaLink = new LinkResponse();
         javaLink.setId(1L);
         javaLink.setUrl(URI.create("https://github.com/user/java-repo"));
@@ -100,12 +127,20 @@ class ListCommandTest {
 
         ListLinksResponse listResponse = new ListLinksResponse();
         listResponse.setLinks(List.of(javaLink, goLink));
+        listResponse.setSize(2);
+
+        Message message = mock(Message.class);
+        Chat chat = mock(Chat.class);
+        when(message.chat()).thenReturn(chat);
+        when(chat.id()).thenReturn(chatId);
+        when(message.text()).thenReturn("/list java");
 
         when(scrapperClient.getLinks(chatId)).thenReturn(listResponse);
 
-        commandExecutor.executeList(chatId, "java");
+        listCommand.handle(message);
 
-        verify(telegramSender).sendMessage(eq(chatId), contains("java"));
+        verify(telegramSender).sendMessage(eq(chatId), contains("java-repo"));
+
         verify(telegramSender, never()).sendMessage(eq(chatId), contains("go-repo"));
     }
 }

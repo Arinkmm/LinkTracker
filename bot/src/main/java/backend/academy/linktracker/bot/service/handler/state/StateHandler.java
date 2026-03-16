@@ -2,22 +2,38 @@ package backend.academy.linktracker.bot.service.handler.state;
 
 import backend.academy.linktracker.bot.exception.ApiException;
 import backend.academy.linktracker.bot.model.State;
-import backend.academy.linktracker.bot.properties.CommandProperties;
+import backend.academy.linktracker.bot.properties.MessagesProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.bot.service.user.UserService;
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class StateHandler {
+    private final Map<State, StateProcessor> processorMap;
     private final UserService userService;
-    private final TrackStateHandler trackHandler;
-    private final UntrackStateHandler untrackHandler;
     private final TelegramSender telegramSender;
-    private final CommandProperties properties;
+    private final MessagesProperties properties;
+
+    public StateHandler(
+            List<StateProcessor> stateProcessors,
+            UserService userService,
+            TelegramSender telegramSender,
+            MessagesProperties properties) {
+        this.processorMap = new HashMap<>();
+        for (StateProcessor processor : stateProcessors) {
+            for (State state : processor.getSupportedStates()) {
+                processorMap.put(state, processor);
+            }
+        }
+        this.userService = userService;
+        this.telegramSender = telegramSender;
+        this.properties = properties;
+    }
 
     public boolean hasState(Long id) {
         return userService.findStateById(id).filter(s -> s != State.OK).isPresent();
@@ -33,10 +49,11 @@ public class StateHandler {
                 .log("Processing State Machine state");
 
         try {
-            switch (state) {
-                case WAITING_URL, NEEDED_TAGS, WAITING_TAGS -> trackHandler.handle(id, text, state);
-                case WAITING_UNTRACKING_URL -> untrackHandler.handle(id, text);
-                default -> handleUnknownState(id);
+            StateProcessor processor = processorMap.get(state);
+            if (processor != null) {
+                processor.handle(id, text, state);
+            } else {
+                handleUnknownState(id);
             }
         } catch (ApiException e) {
             log.atError()
@@ -53,7 +70,7 @@ public class StateHandler {
     }
 
     private void handleUnknownState(Long id) {
-        telegramSender.sendMessage(id, properties.getMessages().getStateError());
+        telegramSender.sendMessage(id, properties.getStateError());
         userService.deleteState(id);
     }
 }
