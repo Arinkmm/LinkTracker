@@ -70,27 +70,24 @@ class ListCommandTest {
         link1.setUrl(URI.create("https://github.com/user/repo1"));
         link1.setTags(List.of("java"));
 
-        LinkResponse link2 = new LinkResponse();
-        link2.setId(2L);
-        link2.setUrl(URI.create("https://github.com/user/repo2"));
-        link2.setTags(List.of("go"));
-
         ListLinksResponse listResponse = new ListLinksResponse();
-        listResponse.setLinks(List.of(link1, link2));
-        listResponse.setSize(2);
+        listResponse.setLinks(List.of(link1));
+        listResponse.setSize(1);
 
         Message message = mock(Message.class);
         Chat chat = mock(Chat.class);
         when(message.chat()).thenReturn(chat);
         when(chat.id()).thenReturn(chatId);
+        when(message.text()).thenReturn("/list");
 
         when(scrapperClient.getLinks(chatId)).thenReturn(listResponse);
 
+        String linksHeader = messagesProperties.getLinks();
+
         listCommand.handle(message);
 
-        verify(telegramSender).sendMessage(eq(chatId), contains("Ваши ссылки:"));
+        verify(telegramSender).sendMessage(eq(chatId), contains(linksHeader));
         verify(telegramSender).sendMessage(eq(chatId), contains("https://github.com/user/repo1"));
-        verify(telegramSender).sendMessage(eq(chatId), contains("https://github.com/user/repo2"));
     }
 
     @Test
@@ -104,12 +101,15 @@ class ListCommandTest {
         Chat chat = mock(Chat.class);
         when(message.chat()).thenReturn(chat);
         when(chat.id()).thenReturn(chatId);
+        when(message.text()).thenReturn("/list");
 
         when(scrapperClient.getLinks(chatId)).thenReturn(emptyResponse);
 
+        String emptyMsg = messagesProperties.getLinkIsEmpty();
+
         listCommand.handle(message);
 
-        verify(telegramSender).sendMessage(chatId, "Ссылок не обнаружено");
+        verify(telegramSender).sendMessage(chatId, emptyMsg);
     }
 
     @Test

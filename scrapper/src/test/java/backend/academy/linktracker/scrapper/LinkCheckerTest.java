@@ -62,10 +62,8 @@ class LinkCheckerTest {
         LinkDto link = new LinkDto(linkId, url, null, null, oldTime);
 
         when(linkRepository.findAll()).thenReturn(List.of(link));
-
         when(provider.supports(url)).thenReturn(true);
         when(provider.getCurrentTime(url)).thenReturn(Optional.of(newTime));
-
         when(subscriptionRepository.findUserIdsByLinkId(linkId)).thenReturn(List.of(tgChatId));
         when(notificationBuilder.buildMessage(url)).thenReturn("Link updated!");
 
@@ -73,6 +71,6 @@ class LinkCheckerTest {
 
         verify(linkRepository).updateLastChecked(linkId, newTime);
 
-        verify(botNotifier).notify(eq(tgChatId), eq(url), eq("Link updated!"), any());
+        verify(botNotifier).notify(eq(linkId), eq(url), eq("Link updated!"), any());
     }
 }

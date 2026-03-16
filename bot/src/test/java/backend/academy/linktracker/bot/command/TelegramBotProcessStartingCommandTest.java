@@ -94,32 +94,36 @@ class TelegramBotProcessStartingCommandTest {
     @DisplayName("Успешный /start: регистрация и приветствие")
     void startScenario() {
         Update update = createStubUpdate("/start", CHAT_ID);
+        String welcome = messagesProperties.getWelcome();
 
         handler.process(update);
 
         verify(scrapperClient).registerChat(CHAT_ID);
-        verify(telegramSender).sendMessage(eq(CHAT_ID), eq(messagesProperties.getWelcome()));
+        verify(telegramSender).sendMessage(eq(CHAT_ID), eq(welcome));
     }
 
     @Test
     @DisplayName("Вызов /help возвращает заголовок помощи")
     void helpScenario() {
         Update update = createStubUpdate("/help", CHAT_ID);
+        String helpHeader = messagesProperties.getHelpHeader();
+        String welcome = messagesProperties.getWelcome();
 
         handler.process(update);
 
-        verify(telegramSender).sendMessage(eq(CHAT_ID), contains(messagesProperties.getHelpHeader()));
-        verify(telegramSender, never()).sendMessage(eq(CHAT_ID), eq(messagesProperties.getWelcome()));
+        verify(telegramSender).sendMessage(eq(CHAT_ID), contains(helpHeader));
+        verify(telegramSender, never()).sendMessage(eq(CHAT_ID), eq(welcome));
     }
 
     @Test
     @DisplayName("Ввод неизвестного текста вызывает UnknownCommandHandler")
     void unknownCommandScenario() {
         Update update = createStubUpdate("просто текст", CHAT_ID);
+        String unknown = messagesProperties.getUnknownCommand();
 
         handler.process(update);
 
-        verify(telegramSender).sendMessage(eq(CHAT_ID), eq(messagesProperties.getUnknownCommand()));
+        verify(telegramSender).sendMessage(eq(CHAT_ID), eq(unknown));
     }
 
     private Update createStubUpdate(String text, Long chatId) {
