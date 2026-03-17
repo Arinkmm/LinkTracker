@@ -10,7 +10,7 @@ spring:
 
 app:
   client:
-    type: http
+    type: grpc
   scrapper:
     url: "http://localhost:8081"
   grpc:

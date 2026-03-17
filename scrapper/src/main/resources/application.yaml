@@ -10,7 +10,7 @@ spring:
 
 app:
   client:
-    type: http
+    type: grpc
   bot:
     url: "http://localhost:8080"
   grpc:

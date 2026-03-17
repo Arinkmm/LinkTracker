@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "bot.commands")
+@ConfigurationProperties(prefix = "bot")
 public class CommandProperties {
     private Map<String, CommandInfo> commands = new HashMap<>();
 
