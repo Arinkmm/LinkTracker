@@ -2,6 +2,7 @@ package backend.academy.linktracker.bot.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import backend.academy.linktracker.bot.configuration.TestcontainersConfiguration;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import java.net.URI;
 import java.util.List;
@@ -18,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(TestcontainersConfiguration.class)
