@@ -7,8 +7,10 @@ import backend.academy.linktracker.scrapper.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
@@ -27,16 +29,13 @@ public class UserService {
             throw new ChatNotFoundException();
         }
 
-        List<Long> userLinkIds = subscriptionRepository.findLinksByUser(id);
-
-        subscriptionRepository.removeUser(id);
-
-        userLinkIds.forEach(linkId -> {
-            if (!subscriptionRepository.hasSubscribers(linkId)) {
-                linkRepository.remove(linkId);
-            }
-        });
+        List<Long> deletingLinkIds = subscriptionRepository.findLinkIdByUserId(id).stream()
+                .filter(linkId ->
+                        subscriptionRepository.findUserIdByLinkId(linkId).size() == 1)
+                .toList();
 
         userRepository.delete(id);
+
+        deletingLinkIds.forEach(linkRepository::remove);
     }
 }

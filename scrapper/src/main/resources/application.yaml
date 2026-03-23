@@ -4,17 +4,23 @@ server:
 spring:
   application:
     name: scrapper
-  grpc:
-    server:
-      port: 9090
+  datasource:
+    driver-class-name: ${DB_DRIVER}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/${DB_NAME}}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
 app:
+  db:
+    access-type: orm
+  pagination:
+    default-page-size: 20
   client:
-    type: grpc
+    type: http
   bot:
-    url: "http://localhost:8080"
+    url: ${APP_BOT_URL:http://localhost:8080}
   grpc:
-    host: localhost
+    host: ${APP_GRPC_HOST:localhost}
     port: 9091
 
   stackoverflow:
@@ -34,4 +40,3 @@ errors:
 
 scheduler:
   interval: 60000
-

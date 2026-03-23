@@ -3,7 +3,9 @@ package backend.academy.linktracker.bot.util.url.validator.impl;
 import backend.academy.linktracker.bot.util.url.validator.SpecificUrlValidator;
 import java.net.URI;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Component;
 
+@Component
 public class GitHubValidator implements SpecificUrlValidator {
     private static final Pattern GITHUB_PATH = Pattern.compile("^/[a-zA-Z0-9\\-_.]+/[a-zA-Z0-9\\-_.]+(/.*)?$");
 

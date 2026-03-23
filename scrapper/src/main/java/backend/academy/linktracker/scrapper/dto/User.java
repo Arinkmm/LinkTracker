@@ -1,3 +1,3 @@
 package backend.academy.linktracker.scrapper.dto;
 
-public record UserDto(Long id) {}
+public record User(Long id) {}

@@ -1,20 +1,21 @@
 package backend.academy.linktracker.scrapper.repository;
 
-import backend.academy.linktracker.scrapper.dto.LinkDto;
+import backend.academy.linktracker.scrapper.dto.Link;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface LinkRepository {
-    LinkDto getOrCreate(URI url, List<String> tags, List<String> filters);
+    Link save(URI url);
 
-    LinkDto findById(Long id);
+    List<Link> findByIds(List<Long> ids);
 
-    LinkDto findByUrl(URI url);
+    Optional<Link> findByUrl(URI url);
 
     void remove(Long id);
 
-    List<LinkDto> findAll();
+    List<Link> findStaleLinks(Instant threshold, int page, int size);
 
     void updateLastChecked(Long id, Instant newTime);
 }

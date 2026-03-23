@@ -1,10 +1,11 @@
-package backend.academy.linktracker.scrapper;
+package backend.academy.linktracker.scrapper.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import backend.academy.linktracker.scrapper.dto.LinkDto;
+import backend.academy.linktracker.scrapper.dto.Link;
+import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
@@ -42,12 +43,20 @@ class LinkCheckerTest {
     @Mock
     private LinkTimeProvider provider;
 
+    @Mock
+    private SchedulerProperties properties;
+
     private LinkChecker linkChecker;
 
     @BeforeEach
     void setUp() {
         linkChecker = new LinkChecker(
-                linkRepository, subscriptionRepository, List.of(provider), botNotifier, notificationBuilder);
+                linkRepository,
+                subscriptionRepository,
+                List.of(provider),
+                properties,
+                botNotifier,
+                notificationBuilder);
     }
 
     @Test
@@ -59,18 +68,19 @@ class LinkCheckerTest {
         Long linkId = 1L;
         Long tgChatId = 12345L;
 
-        LinkDto link = new LinkDto(linkId, url, null, null, oldTime);
+        Link link = new Link(linkId, url, oldTime);
 
-        when(linkRepository.findAll()).thenReturn(List.of(link));
+        when(linkRepository.findStaleLinks(any(Instant.class), eq(0), eq(100))).thenReturn(List.of(link));
+        when(linkRepository.findStaleLinks(any(Instant.class), eq(1), eq(100))).thenReturn(List.of());
+
         when(provider.supports(url)).thenReturn(true);
         when(provider.getCurrentTime(url)).thenReturn(Optional.of(newTime));
-        when(subscriptionRepository.findUserIdsByLinkId(linkId)).thenReturn(List.of(tgChatId));
+        when(subscriptionRepository.findUserIdByLinkId(linkId)).thenReturn(List.of(tgChatId));
         when(notificationBuilder.buildMessage(url)).thenReturn("Link updated!");
 
         linkChecker.checkAllLinks();
 
         verify(linkRepository).updateLastChecked(linkId, newTime);
-
         verify(botNotifier).notify(eq(linkId), eq(url), eq("Link updated!"), any());
     }
 }

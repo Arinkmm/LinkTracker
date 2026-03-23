@@ -10,11 +10,11 @@ spring:
 
 app:
   client:
-    type: grpc
+    type: http
   scrapper:
-    url: "http://localhost:8081"
+    url: ${APP_SCRAPPER_URL:http://localhost:8081}
   grpc:
-    host: localhost
+    host: ${APP_GRPC_HOST:localhost}
     port: 9090
   telegram:
     url: https://api.telegram.org/bot

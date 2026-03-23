@@ -1,19 +1,26 @@
 package backend.academy.linktracker.scrapper.repository;
 
+import backend.academy.linktracker.scrapper.dto.Subscription;
 import java.util.List;
 
 public interface SubscriptionRepository {
-    void add(Long userId, Long linkId);
+    void save(Long userId, Long linkId, List<String> tags);
 
     void remove(Long userId, Long linkId);
 
-    List<Long> findLinksByUser(Long userId);
+    List<Long> findUserIdByLinkId(Long linkId);
 
-    List<Long> findUserIdsByLinkId(Long linkId);
+    boolean exists(Long linkId, Long userId);
 
-    void removeUser(Long userId);
+    List<Subscription> findSubscriptionByUserId(Long userId, int page, int size);
 
-    boolean exists(Long userId, Long linkId);
+    List<Long> findLinkIdByUserId(Long userId);
 
-    boolean hasSubscribers(Long linkId);
+    void saveTag(Long userId, Long linkId, String tag);
+
+    void removeTag(Long userId, Long linkId, String tag);
+
+    List<String> findTags(Long userId, Long linkId);
+
+    void updateTags(Long userId, Long linkId, List<String> tags);
 }

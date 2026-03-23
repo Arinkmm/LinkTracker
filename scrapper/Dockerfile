@@ -1,3 +1,19 @@
+FROM maven:3.9-eclipse-temurin-25 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY ai-agent/pom.xml ai-agent/pom.xml
+COPY api-common/pom.xml api-common/pom.xml
+COPY bot/pom.xml bot/pom.xml
+COPY build-report-aggregate/pom.xml build-report-aggregate/pom.xml
+COPY scrapper/pom.xml scrapper/pom.xml
+RUN mvn dependency:go-offline -pl scrapper -am
+COPY ai-agent/src ai-agent/src
+COPY api-common/src api-common/src
+COPY scrapper/src scrapper/src
+COPY bot/src bot/src
+RUN mvn package -pl scrapper -DskipTests
+
 FROM eclipse-temurin:25-jre
-COPY app.jar app.jar
+WORKDIR /app
+COPY --from=build /app/scrapper/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
