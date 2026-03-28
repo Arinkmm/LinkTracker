@@ -9,9 +9,9 @@ import backend.academy.linktracker.scrapper.dto.Subscription;
 import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.properties.DBProperties;
+import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
-import backend.academy.linktracker.scrapper.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,16 +21,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class LinkService {
-    private final UserRepository userRepository;
+    private final ChatRepository chatRepository;
     private final LinkRepository linkRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final DBProperties dbProperties;
 
+    @Transactional
     public LinkResponse addLink(Long chatId, AddLinkRequest request) {
-        if (!userRepository.exists(chatId)) {
+        if (!chatRepository.exists(chatId)) {
             throw new ChatNotFoundException();
         }
 
@@ -45,8 +45,9 @@ public class LinkService {
         return mapToResponse(link, request.getTags());
     }
 
+    @Transactional
     public LinkResponse removeLink(Long chatId, RemoveLinkRequest request) {
-        if (!userRepository.exists(chatId)) {
+        if (!chatRepository.exists(chatId)) {
             throw new ChatNotFoundException();
         }
 
@@ -58,15 +59,14 @@ public class LinkService {
 
         subscriptionRepository.remove(chatId, link.id());
 
-        if (subscriptionRepository.findUserIdByLinkId(link.id()).isEmpty()) {
-            linkRepository.remove(link.id());
-        }
+        linkRepository.removeIfOrphan(link.id());
 
         return mapToResponse(link, List.of());
     }
 
+    @Transactional(readOnly = true)
     public ListLinksResponse getLinks(Long chatId) {
-        if (!userRepository.exists(chatId)) {
+        if (!chatRepository.exists(chatId)) {
             throw new ChatNotFoundException();
         }
 
@@ -76,7 +76,7 @@ public class LinkService {
         List<Subscription> batch;
 
         do {
-            batch = subscriptionRepository.findSubscriptionByUserId(chatId, page, size);
+            batch = subscriptionRepository.findSubscriptionByChatId(chatId, page, size);
             allSubscriptions.addAll(batch);
             page++;
         } while (batch.size() == size);

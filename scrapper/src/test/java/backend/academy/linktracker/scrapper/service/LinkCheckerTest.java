@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.scrapper.dto.Link;
+import backend.academy.linktracker.scrapper.properties.DBProperties;
 import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
@@ -44,7 +45,10 @@ class LinkCheckerTest {
     private LinkTimeProvider provider;
 
     @Mock
-    private SchedulerProperties properties;
+    private SchedulerProperties schedulerProperties;
+
+    @Mock
+    private DBProperties dbProperties;
 
     private LinkChecker linkChecker;
 
@@ -54,7 +58,8 @@ class LinkCheckerTest {
                 linkRepository,
                 subscriptionRepository,
                 List.of(provider),
-                properties,
+                dbProperties,
+                schedulerProperties,
                 botNotifier,
                 notificationBuilder);
     }
@@ -75,7 +80,7 @@ class LinkCheckerTest {
 
         when(provider.supports(url)).thenReturn(true);
         when(provider.getCurrentTime(url)).thenReturn(Optional.of(newTime));
-        when(subscriptionRepository.findUserIdByLinkId(linkId)).thenReturn(List.of(tgChatId));
+        when(subscriptionRepository.findChatIdByLinkId(linkId)).thenReturn(List.of(tgChatId));
         when(notificationBuilder.buildMessage(url)).thenReturn("Link updated!");
 
         linkChecker.checkAllLinks();

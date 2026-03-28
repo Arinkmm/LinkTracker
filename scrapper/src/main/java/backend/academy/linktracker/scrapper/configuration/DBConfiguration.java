@@ -1,53 +1,53 @@
 package backend.academy.linktracker.scrapper.configuration;
 
+import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
-import backend.academy.linktracker.scrapper.repository.UserRepository;
-import backend.academy.linktracker.scrapper.repository.jdbc.LinkJdbcAdapter;
-import backend.academy.linktracker.scrapper.repository.jdbc.SubscriptionJdbcAdapter;
-import backend.academy.linktracker.scrapper.repository.jdbc.UserJdbcAdapter;
-import backend.academy.linktracker.scrapper.repository.jpa.JpaLinkRepository;
-import backend.academy.linktracker.scrapper.repository.jpa.JpaSubscriptionRepository;
-import backend.academy.linktracker.scrapper.repository.jpa.JpaSubscriptionTagRepository;
-import backend.academy.linktracker.scrapper.repository.jpa.JpaUserRepository;
-import backend.academy.linktracker.scrapper.repository.jpa.LinkJpaAdapter;
-import backend.academy.linktracker.scrapper.repository.jpa.SubscriptionJpaAdapter;
-import backend.academy.linktracker.scrapper.repository.jpa.UserJpaAdapter;
+import backend.academy.linktracker.scrapper.repository.orm.JpaChatRepository;
+import backend.academy.linktracker.scrapper.repository.orm.JpaLinkRepository;
+import backend.academy.linktracker.scrapper.repository.orm.JpaSubscriptionRepository;
+import backend.academy.linktracker.scrapper.repository.orm.JpaSubscriptionTagRepository;
+import backend.academy.linktracker.scrapper.repository.orm.OrmChatRepository;
+import backend.academy.linktracker.scrapper.repository.orm.OrmLinkRepository;
+import backend.academy.linktracker.scrapper.repository.orm.OrmSubscriptionRepository;
+import backend.academy.linktracker.scrapper.repository.sql.SqlChatRepository;
+import backend.academy.linktracker.scrapper.repository.sql.SqlLinkRepository;
+import backend.academy.linktracker.scrapper.repository.sql.SqlSubscriptionRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 public class DBConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.db.access-type", havingValue = "sql", matchIfMissing = true)
-    public UserRepository jdbcUserRepository(JdbcTemplate jdbcTemplate) {
-        return new UserJdbcAdapter(jdbcTemplate);
+    public ChatRepository jdbcChatRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+        return new SqlChatRepository(jdbcTemplate);
     }
 
     @Bean
     @ConditionalOnProperty(name = "app.db.access-type", havingValue = "sql", matchIfMissing = true)
-    public LinkRepository jdbcLinkRepository(JdbcTemplate jdbcTemplate) {
-        return new LinkJdbcAdapter(jdbcTemplate);
+    public LinkRepository jdbcLinkRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+        return new SqlLinkRepository(jdbcTemplate);
     }
 
     @Bean
     @ConditionalOnProperty(name = "app.db.access-type", havingValue = "sql", matchIfMissing = true)
-    public SubscriptionRepository jdbcSubscriptionRepository(JdbcTemplate jdbcTemplate) {
-        return new SubscriptionJdbcAdapter(jdbcTemplate);
+    public SubscriptionRepository jdbcSubscriptionRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+        return new SqlSubscriptionRepository(jdbcTemplate);
     }
 
     @Bean
     @ConditionalOnProperty(name = "app.db.access-type", havingValue = "orm")
-    public UserRepository userJpaRepository(JpaUserRepository jpaUserRepository) {
-        return new UserJpaAdapter(jpaUserRepository);
+    public ChatRepository chatJpaRepository(JpaChatRepository jpaChatRepository) {
+        return new OrmChatRepository(jpaChatRepository);
     }
 
     @Bean
     @ConditionalOnProperty(name = "app.db.access-type", havingValue = "orm")
     public LinkRepository linkJpaRepository(JpaLinkRepository jpaLinkRepository) {
-        return new LinkJpaAdapter(jpaLinkRepository);
+        return new OrmLinkRepository(jpaLinkRepository);
     }
 
     @Bean
@@ -55,6 +55,6 @@ public class DBConfiguration {
     public SubscriptionRepository subscriptionJpaRepository(
             JpaSubscriptionRepository jpaSubscriptionRepository,
             JpaSubscriptionTagRepository jpaSubscriptionTagRepository) {
-        return new SubscriptionJpaAdapter(jpaSubscriptionTagRepository, jpaSubscriptionRepository);
+        return new OrmSubscriptionRepository(jpaSubscriptionTagRepository, jpaSubscriptionRepository);
     }
 }

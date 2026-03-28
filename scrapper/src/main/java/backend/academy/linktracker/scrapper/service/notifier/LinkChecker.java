@@ -1,6 +1,8 @@
 package backend.academy.linktracker.scrapper.service.notifier;
 
 import backend.academy.linktracker.scrapper.dto.Link;
+import backend.academy.linktracker.scrapper.dto.Subscription;
+import backend.academy.linktracker.scrapper.properties.DBProperties;
 import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
@@ -14,12 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class LinkChecker {
     private final LinkRepository linkRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final List<LinkTimeProvider> providers;
+    private final DBProperties dbProperties;
     private final SchedulerProperties schedulerProperties;
     private final BotNotifier botNotifier;
     private final NotificationBuilder builder;
@@ -27,7 +29,7 @@ public class LinkChecker {
     public void checkAllLinks() {
         Instant threshold = Instant.now().minusSeconds(schedulerProperties.getInterval() / 1000);
         int page = 0;
-        int size = 100;
+        int size = dbProperties.getDefaultPageSize();
         List<Link> batch;
 
         do {
@@ -39,7 +41,8 @@ public class LinkChecker {
         log.atInfo().log("Link check cycle completed");
     }
 
-    private void checkSingleLink(Link link) {
+    @Transactional
+    public void checkSingleLink(Link link) {
         providers.stream()
                 .filter(provider -> provider.supports(link.url()))
                 .findFirst()
@@ -53,16 +56,24 @@ public class LinkChecker {
                 });
     }
 
-    private void notifyAndUpdate(Link link, Instant newTime) {
+    @Transactional
+    public void notifyAndUpdate(Link link, Instant newTime) {
         log.atInfo().addKeyValue("id", link.id()).addKeyValue("url", link.url()).log("Link changed, notifying");
 
         String message = builder.buildMessage(link.url());
 
-        List<Long> tgChatIds = subscriptionRepository.findUserIdByLinkId(link.id());
+        int page = 0;
+        int size = dbProperties.getDefaultPageSize();
+        List<Subscription> batch;
 
-        if (!tgChatIds.isEmpty()) {
-            botNotifier.notify(link.id(), link.url(), message, tgChatIds);
-        }
+        do {
+            batch = subscriptionRepository.findSubscriptionByChatId(link.id(), page, size);
+            List<Long> tgChatIds = batch.stream().map(Subscription::chatId).toList();
+            if (!tgChatIds.isEmpty()) {
+                botNotifier.notify(link.id(), link.url(), message, tgChatIds);
+            }
+            page++;
+        } while (batch.size() == size);
 
         linkRepository.updateLastChecked(link.id(), newTime);
     }

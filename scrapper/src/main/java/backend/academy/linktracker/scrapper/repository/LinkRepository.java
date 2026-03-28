@@ -15,6 +15,10 @@ public interface LinkRepository {
 
     void remove(Long id);
 
+    void removeIfOrphan(Long id);
+
+    void removeOrphans();
+
     List<Link> findStaleLinks(Instant threshold, int page, int size);
 
     void updateLastChecked(Long id, Instant newTime);

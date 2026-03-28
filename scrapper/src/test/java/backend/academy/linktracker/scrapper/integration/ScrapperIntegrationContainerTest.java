@@ -2,52 +2,93 @@ package backend.academy.linktracker.scrapper.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import backend.academy.linktracker.scrapper.configuration.E2ETestcontainersConfiguration;
+import backend.academy.linktracker.scrapper.configuration.ContainerConstants;
+import backend.academy.linktracker.scrapper.configuration.SharedPostgresContainer;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import java.net.URI;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.junit.jupiter.api.*;
+import org.springframework.http.*;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 
-@ActiveProfiles("test")
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = E2ETestcontainersConfiguration.class)
 class ScrapperIntegrationContainerTest {
-
-    @Autowired
-    private GenericContainer<?> scrapperContainer;
-
-    private RestClient restClient;
+    static final GenericContainer<?> scrapper = new GenericContainer<>(
+                    new ImageFromDockerfile(ContainerConstants.APP_IMAGE, false)
+                            .withFileFromPath("app.jar", Paths.get(ContainerConstants.APP_JAR))
+                            .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
+                                    .copy("app.jar", "app.jar")
+                                    .expose(ContainerConstants.APP_PORT)
+                                    .entryPoint("java", "-Dspring.profiles.active=test", "-jar", "app.jar")
+                                    .build()))
+            .withNetwork(SharedPostgresContainer.NETWORK)
+            .dependsOn(SharedPostgresContainer.INSTANCE)
+            .withExposedPorts(ContainerConstants.APP_PORT)
+            .withEnv(
+                    "DB_URL",
+                    "jdbc:postgresql://" + ContainerConstants.DB_NETWORK_ALIAS + ":5432/" + ContainerConstants.DB_NAME)
+            .withEnv("DB_USER", ContainerConstants.DB_USER)
+            .withEnv("DB_PASSWORD", ContainerConstants.DB_PASSWORD)
+            .withEnv("DB_DRIVER", ContainerConstants.DB_DRIVER)
+            .withEnv("SPRING_LIQUIBASE_ENABLED", "true")
+            .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", ContainerConstants.LIQUIBASE_PATH)
+            .waitingFor(Wait.forHttp("/actuator/health")
+                    .forPort(ContainerConstants.APP_PORT)
+                    .forStatusCode(200))
+            .withStartupTimeout(Duration.ofSeconds(120));
 
     private static final AtomicLong chatIdCounter = new AtomicLong(100L);
+    private RestClient restClient;
+
+    @BeforeAll
+    static void startContainers() {
+        scrapper.start();
+    }
+
+    @AfterAll
+    static void stopContainers() {
+        scrapper.stop();
+    }
 
     @BeforeEach
     void setUp() {
-        Integer port = scrapperContainer.getMappedPort(8081);
-        this.restClient = RestClient.builder()
-                .baseUrl("http://" + scrapperContainer.getHost() + ":" + port)
+        restClient = RestClient.builder()
+                .baseUrl("http://" + scrapper.getHost() + ":" + scrapper.getMappedPort(ContainerConstants.APP_PORT))
                 .build();
     }
 
-    private AddLinkRequest createAddLinkBody(String link) {
-        AddLinkRequest request = new AddLinkRequest();
-        request.setLink(URI.create(link));
-        request.setTags(List.of());
-        request.setFilters(List.of());
-        return request;
+    private AddLinkRequest linkRequest(String url) {
+        AddLinkRequest req = new AddLinkRequest();
+        req.setLink(URI.create(url));
+        req.setTags(List.of());
+        req.setFilters(List.of());
+        return req;
+    }
+
+    private void registerChat(long chatId) {
+        restClient
+                .method(HttpMethod.POST)
+                .uri("/tg-chat/{id}", chatId)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private void addLink(long chatId, String url) {
+        restClient
+                .method(HttpMethod.POST)
+                .uri("/links")
+                .header("Tg-Chat-Id", String.valueOf(chatId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(linkRequest(url))
+                .retrieve()
+                .toBodilessEntity();
     }
 
     @Test
@@ -56,20 +97,8 @@ class ScrapperIntegrationContainerTest {
         long chatId = chatIdCounter.getAndIncrement();
         String link = "https://github.com/user/repo";
 
-        restClient
-                .method(HttpMethod.POST)
-                .uri("/tg-chat/{id}", chatId)
-                .retrieve()
-                .toBodilessEntity();
-
-        restClient
-                .method(HttpMethod.POST)
-                .uri("/links")
-                .header("Tg-Chat-Id", String.valueOf(chatId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(createAddLinkBody(link))
-                .retrieve()
-                .toBodilessEntity();
+        registerChat(chatId);
+        addLink(chatId, link);
 
         String response = restClient
                 .method(HttpMethod.GET)
@@ -88,27 +117,15 @@ class ScrapperIntegrationContainerTest {
         long chatId = chatIdCounter.getAndIncrement();
         String link = "https://google.com";
 
-        restClient
-                .method(HttpMethod.POST)
-                .uri("/tg-chat/{id}", chatId)
-                .retrieve()
-                .toBodilessEntity();
-
-        restClient
-                .method(HttpMethod.POST)
-                .uri("/links")
-                .header("Tg-Chat-Id", String.valueOf(chatId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(createAddLinkBody(link))
-                .retrieve()
-                .toBodilessEntity();
+        registerChat(chatId);
+        addLink(chatId, link);
 
         restClient
                 .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(createAddLinkBody(link))
+                .body(linkRequest(link))
                 .retrieve()
                 .toBodilessEntity();
 
@@ -119,7 +136,8 @@ class ScrapperIntegrationContainerTest {
                 .retrieve()
                 .body(String.class);
 
-        assertTrue(response != null && !response.contains(link));
+        assertNotNull(response);
+        assertFalse(response.contains(link));
     }
 
     @Test
@@ -130,9 +148,10 @@ class ScrapperIntegrationContainerTest {
                 .uri("/links")
                 .header("Tg-Chat-Id", "999")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(createAddLinkBody("https://yandex.ru"))
+                .body(linkRequest("https://yandex.ru"))
                 .retrieve()
                 .toBodilessEntity());
+
         assertTrue(ex.getStatusCode().is4xxClientError());
     }
 
@@ -144,9 +163,10 @@ class ScrapperIntegrationContainerTest {
                 .uri("/links")
                 .header("Tg-Chat-Id", "2")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(createAddLinkBody("https://github.com"))
+                .body(linkRequest("https://github.com"))
                 .retrieve()
                 .toBodilessEntity());
+
         assertTrue(ex.getStatusCode().is4xxClientError());
     }
 
@@ -155,11 +175,7 @@ class ScrapperIntegrationContainerTest {
     void test3_5_workWithDeletedChat() {
         long chatId = chatIdCounter.getAndIncrement();
 
-        restClient
-                .method(HttpMethod.POST)
-                .uri("/tg-chat/{id}", chatId)
-                .retrieve()
-                .toBodilessEntity();
+        registerChat(chatId);
 
         restClient
                 .method(HttpMethod.DELETE)
@@ -172,9 +188,10 @@ class ScrapperIntegrationContainerTest {
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(createAddLinkBody("https://github.com"))
+                .body(linkRequest("https://github.com"))
                 .retrieve()
                 .toBodilessEntity());
+
         assertTrue(ex.getStatusCode().is4xxClientError());
     }
 
@@ -186,6 +203,7 @@ class ScrapperIntegrationContainerTest {
                 .uri("/tg-chat/100500")
                 .retrieve()
                 .toBodilessEntity());
+
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 }

@@ -13,9 +13,4 @@ public abstract class AbstractCommand implements Command {
     public String command() {
         return commandProperties.getCommands().get(configKey).getName();
     }
-
-    @Override
-    public String description() {
-        return commandProperties.getCommands().get(configKey).getDescription();
-    }
 }

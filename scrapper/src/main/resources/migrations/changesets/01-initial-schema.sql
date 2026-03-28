@@ -1,6 +1,6 @@
 --liquibase formatted sql
 --changeset arinkmm:1
-CREATE TABLE users (
+CREATE TABLE chats (
     id BIGINT PRIMARY KEY
 );
 
@@ -11,15 +11,13 @@ CREATE TABLE links (
 );
 
 CREATE TABLE subscriptions (
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    link_id BIGINT NOT NULL REFERENCES links(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, link_id)
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    chat_id BIGINT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+    link_id BIGINT NOT NULL REFERENCES links(id) ON DELETE CASCADE
 );
 
 CREATE TABLE subscription_tags (
-    user_id BIGINT NOT NULL,
-    link_id BIGINT NOT NULL,
+    subscription_id BIGINT NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
     tag TEXT NOT NULL,
-    PRIMARY KEY (user_id, link_id, tag),
-    FOREIGN KEY (user_id, link_id) REFERENCES subscriptions(user_id, link_id) ON DELETE CASCADE
+    PRIMARY KEY (subscription_id, tag)
 );

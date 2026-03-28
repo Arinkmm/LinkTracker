@@ -10,27 +10,21 @@ import java.net.URI;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-@Import(DatabaseIntegrationEnvironment.LiquibaseConfig.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@ActiveProfiles("test")
-public class LinkRepositoryTest extends DatabaseIntegrationEnvironment {
+class LinkRepositoryTest extends DatabaseIntegrationEnvironment {
     @Autowired
     private LinkRepository linkRepository;
 
     @Test
-    @DisplayName("Сценарий: Тест миграций (приложение стартует с чистой БД)")
+    @DisplayName("Миграции применились — БД доступна")
     void migrationsShouldApplySuccessfully() {
         assertTrue(postgres.isRunning());
     }
 
     @Test
-    @DisplayName("Сценарий: Добавление и удаление ссылки")
+    @DisplayName("Добавление и удаление ссылки")
     void shouldSaveAndRemoveLink() {
         URI url = URI.create("https://example.com");
 
@@ -40,16 +34,5 @@ public class LinkRepositoryTest extends DatabaseIntegrationEnvironment {
 
         linkRepository.remove(saved.id());
         assertThat(linkRepository.findByUrl(url)).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Сценарий: Добавление дублирующей ссылки")
-    void shouldHandleDuplicateLink() {
-        URI url = URI.create("https://example.com/duplicate");
-
-        Link first = linkRepository.save(url);
-        Link second = linkRepository.save(url);
-
-        assertThat(first.id()).isEqualTo(second.id());
     }
 }

@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.repository.jpa.id;
+package backend.academy.linktracker.scrapper.repository.orm.id;
 
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class SubscriptionTagId implements Serializable {
-    private Long userId;
-    private Long linkId;
+    private Long subscriptionId;
     private String tag;
 }
