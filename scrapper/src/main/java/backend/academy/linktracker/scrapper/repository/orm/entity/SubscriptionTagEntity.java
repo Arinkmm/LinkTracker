@@ -9,7 +9,7 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.EqualsAndHashCode;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +20,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode
 public class SubscriptionTagEntity {
     @Id
     @Column(name = "subscription_id")
@@ -38,5 +37,20 @@ public class SubscriptionTagEntity {
         this.subscription = subscription;
         this.subscriptionId = subscription.getId();
         this.tag = tag;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SubscriptionTagEntity other)) return false;
+        return subscriptionId != null
+                && tag != null
+                && subscriptionId.equals(other.subscriptionId)
+                && tag.equals(other.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(subscriptionId, tag);
     }
 }

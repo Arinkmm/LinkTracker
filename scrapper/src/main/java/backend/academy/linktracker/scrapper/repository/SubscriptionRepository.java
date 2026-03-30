@@ -8,11 +8,11 @@ public interface SubscriptionRepository {
 
     void remove(Long chatId, Long linkId);
 
-    List<Long> findChatIdByLinkId(Long linkId);
-
     boolean exists(Long linkId, Long chatId);
 
     List<Subscription> findSubscriptionByChatId(Long chatId, int page, int size);
+
+    List<Subscription> findSubscriptionByLinkId(Long linkId, int page, int size);
 
     void saveTag(Long subscriptionId, String tag);
 

@@ -29,7 +29,7 @@ public interface JpaLinkRepository extends JpaRepository<LinkEntity, Long> {
     @Query("""
         DELETE FROM LinkEntity l
         WHERE l.id
-          NOT IN (SELECT s.id FROM SubscriptionEntity s)
+          NOT IN (SELECT s.linkId FROM SubscriptionEntity s)
         """)
     void removeOrphans();
 

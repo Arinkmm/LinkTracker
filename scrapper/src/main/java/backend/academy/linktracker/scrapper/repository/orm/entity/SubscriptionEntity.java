@@ -10,7 +10,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.EqualsAndHashCode;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +20,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode
 public class SubscriptionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,5 +41,17 @@ public class SubscriptionEntity {
 
     public void addTag(String tag) {
         tags.add(new SubscriptionTagEntity(this, tag));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SubscriptionEntity other)) return false;
+        return chatId != null && linkId != null && chatId.equals(other.chatId) && linkId.equals(other.linkId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(chatId, linkId);
     }
 }

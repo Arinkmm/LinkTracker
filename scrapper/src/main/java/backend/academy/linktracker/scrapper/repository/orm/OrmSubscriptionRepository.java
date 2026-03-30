@@ -34,15 +34,18 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
-    public void remove(Long chatId, Long linkId) {
-        jpaSubscriptionRepository.deleteByChatIdAndLinkId(chatId, linkId);
+    public List<Subscription> findSubscriptionByLinkId(Long linkId, int page, int size) {
+        return jpaSubscriptionRepository.findByLinkId(linkId, PageRequest.of(page, size)).stream()
+                .map(e -> new Subscription(
+                        e.getChatId(),
+                        e.getLinkId(),
+                        e.getTags().stream().map(SubscriptionTagEntity::getTag).toList()))
+                .toList();
     }
 
     @Override
-    public List<Long> findChatIdByLinkId(Long linkId) {
-        return jpaSubscriptionRepository.findByLinkId(linkId).stream()
-                .map(SubscriptionEntity::getChatId)
-                .toList();
+    public void remove(Long chatId, Long linkId) {
+        jpaSubscriptionRepository.deleteByChatIdAndLinkId(chatId, linkId);
     }
 
     @Override

@@ -9,7 +9,6 @@ import jakarta.persistence.Table;
 import java.net.URI;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +19,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
 public class LinkEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,5 +34,17 @@ public class LinkEntity {
         LinkEntity entity = new LinkEntity();
         entity.url = url.toString();
         return entity;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LinkEntity other)) return false;
+        return url != null && url.equals(other.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return url != null ? url.hashCode() : getClass().hashCode();
     }
 }

@@ -58,12 +58,6 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
-    public List<Long> findChatIdByLinkId(Long linkId) {
-        String sql = "SELECT chat_id FROM subscriptions WHERE link_id = :link_id";
-        return namedParameterJdbcTemplate.queryForList(sql, new MapSqlParameterSource("link_id", linkId), Long.class);
-    }
-
-    @Override
     public boolean exists(Long linkId, Long chatId) {
         String sql = "SELECT EXISTS (SELECT 1 FROM subscriptions WHERE link_id = :link_id AND chat_id = :chat_id)";
         return namedParameterJdbcTemplate.queryForObject(
@@ -86,6 +80,25 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
                 sql,
                 new MapSqlParameterSource()
                         .addValue("chat_id", chatId)
+                        .addValue("limit", size)
+                        .addValue("offset", (long) page * size),
+                extractor);
+    }
+
+    @Override
+    public List<Subscription> findSubscriptionByLinkId(Long linkId, int page, int size) {
+        String sql = """
+        SELECT s.chat_id, s.link_id, t.tag
+        FROM subscriptions s
+        LEFT JOIN subscription_tags t ON s.id = t.subscription_id
+        WHERE s.link_id = :link_id
+        ORDER BY s.chat_id
+        LIMIT :limit OFFSET :offset
+            """;
+        return namedParameterJdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("link_id", linkId)
                         .addValue("limit", size)
                         .addValue("offset", (long) page * size),
                 extractor);

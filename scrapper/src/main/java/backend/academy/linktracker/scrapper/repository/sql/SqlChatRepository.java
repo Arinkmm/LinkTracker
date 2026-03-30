@@ -1,16 +1,13 @@
 package backend.academy.linktracker.scrapper.repository.sql;
 
-import backend.academy.linktracker.scrapper.dto.Chat;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @RequiredArgsConstructor
 public class SqlChatRepository implements ChatRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private static final RowMapper<Chat> mapper = (rs, r) -> new Chat(rs.getLong("id"));
 
     @Override
     public void save(Long id) {

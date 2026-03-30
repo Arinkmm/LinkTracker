@@ -67,7 +67,7 @@ public class LinkChecker {
         List<Subscription> batch;
 
         do {
-            batch = subscriptionRepository.findSubscriptionByChatId(link.id(), page, size);
+            batch = subscriptionRepository.findSubscriptionByLinkId(link.id(), page, size);
             List<Long> tgChatIds = batch.stream().map(Subscription::chatId).toList();
             if (!tgChatIds.isEmpty()) {
                 botNotifier.notify(link.id(), link.url(), message, tgChatIds);

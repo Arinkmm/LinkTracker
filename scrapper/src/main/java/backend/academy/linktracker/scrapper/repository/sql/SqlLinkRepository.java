@@ -63,7 +63,7 @@ public class SqlLinkRepository implements LinkRepository {
     @Override
     public void removeIfOrphan(Long id) {
         String sql =
-                "DELETE FROM links WHERE id != :id AND NOT EXISTS (SELECT * FROM subscriptions WHERE link_id = :id)";
+                "DELETE FROM links WHERE id = :id AND NOT EXISTS (SELECT * FROM subscriptions WHERE link_id = :id)";
         namedParameterJdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
     }
 
