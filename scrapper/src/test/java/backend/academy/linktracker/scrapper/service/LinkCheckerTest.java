@@ -91,7 +91,7 @@ class LinkCheckerTest {
         when(provider.supports(url)).thenReturn(true);
         when(provider.getCurrentTime(url)).thenReturn(Optional.of(newTime));
 
-        when(subscriptionRepository.findSubscriptionByChatId(eq(linkId), anyInt(), eq(PAGE_SIZE)))
+        when(subscriptionRepository.findSubscriptionByLinkId(eq(linkId), anyInt(), eq(PAGE_SIZE)))
                 .thenReturn(List.of(subscription))
                 .thenReturn(List.of());
 
