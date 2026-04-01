@@ -15,7 +15,6 @@ public class GrpcMapper {
 
         dto.setLink(URI.create(grpc.getLink()));
         dto.setTags(grpc.getTagsList());
-        dto.setFilters(grpc.getFiltersList());
 
         return dto;
     }
@@ -35,9 +34,6 @@ public class GrpcMapper {
 
         if (dto.getTags() != null) {
             builder.addAllTags(dto.getTags());
-        }
-        if (dto.getFilters() != null) {
-            builder.addAllFilters(dto.getFilters());
         }
 
         return builder.build();

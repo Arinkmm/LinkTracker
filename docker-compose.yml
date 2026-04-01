@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: pg_scrapper
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  liquibase-migrations:
+    container_name: migrations
+    image: liquibase/liquibase:4.29
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - --searchPath=/changesets
+      - --changelog-file=master.xml
+      - --url=jdbc:postgresql://postgres:5432/${DB_NAME}
+      - --username=${DB_USER}
+      - --password=${DB_PASSWORD}
+      - update
+    volumes:
+      - ./scrapper/src/main/resources/migrations:/changesets
+    networks:
+      - backend
+
+  scrapper:
+    build:
+      context: .
+      dockerfile: scrapper/Dockerfile
+    container_name: scrapper
+    depends_on:
+      postgres:
+        condition: service_healthy
+      liquibase-migrations:
+        condition: service_completed_successfully
+    environment:
+      DB_DRIVER: ${DB_DRIVER}
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      APP_BOT_URL: http://bot:8080
+      APP_GRPC_HOST: bot
+      STACKOVERFLOW_KEY: ${STACKOVERFLOW_KEY}
+      STACKOVERFLOW_ACCESS_KEY: ${STACKOVERFLOW_ACCESS_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+    ports:
+      - "8081:8081"
+      - "9090:9090"
+    networks:
+      - backend
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    container_name: bot
+    depends_on:
+      - scrapper
+    environment:
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      APP_SCRAPPER_URL: http://scrapper:8081
+      APP_GRPC_HOST: scrapper
+    ports:
+      - "8080:8080"
+      - "9091:9091"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pg_data:

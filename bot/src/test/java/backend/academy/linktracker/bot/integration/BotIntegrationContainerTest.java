@@ -1,7 +1,8 @@
-package backend.academy.linktracker.bot;
+package backend.academy.linktracker.bot.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import backend.academy.linktracker.bot.configuration.TestcontainersConfiguration;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import java.net.URI;
 import java.util.List;

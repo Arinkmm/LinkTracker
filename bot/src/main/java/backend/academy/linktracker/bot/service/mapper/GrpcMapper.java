@@ -14,7 +14,6 @@ public class GrpcMapper {
         response.setId(proto.getId());
         response.setUrl(URI.create(proto.getUrl()));
         response.setTags(proto.getTagsList());
-        response.setFilters(proto.getFiltersList());
 
         return response;
     }

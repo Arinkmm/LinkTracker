@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot;
+package backend.academy.linktracker.bot.configuration;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,7 +11,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration {
+public class TestcontainersConfiguration {
     @Bean(name = "customNetwork")
     public Network network() {
         return Network.newNetwork();
@@ -23,8 +23,12 @@ class TestcontainersConfiguration {
         Path jarPath = Paths.get("target").resolve(jarName);
 
         return new GenericContainer<>(new ImageFromDockerfile("localhost/link-tracker-bot:latest", false)
-                        .withFileFromPath("Dockerfile", Paths.get("Dockerfile"))
-                        .withFileFromPath("app.jar", jarPath))
+                        .withFileFromPath("app.jar", jarPath)
+                        .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
+                                .copy("app.jar", "app.jar")
+                                .expose(8081)
+                                .entryPoint("java", "-jar", "app.jar")
+                                .build()))
                 .withNetwork(network)
                 .withExposedPorts(8080)
                 .withStartupTimeout(Duration.ofSeconds(60))

@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.controller;
 
 import backend.academy.linktracker.scrapper.api.TgChatApi;
-import backend.academy.linktracker.scrapper.service.user.UserService;
+import backend.academy.linktracker.scrapper.service.user.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 public class ChatController implements TgChatApi {
-    private final UserService service;
+    private final ChatService service;
 
     @Override
     public ResponseEntity<Void> tgChatIdPost(Long id) {
