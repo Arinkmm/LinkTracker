@@ -23,9 +23,8 @@ public class GitHubTimeProvider implements LinkTimeProvider {
     @Override
     public boolean supports(URI url) {
         String host = url.getHost();
-        boolean supports = host != null
-            && (host.equals("github.com") || host.equals("www.github.com"))
-            && url.getPath() != null;
+        boolean supports =
+                host != null && (host.equals("github.com") || host.equals("www.github.com")) && url.getPath() != null;
 
         if (supports) {
             log.atTrace().addKeyValue("url", url).log("GitHub provider supports this URL");
@@ -45,35 +44,34 @@ public class GitHubTimeProvider implements LinkTimeProvider {
             Instant since = Optional.ofNullable(link.lastChecked()).orElse(Instant.EPOCH);
 
             log.atDebug()
-                .addKeyValue("owner", owner)
-                .addKeyValue("repo", repo)
-                .addKeyValue("since", since)
-                .log("Fetching GitHub updates");
+                    .addKeyValue("owner", owner)
+                    .addKeyValue("repo", repo)
+                    .addKeyValue("since", since)
+                    .log("Fetching GitHub updates");
 
-            List<GitHubRepoResponse> issues = client.getIssues(owner, repo, since.toString())
-                .stream()
-                .filter(r -> r.createdAt().isAfter(since))
-                .toList();
+            List<GitHubRepoResponse> issues = client.getIssues(owner, repo, since.toString()).stream()
+                    .filter(r -> r.createdAt().isAfter(since))
+                    .toList();
 
             log.atInfo()
-                .addKeyValue("repo", owner + "/" + repo)
-                .addKeyValue("newEventsCount", issues.size())
-                .log("GitHub sync successful");
+                    .addKeyValue("repo", owner + "/" + repo)
+                    .addKeyValue("newEventsCount", issues.size())
+                    .log("GitHub sync successful");
 
             return new GitHubRepoResponses(issues);
         } catch (IllegalArgumentException e) {
             log.atWarn()
-                .addKeyValue("url", link.url())
-                .addKeyValue("error", e.getMessage())
-                .log("Failed to parse GitHub repository from URL");
+                    .addKeyValue("url", link.url())
+                    .addKeyValue("error", e.getMessage())
+                    .log("Failed to parse GitHub repository from URL");
             return null;
         } catch (Exception e) {
             log.atError()
-                .setCause(e)
-                .addKeyValue("owner", owner)
-                .addKeyValue("repo", repo)
-                .addKeyValue("url", link.url())
-                .log("Unexpected error while fetching GitHub response");
+                    .setCause(e)
+                    .addKeyValue("owner", owner)
+                    .addKeyValue("repo", repo)
+                    .addKeyValue("url", link.url())
+                    .log("Unexpected error while fetching GitHub response");
             return null;
         }
     }

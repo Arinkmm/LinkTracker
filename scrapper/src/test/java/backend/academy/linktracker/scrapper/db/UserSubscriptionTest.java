@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import backend.academy.linktracker.scrapper.configuration.DatabaseIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
+import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
-import backend.academy.linktracker.scrapper.repository.ChatRepository;
+import backend.academy.linktracker.scrapper.service.user.LinkService;
 import java.net.URI;
 import java.util.List;
-import backend.academy.linktracker.scrapper.service.user.LinkService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @Transactional
 class UserSubscriptionTest extends DatabaseIntegrationEnvironment {
-    @Autowired private LinkService linkService;
-    @Autowired private ChatRepository chatRepository;
-    @Autowired private LinkRepository linkRepository;
-    @Autowired private SubscriptionRepository subscriptionRepository;
+    @Autowired
+    private LinkService linkService;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private LinkRepository linkRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     @Test
     @DisplayName("Повторная подписка выбрасывает LinkAlreadyTrackedException")

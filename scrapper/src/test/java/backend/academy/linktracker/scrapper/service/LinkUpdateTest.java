@@ -6,8 +6,8 @@ import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.scrapper.configuration.ExternalApiIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.Link;
-import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
+import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.service.checker.LinkChecker;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
@@ -27,13 +27,23 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest
 @TestPropertySource(properties = "app.scheduler.interval=3600000")
 class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
-    @Autowired private LinkChecker linkChecker;
-    @Autowired private LinkRepository linkRepository;
-    @Autowired private LinkService linkService;
-    @Autowired private ChatRepository chatRepository;
-    @Autowired private SubscriptionRepository subscriptionRepository;
+    @Autowired
+    private LinkChecker linkChecker;
 
-    @MockitoBean private BotNotifier botNotifier;
+    @Autowired
+    private LinkRepository linkRepository;
+
+    @Autowired
+    private LinkService linkService;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @MockitoBean
+    private BotNotifier botNotifier;
 
     @Test
     @DisplayName("GitHub: новый Issue -> обрезка превью до 200 симв.")
@@ -62,9 +72,8 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         String message = descCaptor.getValue();
         assertAll(
-            () -> assertTrue(message.contains("..."), "Должно быть многоточие"),
-            () -> assertTrue(message.length() < 400, "Сообщение слишком длинное")
-        );
+                () -> assertTrue(message.contains("..."), "Должно быть многоточие"),
+                () -> assertTrue(message.length() < 400, "Сообщение слишком длинное"));
     }
 
     @Test
@@ -105,7 +114,11 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         linkService.updateLastChecked(okLink.id(), Instant.now().minus(1, ChronoUnit.DAYS));
         linkService.updateLastChecked(failLink.id(), Instant.now().minus(1, ChronoUnit.DAYS));
 
-        stubGitHub("user", "ok", 200, "[{\"title\":\"Ok\",\"user\":{\"login\":\"u\"},\"created_at\":\""+Instant.now()+"\"}]");
+        stubGitHub(
+                "user",
+                "ok",
+                200,
+                "[{\"title\":\"Ok\",\"user\":{\"login\":\"u\"},\"created_at\":\"" + Instant.now() + "\"}]");
         stubGitHub("user", "fail", 503, "Unavailable");
 
         assertDoesNotThrow(() -> linkChecker.checkAllLinks());

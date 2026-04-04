@@ -21,8 +21,7 @@ public class NotificationBuilder {
     private final NotificationProperties properties;
 
     public String buildError(Link link) {
-        return properties.getError().getTitle() + "\n\n" +
-            link.url() + "\n";
+        return properties.getError().getTitle() + "\n\n" + link.url() + "\n";
     }
 
     public String buildMessage(LinkResponse response) {
@@ -46,12 +45,22 @@ public class NotificationBuilder {
             String type = r.isPullRequest() ? labels.getTypePr() : labels.getTypeIssue();
             String body = truncate(cleanMarkdown(r.body()), limits.getGithubBody());
 
-            sb.append(type).append("\n")
-                .append(labels.getTitle()).append(r.title()).append("\n")
-                .append(labels.getAuthor()).append(r.user().login()).append("\n")
-                .append(labels.getTime()).append(formatDate(r.createdAt())).append("\n")
-                .append(labels.getDescription()).append(body).append("\n")
-                .append(properties.getDivider()).append("\n");
+            sb.append(type)
+                    .append("\n")
+                    .append(labels.getTitle())
+                    .append(r.title())
+                    .append("\n")
+                    .append(labels.getAuthor())
+                    .append(r.user().login())
+                    .append("\n")
+                    .append(labels.getTime())
+                    .append(formatDate(r.createdAt()))
+                    .append("\n")
+                    .append(labels.getDescription())
+                    .append(body)
+                    .append("\n")
+                    .append(properties.getDivider())
+                    .append("\n");
         }
         return sb.toString();
     }
@@ -66,33 +75,53 @@ public class NotificationBuilder {
 
             for (StackOverflowResponse.Answer answer : item.answers()) {
                 String body = truncate(cleanHtml(answer.body()), limits.getStackoverflowAnswer());
-                appendEntity(sb, labels.getTypeAnswer(), question, answer.owner().displayName(),
-                    Instant.ofEpochSecond(answer.creationDate()), body);
+                appendEntity(
+                        sb,
+                        labels.getTypeAnswer(),
+                        question,
+                        answer.owner().displayName(),
+                        Instant.ofEpochSecond(answer.creationDate()),
+                        body);
             }
 
             for (StackOverflowResponse.Comment comment : item.comments()) {
                 String body = truncate(cleanHtml(comment.body()), limits.getStackoverflowComment());
-                appendEntity(sb, labels.getTypeComment(), question, comment.owner().displayName(),
-                    Instant.ofEpochSecond(comment.creationDate()), body);
+                appendEntity(
+                        sb,
+                        labels.getTypeComment(),
+                        question,
+                        comment.owner().displayName(),
+                        Instant.ofEpochSecond(comment.creationDate()),
+                        body);
             }
         }
         return sb.toString();
     }
 
-    private void appendEntity(StringBuilder sb, String type, String question, String author, Instant time, String body) {
+    private void appendEntity(
+            StringBuilder sb, String type, String question, String author, Instant time, String body) {
         NotificationProperties.Labels labels = properties.getLabels();
-        sb.append(type).append("\n")
-            .append(labels.getQuestion()).append(question).append("\n")
-            .append(labels.getAuthor()).append(author).append("\n")
-            .append(labels.getTime()).append(formatDate(time)).append("\n")
-            .append(labels.getDescription()).append(body).append("\n")
-            .append(properties.getDivider()).append("\n");
+        sb.append(type)
+                .append("\n")
+                .append(labels.getQuestion())
+                .append(question)
+                .append("\n")
+                .append(labels.getAuthor())
+                .append(author)
+                .append("\n")
+                .append(labels.getTime())
+                .append(formatDate(time))
+                .append("\n")
+                .append(labels.getDescription())
+                .append(body)
+                .append("\n")
+                .append(properties.getDivider())
+                .append("\n");
     }
 
     private String formatDate(Instant instant) {
-        DateTimeFormatter formatter = DateTimeFormatter
-            .ofPattern(properties.getDateTimeFormat())
-            .withZone(ZoneOffset.UTC);
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern(properties.getDateTimeFormat()).withZone(ZoneOffset.UTC);
         return formatter.format(instant);
     }
 
@@ -104,12 +133,11 @@ public class NotificationBuilder {
     private String cleanMarkdown(String text) {
         if (text == null) return properties.getLabels().getEmptyContent();
 
-        String noMarkdown = text
-            .replaceAll("```[\\s\\S]*?```", "[код]")
-            .replaceAll("`[^`]+`", "[код]")
-            .replaceAll("!\\[.*?\\]\\(.*?\\)", "[изображение]")
-            .replaceAll("\\[([^\\]]+)\\]\\([^)]+\\)", "$1")
-            .replaceAll("[#*_~>]", "");
+        String noMarkdown = text.replaceAll("```[\\s\\S]*?```", "[код]")
+                .replaceAll("`[^`]+`", "[код]")
+                .replaceAll("!\\[.*?\\]\\(.*?\\)", "[изображение]")
+                .replaceAll("\\[([^\\]]+)\\]\\([^)]+\\)", "$1")
+                .replaceAll("[#*_~>]", "");
 
         return Jsoup.parse(noMarkdown).text().trim();
     }

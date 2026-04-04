@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class OrmLinkRepository implements LinkRepository {

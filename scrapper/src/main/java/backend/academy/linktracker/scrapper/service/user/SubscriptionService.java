@@ -2,10 +2,10 @@ package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.dto.Subscription;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

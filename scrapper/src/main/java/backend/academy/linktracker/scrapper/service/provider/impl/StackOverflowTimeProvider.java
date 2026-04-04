@@ -6,6 +6,7 @@ import backend.academy.linktracker.scrapper.client.api.stackoverflow.StackOverfl
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.properties.StackoverflowProperties;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
+import com.google.common.collect.Lists;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,23 +27,19 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
 
     private StackOverflowResponse fetchFromApi(List<String> ids) {
         log.atDebug()
-            .addKeyValue("idsCount", ids.size())
-            .addKeyValue("site", properties.getSite())
-            .log("Calling StackOverflow API");
+                .addKeyValue("idsCount", ids.size())
+                .addKeyValue("site", properties.getSite())
+                .log("Calling StackOverflow API");
 
-        return client.getQuestions(
-            String.join(";", ids),
-            properties.getSite(),
-            properties.getFilter()
-        );
+        return client.getQuestions(String.join(";", ids), properties.getSite(), properties.getFilter());
     }
 
     @Override
     public boolean supports(URI url) {
         return url.getHost() != null
-            && url.getHost().contains("stackoverflow.com")
-            && url.getPath() != null
-            && url.getPath().contains("/questions/");
+                && url.getHost().contains("stackoverflow.com")
+                && url.getPath() != null
+                && url.getPath().contains("/questions/");
     }
 
     @Override
@@ -52,12 +48,8 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
         List<ResponseWithLink> results = new ArrayList<>();
 
         Lists.partition(links, properties.getBatchSize()).forEach(batch -> {
-            Map<String, Link> idToLink = batch.stream()
-                .collect(Collectors.toMap(
-                    l -> extractQuestionId(l.url()),
-                    l -> l,
-                    (a, b) -> a
-                ));
+            Map<String, Link> idToLink =
+                    batch.stream().collect(Collectors.toMap(l -> extractQuestionId(l.url()), l -> l, (a, b) -> a));
 
             List<String> ids = new ArrayList<>(idToLink.keySet());
             try {
@@ -70,7 +62,7 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
                 }
 
                 Map<String, StackOverflowResponse.Item> itemsById = response.items().stream()
-                    .collect(Collectors.toMap(i -> String.valueOf(i.questionId()), i -> i));
+                        .collect(Collectors.toMap(i -> String.valueOf(i.questionId()), i -> i));
 
                 for (Link link : batch) {
                     String id = extractQuestionId(link.url());
@@ -83,19 +75,14 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
                     StackOverflowResponse filteredResponse = filterItemActivity(rawItem, link.lastChecked());
 
                     if (!filteredResponse.items().isEmpty()) {
-                        log.atDebug()
-                            .addKeyValue("id", id)
-                            .log("Found new activity for StackOverflow question");
+                        log.atDebug().addKeyValue("id", id).log("Found new activity for StackOverflow question");
                     }
 
                     results.add(new ResponseWithLink(link, filteredResponse));
                 }
 
             } catch (Exception e) {
-                log.atError()
-                    .setCause(e)
-                    .addKeyValue("ids", ids)
-                    .log("Failed to process StackOverflow batch");
+                log.atError().setCause(e).addKeyValue("ids", ids).log("Failed to process StackOverflow batch");
             }
         });
         return results;
@@ -108,9 +95,10 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
 
         try {
             StackOverflowResponse response = fetchFromApi(List.of(id));
-            StackOverflowResponse.Item item = (response != null && !response.items().isEmpty())
-                ? response.items().getFirst()
-                : null;
+            StackOverflowResponse.Item item =
+                    (response != null && !response.items().isEmpty())
+                            ? response.items().getFirst()
+                            : null;
 
             return filterItemActivity(item, link.lastChecked());
         } catch (Exception e) {
@@ -124,20 +112,18 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
 
         Instant threshold = (lastChecked == null) ? Instant.EPOCH : lastChecked;
 
-        List<StackOverflowResponse.Answer> newAnswers = Optional.ofNullable(item.answers()).orElse(List.of())
-            .stream()
-            .filter(a -> Instant.ofEpochSecond(a.creationDate()).isAfter(threshold))
-            .toList();
+        List<StackOverflowResponse.Answer> newAnswers = Optional.ofNullable(item.answers()).orElse(List.of()).stream()
+                .filter(a -> Instant.ofEpochSecond(a.creationDate()).isAfter(threshold))
+                .toList();
 
-        List<StackOverflowResponse.Comment> newComments = Optional.ofNullable(item.comments()).orElse(List.of())
-            .stream()
-            .filter(c -> Instant.ofEpochSecond(c.creationDate()).isAfter(threshold))
-            .toList();
+        List<StackOverflowResponse.Comment> newComments =
+                Optional.ofNullable(item.comments()).orElse(List.of()).stream()
+                        .filter(c -> Instant.ofEpochSecond(c.creationDate()).isAfter(threshold))
+                        .toList();
 
         if (!newAnswers.isEmpty() || !newComments.isEmpty()) {
             return new StackOverflowResponse(List.of(new StackOverflowResponse.Item(
-                item.questionId(), item.body(), newAnswers, newComments, item.lastActivityDate()
-            )));
+                    item.questionId(), item.body(), newAnswers, newComments, item.lastActivityDate())));
         }
         return new StackOverflowResponse(List.of());
     }

@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.properties.DBProperties;
 import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.properties.ThreadProperties;
+import backend.academy.linktracker.scrapper.service.user.LinkService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import backend.academy.linktracker.scrapper.service.user.LinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,9 +40,9 @@ public class LinkChecker {
             batch = linkService.getStaleLinks(threshold, page, size);
             if (!batch.isEmpty()) {
                 log.atInfo()
-                    .addKeyValue("page", page)
-                    .addKeyValue("batchSize", batch.size())
-                    .log("Processing batch from database");
+                        .addKeyValue("page", page)
+                        .addKeyValue("batchSize", batch.size())
+                        .log("Processing batch from database");
 
                 processBatchParallel(batch, allFailedLinks);
             }
@@ -51,15 +51,15 @@ public class LinkChecker {
 
         if (!allFailedLinks.isEmpty()) {
             log.atWarn()
-                .addKeyValue("failedCount", allFailedLinks.size())
-                .log("Sending error notifications for failed links");
+                    .addKeyValue("failedCount", allFailedLinks.size())
+                    .log("Sending error notifications for failed links");
             allFailedLinks.forEach(linkCheckerHelper::notifyError);
         }
 
         log.atInfo()
-            .addKeyValue("totalFailed", allFailedLinks.size())
-            .addKeyValue("totalPages", page)
-            .log("Link check cycle completed");
+                .addKeyValue("totalFailed", allFailedLinks.size())
+                .addKeyValue("totalPages", page)
+                .log("Link check cycle completed");
     }
 
     private void processBatchParallel(List<Link> batch, List<Link> globalFailedList) {
@@ -77,9 +77,9 @@ public class LinkChecker {
             futures.add(linkExecutorService.submit(() -> linkCheckerHelper.checkBatch(partition)));
 
             log.atDebug()
-                .addKeyValue("partitionSize", partition.size())
-                .addKeyValue("range", i + "-" + end)
-                .log("Submitted task to executor service");
+                    .addKeyValue("partitionSize", partition.size())
+                    .addKeyValue("range", i + "-" + end)
+                    .log("Submitted task to executor service");
         }
 
         for (Future<List<Link>> future : futures) {
@@ -92,9 +92,7 @@ public class LinkChecker {
                 log.error("Main checker thread interrupted while waiting for workers", e);
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
-                log.atError()
-                    .setCause(e.getCause())
-                    .log("Worker thread encountered a critical error");
+                log.atError().setCause(e.getCause()).log("Worker thread encountered a critical error");
             }
         }
     }
