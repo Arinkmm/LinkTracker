@@ -98,6 +98,11 @@ public class LinkCheckerHelper {
     private void processSingleUpdate(Link link, LinkResponse response) {
         Instant newEventDate = extractDate(response);
 
+        if (response == null) {
+            log.warn("Response is null, skipping update processing for this link");
+            return;
+        }
+
         if (newEventDate == null) {
             log.atDebug()
                 .addKeyValue("linkId", link.id())
@@ -162,6 +167,9 @@ public class LinkCheckerHelper {
     }
 
     private Instant extractDate(LinkResponse response) {
+        if (response == null) {
+            return null;
+        }
         return switch (response) {
             case StackOverflowResponse r -> r.items().stream()
                 .flatMap(item -> {
