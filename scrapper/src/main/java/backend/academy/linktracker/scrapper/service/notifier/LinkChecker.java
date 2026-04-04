@@ -1,80 +1,103 @@
 package backend.academy.linktracker.scrapper.service.notifier;
 
 import backend.academy.linktracker.scrapper.dto.Link;
-import backend.academy.linktracker.scrapper.dto.Subscription;
 import backend.academy.linktracker.scrapper.properties.DBProperties;
 import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
+import backend.academy.linktracker.scrapper.properties.ThreadProperties;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
-import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
-import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import backend.academy.linktracker.scrapper.service.user.LinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LinkChecker {
-    private final LinkRepository linkRepository;
-    private final SubscriptionRepository subscriptionRepository;
-    private final List<LinkTimeProvider> providers;
     private final DBProperties dbProperties;
     private final SchedulerProperties schedulerProperties;
-    private final BotNotifier botNotifier;
-    private final NotificationBuilder builder;
+    private final LinkCheckerHelper linkCheckerHelper;
+    private final ThreadProperties threadProperties;
+    private final ExecutorService linkExecutorService;
+    private final LinkService linkService;
 
     public void checkAllLinks() {
-        Instant threshold = Instant.now().minusSeconds(schedulerProperties.getInterval() / 1000);
+        log.info("Starting link check cycle...");
+        List<Link> allFailedLinks = Collections.synchronizedList(new ArrayList<>());
+
+        Instant threshold = Instant.now().minusMillis(schedulerProperties.getInterval());
         int page = 0;
         int size = dbProperties.getDefaultPageSize();
         List<Link> batch;
 
         do {
-            batch = linkRepository.findStaleLinks(threshold, page, size);
-            batch.forEach(this::checkSingleLink);
-            page++;
-        } while (batch.size() == size);
+            batch = linkService.getStaleLinks(threshold, page, size);
+            if (!batch.isEmpty()) {
+                log.atInfo()
+                    .addKeyValue("page", page)
+                    .addKeyValue("batchSize", batch.size())
+                    .log("Processing batch from database");
 
-        log.atInfo().log("Link check cycle completed");
-    }
-
-    @Transactional
-    public void checkSingleLink(Link link) {
-        providers.stream()
-                .filter(provider -> provider.supports(link.url()))
-                .findFirst()
-                .flatMap(provider -> provider.getCurrentTime(link.url()))
-                .ifPresent(current -> {
-                    if (link.lastChecked() == null) {
-                        linkRepository.updateLastChecked(link.id(), current);
-                    } else if (current.isAfter(link.lastChecked())) {
-                        notifyAndUpdate(link, current);
-                    }
-                });
-    }
-
-    @Transactional
-    public void notifyAndUpdate(Link link, Instant newTime) {
-        log.atInfo().addKeyValue("id", link.id()).addKeyValue("url", link.url()).log("Link changed, notifying");
-
-        String message = builder.buildMessage(link.url());
-
-        int page = 0;
-        int size = dbProperties.getDefaultPageSize();
-        List<Subscription> batch;
-
-        do {
-            batch = subscriptionRepository.findSubscriptionByLinkId(link.id(), page, size);
-            List<Long> tgChatIds = batch.stream().map(Subscription::chatId).toList();
-            if (!tgChatIds.isEmpty()) {
-                botNotifier.notify(link.id(), link.url(), message, tgChatIds);
+                processBatchParallel(batch, allFailedLinks);
             }
             page++;
         } while (batch.size() == size);
 
-        linkRepository.updateLastChecked(link.id(), newTime);
+        if (!allFailedLinks.isEmpty()) {
+            log.atWarn()
+                .addKeyValue("failedCount", allFailedLinks.size())
+                .log("Sending error notifications for failed links");
+            allFailedLinks.forEach(linkCheckerHelper::notifyError);
+        }
+
+        log.atInfo()
+            .addKeyValue("totalFailed", allFailedLinks.size())
+            .addKeyValue("totalPages", page)
+            .log("Link check cycle completed");
+    }
+
+    private void processBatchParallel(List<Link> batch, List<Link> globalFailedList) {
+        int threadCount = threadProperties.getExecutedThreads();
+        // Избегаем деления на ноль, если конфиг кривой
+        int actualThreads = Math.max(1, threadCount);
+        int partitionSize = (int) Math.ceil((double) batch.size() / actualThreads);
+
+        List<Future<List<Link>>> futures = new ArrayList<>();
+
+        for (int i = 0; i < batch.size(); i += partitionSize) {
+            int end = Math.min(i + partitionSize, batch.size());
+            List<Link> partition = new ArrayList<>(batch.subList(i, end));
+
+            futures.add(linkExecutorService.submit(() -> linkCheckerHelper.checkBatch(partition)));
+
+            log.atDebug()
+                .addKeyValue("partitionSize", partition.size())
+                .addKeyValue("range", i + "-" + end)
+                .log("Submitted task to executor service");
+        }
+
+        for (Future<List<Link>> future : futures) {
+            try {
+                List<Link> results = future.get();
+                if (results != null) {
+                    globalFailedList.addAll(results);
+                }
+            } catch (InterruptedException e) {
+                log.error("Main checker thread interrupted while waiting for workers", e);
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                log.atError()
+                    .setCause(e.getCause())
+                    .log("Worker thread encountered a critical error");
+            }
+        }
     }
 }

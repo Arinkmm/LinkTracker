@@ -1,0 +1,24 @@
+package backend.academy.linktracker.scrapper.configuration;
+
+import backend.academy.linktracker.scrapper.properties.ThreadProperties;
+import jakarta.annotation.PreDestroy;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+@Configuration
+public class ThreadConfiguration {
+    private ExecutorService executorService;
+
+    @Bean
+    public ExecutorService linkExecutorService(ThreadProperties threadProperties) {
+        executorService = Executors.newFixedThreadPool(threadProperties.getExecutedThreads());
+        return executorService;
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        executorService.shutdown();
+    }
+}

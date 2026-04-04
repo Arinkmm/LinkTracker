@@ -15,6 +15,12 @@ import org.springframework.validation.annotation.Validated;
 @EqualsAndHashCode
 @NoArgsConstructor
 public class StackoverflowProperties {
+    private String site;
+
+    private String filter;
+
+    private int batchSize;
+
     @NotEmpty
     private String url;
 

@@ -66,3 +66,8 @@ bot:
   responses:
     needed-tags: "да"
     not-needed-tags: "нет"
+
+sender:
+  message-limit: 4096
+  continuer: "Продолжение ниже..."
+  delimiter: "─────────────────"

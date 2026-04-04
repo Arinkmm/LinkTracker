@@ -1,15 +1,15 @@
 package backend.academy.linktracker.scrapper.client.stackoverflow;
 
+import backend.academy.linktracker.scrapper.client.LinkResponse;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 
-public record StackOverflowResponse(@JsonProperty("items") List<Item> items) {
-    public record Item(@JsonProperty("last_activity_date") long lastActivityDate) {}
-
-    public Instant lastActivity() {
-        return items != null && !items.isEmpty()
-                ? Instant.ofEpochSecond(items.getFirst().lastActivityDate())
-                : Instant.EPOCH;
-    }
+public record StackOverflowResponse(@JsonProperty("items") List<Item> items) implements LinkResponse {
+    public record Item(@JsonProperty("question_id") long questionId, @JsonProperty("body") String body, @JsonProperty("answers") List<Answer> answers, @JsonProperty("comments") List<Comment> comments,  @JsonProperty("last_activity_date") long lastActivityDate) {}
+    public record Answer(@JsonProperty("owner") Owner owner, @JsonProperty("body") String body, @JsonProperty("creation_date") long creationDate) {}
+    public record Owner(@JsonProperty("display_name") String displayName) {}
+    public record Comment(@JsonProperty("owner") Owner owner, @JsonProperty("body") String body, @JsonProperty("creation_date") long creationDate) {}
 }
