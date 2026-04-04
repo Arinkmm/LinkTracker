@@ -1,10 +1,9 @@
-package backend.academy.linktracker.scrapper.client.github;
+package backend.academy.linktracker.scrapper.client.api.github;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
-import java.time.Instant;
 import java.util.List;
 
 @HttpExchange

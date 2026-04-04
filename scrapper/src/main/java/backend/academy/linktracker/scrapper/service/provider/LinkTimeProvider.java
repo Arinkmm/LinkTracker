@@ -1,11 +1,9 @@
 package backend.academy.linktracker.scrapper.service.provider;
 
-import backend.academy.linktracker.scrapper.client.LinkResponse;
+import backend.academy.linktracker.scrapper.client.api.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.Link;
 import java.net.URI;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 public interface LinkTimeProvider {
     boolean supports(URI url);

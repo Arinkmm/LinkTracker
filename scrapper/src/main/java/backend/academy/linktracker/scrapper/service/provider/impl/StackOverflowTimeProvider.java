@@ -1,30 +1,22 @@
 package backend.academy.linktracker.scrapper.service.provider.impl;
 
-import backend.academy.linktracker.scrapper.client.LinkResponse;
-import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowClient;
-import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowResponse;
+import backend.academy.linktracker.scrapper.client.api.LinkResponse;
+import backend.academy.linktracker.scrapper.client.api.stackoverflow.StackOverflowClient;
+import backend.academy.linktracker.scrapper.client.api.stackoverflow.StackOverflowResponse;
 import backend.academy.linktracker.scrapper.dto.Link;
-import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.properties.StackoverflowProperties;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import static java.util.stream.Collectors.toList;
 
 @Component
 @RequiredArgsConstructor

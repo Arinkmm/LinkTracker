@@ -1,10 +1,9 @@
-package backend.academy.linktracker.scrapper.service.notifier;
+package backend.academy.linktracker.scrapper.service.checker;
 
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.properties.DBProperties;
 import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.properties.ThreadProperties;
-import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import backend.academy.linktracker.scrapper.service.user.LinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

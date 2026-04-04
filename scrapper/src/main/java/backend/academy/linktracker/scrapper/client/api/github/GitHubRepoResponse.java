@@ -1,12 +1,7 @@
-package backend.academy.linktracker.scrapper.client.github;
+package backend.academy.linktracker.scrapper.client.api.github;
 
-import backend.academy.linktracker.scrapper.client.LinkResponse;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.web.bind.annotation.PathVariable;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 public record GitHubRepoResponse(@JsonProperty("title") String title, @JsonProperty("user") User user, @JsonProperty("created_at") Instant createdAt, @JsonProperty("body") String body, @JsonProperty("pull_request") Object pullRequest) {
     public boolean isPullRequest() {

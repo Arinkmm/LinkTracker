@@ -1,9 +1,9 @@
-package backend.academy.linktracker.scrapper.service.notifier;
+package backend.academy.linktracker.scrapper.service.builder;
 
-import backend.academy.linktracker.scrapper.client.LinkResponse;
-import backend.academy.linktracker.scrapper.client.github.GitHubRepoResponse;
-import backend.academy.linktracker.scrapper.client.github.GitHubRepoResponses;
-import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowResponse;
+import backend.academy.linktracker.scrapper.client.api.LinkResponse;
+import backend.academy.linktracker.scrapper.client.api.github.GitHubRepoResponse;
+import backend.academy.linktracker.scrapper.client.api.github.GitHubRepoResponses;
+import backend.academy.linktracker.scrapper.client.api.stackoverflow.StackOverflowResponse;
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.properties.NotificationProperties;
 import java.time.Instant;

@@ -1,11 +1,10 @@
 package backend.academy.linktracker.scrapper.service.provider.impl;
 
-import backend.academy.linktracker.scrapper.client.LinkResponse;
-import backend.academy.linktracker.scrapper.client.github.GitHubClient;
-import backend.academy.linktracker.scrapper.client.github.GitHubRepoResponse;
-import backend.academy.linktracker.scrapper.client.github.GitHubRepoResponses;
+import backend.academy.linktracker.scrapper.client.api.LinkResponse;
+import backend.academy.linktracker.scrapper.client.api.github.GitHubClient;
+import backend.academy.linktracker.scrapper.client.api.github.GitHubRepoResponse;
+import backend.academy.linktracker.scrapper.client.api.github.GitHubRepoResponses;
 import backend.academy.linktracker.scrapper.dto.Link;
-import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.net.URI;
 import java.time.Instant;

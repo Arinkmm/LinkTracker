@@ -1,10 +1,7 @@
-package backend.academy.linktracker.scrapper.client.stackoverflow;
+package backend.academy.linktracker.scrapper.client.api.stackoverflow;
 
-import backend.academy.linktracker.scrapper.client.LinkResponse;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import backend.academy.linktracker.scrapper.client.api.LinkResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 
 public record StackOverflowResponse(@JsonProperty("items") List<Item> items) implements LinkResponse {
