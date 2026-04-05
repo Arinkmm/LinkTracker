@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import backend.academy.linktracker.scrapper.configuration.DatabaseIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
+import backend.academy.linktracker.scrapper.dto.Subscription;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
@@ -49,7 +50,7 @@ class UserSubscriptionTest extends DatabaseIntegrationEnvironment {
     @Test
     @DisplayName("Подписка: создание Link, Chat и Tags в БД")
     void subscribe_ShouldPersistAllEntities() {
-        long chatId = 1001L;
+        Long chatId = 1001L;
         chatRepository.save(chatId);
         URI url = URI.create("https://github.com/owner/repo");
         List<String> tags = List.of("java", "spring");
@@ -66,7 +67,7 @@ class UserSubscriptionTest extends DatabaseIntegrationEnvironment {
         Long linkId = linkRepository.findByUrl(url).get().id();
         assertTrue(subscriptionRepository.exists(linkId, chatId), "Связь подписки должна существовать");
 
-        var subscriptions = subscriptionRepository.findSubscriptionByChatId(chatId, 0, 10);
-        assertTrue(subscriptions.get(0).tags().containsAll(tags), "Теги должны быть сохранены");
+        List<Subscription> subscriptions = subscriptionRepository.findSubscriptionByChatId(chatId, 0, 10);
+        assertTrue(subscriptions.getFirst().tags().containsAll(tags), "Теги должны быть сохранены");
     }
 }
