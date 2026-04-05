@@ -38,6 +38,7 @@ lint:
 
 test:
   stage: test
+  timeout: 15m
   needs:
     - build
   services:
