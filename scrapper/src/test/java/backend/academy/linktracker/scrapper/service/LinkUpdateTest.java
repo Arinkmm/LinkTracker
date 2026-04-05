@@ -158,4 +158,45 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         assertDoesNotThrow(() -> linkChecker.checkAllLinks());
         verify(botNotifier, never()).notify(eq(link.id()), any(), any(), any());
     }
+
+    @Test
+    @DisplayName("Batch: часть ссылок недоступна — остальные обработаны, ошибки изолированы")
+    void batch_PartialFailure_OtherLinksStillProcessed() {
+        Long chatId = 400L;
+        chatRepository.save(chatId);
+
+        Link good1 = linkRepository.save(URI.create("https://stackoverflow.com/questions/501"));
+        Link good2 = linkRepository.save(URI.create("https://stackoverflow.com/questions/502"));
+        Link bad = linkRepository.save(URI.create("https://stackoverflow.com/questions/503"));
+
+        for (Link link : List.of(good1, good2, bad)) {
+            subscriptionRepository.save(chatId, link.id(), List.of());
+            linkService.updateLastChecked(link.id(), Instant.now().minus(1, ChronoUnit.DAYS));
+        }
+
+        Long now = Instant.now().getEpochSecond();
+
+        for (String id : List.of("501", "502")) {
+            stubStackOverflow(id, 200, """
+            { "items": [ {
+                "question_id": %s,
+                "last_activity_date": %d,
+                "answers": [ { "owner": {"display_name": "u"}, "creation_date": %d } ]
+            } ] }
+            """.formatted(id, now, now));
+        }
+
+        stubStackOverflow("503", 503, "Service Unavailable");
+
+        assertDoesNotThrow(() -> linkChecker.checkAllLinks());
+
+        verify(botNotifier, timeout(5000)).notify(eq(good1.id()), any(), any(), any());
+        verify(botNotifier, timeout(5000)).notify(eq(good2.id()), any(), any(), any());
+
+        ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
+        verify(botNotifier, timeout(5000)).notify(eq(bad.id()), any(), errorCaptor.capture(), any());
+        assertTrue(
+                errorCaptor.getValue().contains("Не удалось обработать"),
+                "Для недоступной ссылки должно быть уведомление об ошибке");
+    }
 }
