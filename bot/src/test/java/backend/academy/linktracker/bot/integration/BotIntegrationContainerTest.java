@@ -1,17 +1,18 @@
 package backend.academy.linktracker.bot.integration;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import backend.academy.linktracker.bot.configuration.TestcontainersConfiguration;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,18 +20,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Import(TestcontainersConfiguration.class)
+@Testcontainers
 class BotIntegrationContainerTest {
-    @Autowired
-    @Qualifier("botContainer")
-    private GenericContainer<?> botContainer;
+    private static final int BOT_PORT = 8080;
+    private static final Duration STARTUP_TIMEOUT = Duration.ofSeconds(180);
 
-    private RestClient restClient() {
-        String host = botContainer.getHost();
-        Integer port = botContainer.getMappedPort(8080);
-        return RestClient.builder().baseUrl("http://" + host + ":" + port).build();
+    @Container
+    static final GenericContainer<?> botContainer = new GenericContainer<>(
+                    new ImageFromDockerfile("localhost/link-tracker-bot-test:latest", false)
+                            .withFileFromPath(".", findProjectRoot())
+                            .withDockerfile(findProjectRoot().resolve("Dockerfile")))
+            .withExposedPorts(BOT_PORT)
+            .withStartupTimeout(STARTUP_TIMEOUT)
+            .waitingFor(Wait.forHttp("/actuator/health")
+                    .forPort(BOT_PORT)
+                    .forStatusCode(200)
+                    .withStartupTimeout(STARTUP_TIMEOUT));
+
+    private RestClient restClient;
+
+    @BeforeEach
+    void setup() {
+        restClient = RestClient.builder()
+                .baseUrl("http://" + botContainer.getHost() + ":" + botContainer.getMappedPort(BOT_PORT))
+                .build();
     }
 
     @Test
@@ -42,7 +60,7 @@ class BotIntegrationContainerTest {
         update.setDescription("New update");
         update.setTgChatIds(List.of(1L, 2L));
 
-        ResponseEntity<Void> response = restClient()
+        ResponseEntity<Void> response = restClient
                 .method(HttpMethod.POST)
                 .uri("/updates")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -63,16 +81,34 @@ class BotIntegrationContainerTest {
             }
             """;
 
-        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> {
-            restClient()
-                    .method(HttpMethod.POST)
-                    .uri("/updates")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(invalidBody)
-                    .retrieve()
-                    .toBodilessEntity();
-        });
+        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient
+                .method(HttpMethod.POST)
+                .uri("/updates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(invalidBody)
+                .retrieve()
+                .toBodilessEntity());
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    private static Path findProjectRoot() {
+        Path current = Paths.get("").toAbsolutePath().normalize();
+
+        while (current != null) {
+            boolean hasDockerfile = Files.exists(current.resolve("Dockerfile"));
+            boolean hasRootPom = Files.exists(current.resolve("pom.xml"));
+            boolean hasBotModule = Files.exists(current.resolve("bot").resolve("pom.xml"));
+            boolean hasApiCommonModule =
+                    Files.exists(current.resolve("api-common").resolve("pom.xml"));
+
+            if (hasDockerfile && hasRootPom && hasBotModule && hasApiCommonModule) {
+                return current;
+            }
+
+            current = current.getParent();
+        }
+
+        throw new IllegalStateException("Не удалось найти корень проекта с Dockerfile и multi-module Maven structure");
     }
 }
