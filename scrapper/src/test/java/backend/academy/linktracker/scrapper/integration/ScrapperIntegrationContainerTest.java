@@ -18,19 +18,15 @@ import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
 class ScrapperIntegrationContainerTest {
-    @Container
     static final GenericContainer<?> scrapper = new GenericContainer<>(
                     new ImageFromDockerfile(ContainerConstants.APP_IMAGE, false)
                             .withFileFromPath("app.jar", Paths.get(ContainerConstants.APP_JAR))
                             .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
-                                    .copy("app.jar", "/app.jar")
+                                    .copy("app.jar", "app.jar")
                                     .expose(ContainerConstants.APP_PORT)
-                                    .entryPoint("java", "-Dspring.profiles.active=test", "-jar", "/app.jar")
+                                    .entryPoint("java", "-Dspring.profiles.active=test", "-jar", "app.jar")
                                     .build()))
             .withNetwork(SharedPostgresContainer.NETWORK)
             .dependsOn(SharedPostgresContainer.INSTANCE)
@@ -50,6 +46,16 @@ class ScrapperIntegrationContainerTest {
 
     private static final AtomicLong chatIdCounter = new AtomicLong(100L);
     private RestClient restClient;
+
+    @BeforeAll
+    static void startContainers() {
+        scrapper.start();
+    }
+
+    @AfterAll
+    static void stopContainers() {
+        scrapper.stop();
+    }
 
     @BeforeEach
     void setUp() {
