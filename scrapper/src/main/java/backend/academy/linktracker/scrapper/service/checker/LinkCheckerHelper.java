@@ -51,7 +51,7 @@ public class LinkCheckerHelper {
                 .collect(Collectors.groupingBy(l -> providers.stream()
                         .filter(p -> p.supports(l.url()))
                         .findFirst()
-                        .get()));
+                        .orElseThrow()));
 
         grouped.forEach((provider, providerList) -> {
             String providerName = provider.getClass().getSimpleName();
