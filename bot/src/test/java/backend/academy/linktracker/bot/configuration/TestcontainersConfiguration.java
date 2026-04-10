@@ -31,7 +31,7 @@ public class TestcontainersConfiguration {
                                 .build()))
                 .withNetwork(network)
                 .withExposedPorts(8080)
-                .withStartupTimeout(Duration.ofSeconds(60))
+                .withStartupTimeout(Duration.ofSeconds(120))
                 .waitingFor(Wait.forHttp("/actuator/health").forPort(8080));
     }
 }
