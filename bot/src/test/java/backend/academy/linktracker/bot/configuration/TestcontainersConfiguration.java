@@ -26,12 +26,12 @@ public class TestcontainersConfiguration {
                         .withFileFromPath("app.jar", jarPath)
                         .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
                                 .copy("app.jar", "app.jar")
-                                .expose(8081)
+                                .expose(8080)
                                 .entryPoint("java", "-jar", "app.jar")
                                 .build()))
                 .withNetwork(network)
                 .withExposedPorts(8080)
-                .withStartupTimeout(Duration.ofSeconds(120))
-                .waitingFor(Wait.forHttp("/actuator/health").forPort(8080));
+                .waitingFor(Wait.forHttp("/actuator/health").forPort(8080).forStatusCode(200))
+                .withStartupTimeout(Duration.ofSeconds(120));
     }
 }
