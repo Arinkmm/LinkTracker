@@ -78,18 +78,12 @@ public class GitHubTimeProvider implements LinkTimeProvider {
 
     private String[] parseRepo(URI url) {
         String path = url.getPath();
-        if (path == null || path.isEmpty()) {
-            throw new IllegalArgumentException("Path is empty");
-        }
 
         if (path.startsWith("/")) {
             path = path.substring(1);
         }
 
         String[] segments = path.split("/");
-        if (segments.length < 2) {
-            throw new IllegalArgumentException("Invalid GitHub URL path: " + path);
-        }
 
         return new String[] {segments[0], segments[1]};
     }

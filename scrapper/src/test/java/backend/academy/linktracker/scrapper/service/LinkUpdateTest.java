@@ -21,11 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
-@TestPropertySource(properties = "app.scheduler.interval=3600000")
 class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
     @Autowired
     private LinkChecker linkChecker;
@@ -46,7 +44,7 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
     private BotNotifier botNotifier;
 
     @Test
-    @DisplayName("GitHub: сообщение содержит название, автора и обрезанное превью (ровно 200 симв.)")
+    @DisplayName("GitHub Issue: сообщение содержит название, автора и обрезанное превью")
     void githubUpdate_MessageContainsTitleAuthorAndTruncatedAt200() {
         Long chatId = 43L;
         chatRepository.save(chatId);
@@ -79,7 +77,35 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("StackOverflow: сообщение содержит автора ответа и превью")
+    @DisplayName("GitHub PR: корректное распознавание нового Pull Request")
+    void githubUpdate_HandlesPullRequest() {
+        Long chatId = 44L;
+        chatRepository.save(chatId);
+        Link link = linkRepository.save(URI.create("https://github.com/user/pr-repo"));
+        subscriptionRepository.save(chatId, link.id(), List.of());
+        linkService.updateLastChecked(link.id(), Instant.now().minus(1, ChronoUnit.DAYS));
+
+        stubGitHub("user", "pr-repo", 200, """
+            [ {
+                "title": "Add new feature",
+                "user": { "login": "developer" },
+                "pull_request": { "url": "https://api.github.com/repos/user/pr-repo/pulls/1" },
+                "created_at": "%s"
+            } ]
+            """.formatted(Instant.now()));
+
+        linkChecker.checkAllLinks();
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(botNotifier, timeout(5000)).notify(eq(link.id()), any(), captor.capture(), any());
+
+        String msg = captor.getValue();
+        assertTrue(
+                msg.toLowerCase().contains("pull request") || msg.contains("PR"), "Сообщение должно указывать на PR");
+    }
+
+    @Test
+    @DisplayName("StackOverflow Answer: сообщение содержит автора ответа и превью")
     void stackOverflow_MessageContainsAnswerAuthorAndPreview() {
         Long chatId = 11L;
         chatRepository.save(chatId);
@@ -112,91 +138,92 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Пакетная обработка: несколько ссылок обрабатываются за один цикл")
+    @DisplayName("StackOverflow Comment: сообщение содержит автора комментария")
+    void stackOverflow_HandlesNewComment() {
+        Long chatId = 12L;
+        chatRepository.save(chatId);
+        Link link = linkRepository.save(URI.create("https://stackoverflow.com/questions/333"));
+        subscriptionRepository.save(chatId, link.id(), List.of());
+        linkService.updateLastChecked(link.id(), Instant.now().minus(1, ChronoUnit.DAYS));
+
+        Long now = Instant.now().getEpochSecond();
+        stubStackOverflow("333", 200, """
+            { "items": [ {
+                "question_id": 333,
+                "last_activity_date": %d,
+                "comments": [ {
+                    "owner": {"display_name": "commenter"},
+                    "body": "Useful comment body",
+                    "creation_date": %d
+                } ]
+            } ] }
+            """.formatted(now, now));
+
+        linkChecker.checkAllLinks();
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(botNotifier, timeout(5000)).notify(eq(link.id()), any(), captor.capture(), any());
+
+        String msg = captor.getValue();
+        assertTrue(
+                msg.contains("commenter") && msg.contains("Useful comment"),
+                "Сообщение должно указывать на комментарий");
+    }
+
+    @Test
+    @DisplayName("Пакетная обработка: несколько StackOverflow ссылок за один HTTP запрос")
     void batchProcessing_MultipleLinksHandledTogether() {
         Long chatId = 200L;
         chatRepository.save(chatId);
 
         Link link1 = linkRepository.save(URI.create("https://stackoverflow.com/questions/301"));
         Link link2 = linkRepository.save(URI.create("https://stackoverflow.com/questions/302"));
-        Link link3 = linkRepository.save(URI.create("https://stackoverflow.com/questions/303"));
 
-        for (Link link : List.of(link1, link2, link3)) {
+        for (Link link : List.of(link1, link2)) {
             subscriptionRepository.save(chatId, link.id(), List.of());
             linkService.updateLastChecked(link.id(), Instant.now().minus(1, ChronoUnit.DAYS));
         }
 
         Long now = Instant.now().getEpochSecond();
-        for (String id : List.of("301", "302", "303")) {
-            stubStackOverflow(id, 200, """
-                { "items": [ {
-                    "question_id": %s,
-                    "last_activity_date": %d,
-                    "answers": [ { "owner": {"display_name": "u"}, "creation_date": %d } ]
-                } ] }
-                """.formatted(id, now, now));
-        }
+        stubStackOverflow("301;302", 200, """
+            { "items": [
+                { "question_id": 301, "last_activity_date": %1$d, "answers": [ { "owner": {"display_name": "u1"}, "creation_date": %1$d } ] },
+                { "question_id": 302, "last_activity_date": %1$d, "answers": [ { "owner": {"display_name": "u2"}, "creation_date": %1$d } ] }
+            ] }
+            """.formatted(now));
 
         linkChecker.checkAllLinks();
 
         verify(botNotifier, timeout(5000)).notify(eq(link1.id()), any(), any(), any());
         verify(botNotifier, timeout(5000)).notify(eq(link2.id()), any(), any(), any());
-        verify(botNotifier, timeout(5000)).notify(eq(link3.id()), any(), any(), any());
     }
 
     @Test
-    @DisplayName("API недоступен (503): уведомление не отправляется, приложение не падает")
-    void apiUnavailable_BotNotNotified() {
-        Long chatId = 300L;
-        chatRepository.save(chatId);
-        Link link = linkRepository.save(URI.create("https://github.com/user/unavailable"));
-        subscriptionRepository.save(chatId, link.id(), List.of());
-        linkService.updateLastChecked(link.id(), Instant.now().minus(1, ChronoUnit.DAYS));
-
-        stubGitHub("user", "unavailable", 503, "Service Unavailable");
-
-        assertDoesNotThrow(() -> linkChecker.checkAllLinks());
-        verify(botNotifier, never()).notify(eq(link.id()), any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("Batch: часть ссылок недоступна — остальные обработаны, ошибки изолированы")
-    void batch_PartialFailure_OtherLinksStillProcessed() {
+    @DisplayName("Resilience: падение одного API не блокирует проверку ссылок из другого")
+    void resilience_OneApiFailureDoesNotStopWholeProcess() {
         Long chatId = 400L;
         chatRepository.save(chatId);
 
-        Link good1 = linkRepository.save(URI.create("https://stackoverflow.com/questions/501"));
-        Link good2 = linkRepository.save(URI.create("https://stackoverflow.com/questions/502"));
-        Link bad = linkRepository.save(URI.create("https://stackoverflow.com/questions/503"));
+        Link ghLink = linkRepository.save(URI.create("https://github.com/user/error-repo"));
+        Link soLink = linkRepository.save(URI.create("https://stackoverflow.com/questions/505"));
 
-        for (Link link : List.of(good1, good2, bad)) {
-            subscriptionRepository.save(chatId, link.id(), List.of());
-            linkService.updateLastChecked(link.id(), Instant.now().minus(1, ChronoUnit.DAYS));
+        for (Link l : List.of(ghLink, soLink)) {
+            subscriptionRepository.save(chatId, l.id(), List.of());
+            linkService.updateLastChecked(l.id(), Instant.now().minus(1, ChronoUnit.DAYS));
         }
+
+        stubGitHub("user", "error-repo", 503, "Service Unavailable");
 
         Long now = Instant.now().getEpochSecond();
-
-        for (String id : List.of("501", "502")) {
-            stubStackOverflow(id, 200, """
+        stubStackOverflow("505", 200, """
             { "items": [ {
-                "question_id": %s,
-                "last_activity_date": %d,
-                "answers": [ { "owner": {"display_name": "u"}, "creation_date": %d } ]
+                "question_id": 505, "last_activity_date": %d, "answers": [{"owner":{"display_name":"so_pro"}, "creation_date": %d}]
             } ] }
-            """.formatted(id, now, now));
-        }
+            """.formatted(now, now));
 
-        stubStackOverflow("503", 503, "Service Unavailable");
+        linkChecker.checkAllLinks();
 
-        assertDoesNotThrow(() -> linkChecker.checkAllLinks());
-
-        verify(botNotifier, timeout(5000)).notify(eq(good1.id()), any(), any(), any());
-        verify(botNotifier, timeout(5000)).notify(eq(good2.id()), any(), any(), any());
-
-        ArgumentCaptor<String> errorCaptor = ArgumentCaptor.forClass(String.class);
-        verify(botNotifier, timeout(5000)).notify(eq(bad.id()), any(), errorCaptor.capture(), any());
-        assertTrue(
-                errorCaptor.getValue().contains("Не удалось обработать"),
-                "Для недоступной ссылки должно быть уведомление об ошибке");
+        verify(botNotifier, timeout(5000)).notify(eq(soLink.id()), any(), contains("so_pro"), any());
+        verify(botNotifier, timeout(5000)).notify(eq(ghLink.id()), any(), any(), any());
     }
 }

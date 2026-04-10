@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -24,8 +24,8 @@ public class LinkChecker {
     private final SchedulerProperties schedulerProperties;
     private final LinkCheckerHelper linkCheckerHelper;
     private final ThreadProperties threadProperties;
-    private final ExecutorService linkExecutorService;
     private final LinkService linkService;
+    private final ThreadPoolTaskExecutor linkUpdateExecutor;
 
     public void checkAllLinks() {
         log.info("Starting link check cycle...");
@@ -63,10 +63,8 @@ public class LinkChecker {
     }
 
     private void processBatchParallel(List<Link> batch, List<Link> globalFailedList) {
-        int threadCount = threadProperties.getExecutedThreads();
-        // Избегаем деления на ноль, если конфиг кривой
-        int actualThreads = Math.max(1, threadCount);
-        int partitionSize = (int) Math.ceil((double) batch.size() / actualThreads);
+        int threadCount = threadProperties.getPoolSize();
+        int partitionSize = (int) Math.ceil((double) batch.size() / threadCount);
 
         List<Future<List<Link>>> futures = new ArrayList<>();
 
@@ -74,7 +72,7 @@ public class LinkChecker {
             int end = Math.min(i + partitionSize, batch.size());
             List<Link> partition = new ArrayList<>(batch.subList(i, end));
 
-            futures.add(linkExecutorService.submit(() -> linkCheckerHelper.checkBatch(partition)));
+            futures.add(linkUpdateExecutor.submit(() -> linkCheckerHelper.checkBatch(partition)));
 
             log.atDebug()
                     .addKeyValue("partitionSize", partition.size())
@@ -89,7 +87,7 @@ public class LinkChecker {
                     globalFailedList.addAll(results);
                 }
             } catch (InterruptedException e) {
-                log.error("Main checker thread interrupted while waiting for workers", e);
+                log.atError().setCause(e.getCause()).log("Main checker thread interrupted while waiting for workers");
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
                 log.atError().setCause(e.getCause()).log("Worker thread encountered a critical error");

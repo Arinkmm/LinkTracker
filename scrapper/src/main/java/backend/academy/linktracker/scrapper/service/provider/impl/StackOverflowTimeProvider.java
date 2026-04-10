@@ -130,17 +130,13 @@ public class StackOverflowTimeProvider implements LinkTimeProvider {
 
     private String extractQuestionId(URI url) {
         String path = url.getPath();
-        if (path == null) {
-            log.atTrace().addKeyValue("url", url).log("Could not extract ID: path is null");
-            return null;
+
+        if (path.startsWith("/")) {
+            path = path.substring(1);
         }
-        String[] parts = path.split("/");
-        for (int i = 0; i < parts.length; i++) {
-            if ("questions".equals(parts[i]) && i + 1 < parts.length) {
-                return parts[i + 1];
-            }
-        }
-        log.atTrace().addKeyValue("path", path).log("Could not find 'questions' segment in URL");
-        return null;
+
+        String[] segments = path.split("/");
+
+        return segments[1];
     }
 }

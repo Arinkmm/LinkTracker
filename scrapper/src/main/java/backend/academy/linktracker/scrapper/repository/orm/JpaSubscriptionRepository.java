@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface JpaSubscriptionRepository extends JpaRepository<SubscriptionEntity, Long> {
     Page<SubscriptionEntity> findByChatId(Long chatId, Pageable pageable);
 
-    @Query("SELECT s FROM SubscriptionEntity s LEFT JOIN FETCH s.tags WHERE s.linkId = :linkId")
+    @Query("SELECT s FROM SubscriptionEntity s WHERE s.linkId = :linkId")
     Page<SubscriptionEntity> findByLinkId(Long linkId, Pageable pageable);
 
     void deleteByChatIdAndLinkId(Long chatId, Long linkId);

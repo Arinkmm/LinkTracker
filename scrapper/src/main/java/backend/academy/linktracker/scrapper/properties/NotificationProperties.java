@@ -2,53 +2,52 @@ package backend.academy.linktracker.scrapper.properties;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
-@Setter
 @RequiredArgsConstructor
 @ConfigurationProperties(prefix = "notifications")
 public class NotificationProperties {
-    public final Defaulting defaulting;
-    public final Error error;
-    public final String divider;
-    public final String dateTimeFormat;
-    public final Labels labels;
-    public final Limits limits;
+
+    private final Defaulting defaulting;
+    private final Error error;
+    private final String divider;
+    private final String dateTimeFormat;
+    private final Labels labels;
+    private final Limits limits;
 
     @Getter
-    @Setter
+    @RequiredArgsConstructor
     public static class Labels {
-        private String title;
-        private String question;
-        private String author;
-        private String time;
-        private String description;
-        private String typeIssue;
-        private String typePr;
-        private String typeAnswer;
-        private String typeComment;
-        private String emptyContent;
+        private final String title;
+        private final String question;
+        private final String author;
+        private final String time;
+        private final String description;
+        private final String typeIssue;
+        private final String typePr;
+        private final String typeAnswer;
+        private final String typeComment;
+        private final String emptyContent;
     }
 
     @Getter
-    @Setter
+    @RequiredArgsConstructor
     public static class Limits {
-        private int githubBody;
-        private int stackoverflowAnswer;
-        private int stackoverflowComment;
+        private final int githubBody;
+        private final int stackoverflowAnswer;
+        private final int stackoverflowComment;
     }
 
     @Getter
-    @Setter
+    @RequiredArgsConstructor
     public static class Defaulting {
-        private String title;
+        private final String title;
     }
 
     @Getter
-    @Setter
+    @RequiredArgsConstructor
     public static class Error {
-        private String title;
+        private final String title;
     }
 }

@@ -1,24 +1,24 @@
 package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.scrapper.properties.ThreadProperties;
-import jakarta.annotation.PreDestroy;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
 public class ThreadConfiguration {
-    private ExecutorService executorService;
-
     @Bean
-    public ExecutorService linkExecutorService(ThreadProperties threadProperties) {
-        executorService = Executors.newFixedThreadPool(threadProperties.getExecutedThreads());
-        return executorService;
-    }
+    public ThreadPoolTaskExecutor linkUpdateExecutor(ThreadProperties properties) {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-    @PreDestroy
-    public void shutdown() {
-        executorService.shutdown();
+        executor.setCorePoolSize(properties.getPoolSize());
+        executor.setMaxPoolSize(properties.getPoolSize());
+        executor.setThreadNamePrefix("link-updater-");
+
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
+
+        executor.initialize();
+        return executor;
     }
 }

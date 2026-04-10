@@ -7,7 +7,7 @@ import backend.academy.linktracker.scrapper.client.api.stackoverflow.StackOverfl
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.dto.Subscription;
 import backend.academy.linktracker.scrapper.properties.DBProperties;
-import backend.academy.linktracker.scrapper.service.builder.NotificationBuilder;
+import backend.academy.linktracker.scrapper.service.builder.impl.NotificationBuilderService;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import backend.academy.linktracker.scrapper.service.user.LinkService;
@@ -29,7 +29,7 @@ public class LinkCheckerHelper {
     private final List<LinkTimeProvider> providers;
     private final DBProperties dbProperties;
     private final BotNotifier botNotifier;
-    private final NotificationBuilder builder;
+    private final NotificationBuilderService builder;
     private final LinkService linkService;
     private final SubscriptionService subscriptionService;
 
@@ -68,8 +68,10 @@ public class LinkCheckerHelper {
                         .addKeyValue("received", results.size())
                         .log("Received provider responses");
 
-                Set<Long> successfulIds =
-                        results.stream().map(r -> r.link().id()).collect(Collectors.toSet());
+                Set<Long> successfulIds = results.stream()
+                        .filter(r -> r.linkResponse() != null)
+                        .map(r -> r.link().id())
+                        .collect(Collectors.toSet());
 
                 providerList.stream()
                         .filter(l -> !successfulIds.contains(l.id()))
@@ -95,13 +97,12 @@ public class LinkCheckerHelper {
     }
 
     private void processSingleUpdate(Link link, LinkResponse response) {
-        Instant newEventDate = extractDate(response);
-
         if (response == null) {
             log.warn("Response is null, skipping update processing for this link");
             return;
         }
 
+        Instant newEventDate = extractDate(response);
         if (newEventDate == null) {
             log.atDebug()
                     .addKeyValue("linkId", link.id())

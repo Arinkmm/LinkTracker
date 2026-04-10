@@ -17,8 +17,8 @@ app:
     access-type: orm
   pagination:
     default-page-size: 20
-  treading:
-    executed-threads: 4
+  threading:
+    pool-size: 4
   client:
     type: http
   bot:
