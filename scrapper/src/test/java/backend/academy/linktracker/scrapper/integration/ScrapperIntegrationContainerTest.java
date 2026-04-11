@@ -18,8 +18,12 @@ import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+@Testcontainers
 class ScrapperIntegrationContainerTest {
+    @Container
     static final GenericContainer<?> scrapper = new GenericContainer<>(
                     new ImageFromDockerfile(ContainerConstants.APP_IMAGE, false)
                             .withFileFromPath("app.jar", Paths.get(ContainerConstants.APP_JAR))
@@ -45,23 +49,11 @@ class ScrapperIntegrationContainerTest {
             .withStartupTimeout(Duration.ofSeconds(120));
 
     private static final AtomicLong chatIdCounter = new AtomicLong(100L);
-    private RestClient restClient;
 
-    @BeforeAll
-    static void startContainers() {
-        scrapper.start();
-    }
-
-    @AfterAll
-    static void stopContainers() {
-        scrapper.stop();
-    }
-
-    @BeforeEach
-    void setUp() {
-        restClient = RestClient.builder()
-                .baseUrl("http://" + scrapper.getHost() + ":" + scrapper.getMappedPort(ContainerConstants.APP_PORT))
-                .build();
+    private RestClient restClient() {
+        String host = scrapper.getHost();
+        Integer port = scrapper.getMappedPort(8081);
+        return RestClient.builder().baseUrl("http://" + host + ":" + port).build();
     }
 
     private AddLinkRequest linkRequest(String url) {
@@ -73,7 +65,7 @@ class ScrapperIntegrationContainerTest {
     }
 
     private void registerChat(long chatId) {
-        restClient
+        restClient()
                 .method(HttpMethod.POST)
                 .uri("/tg-chat/{id}", chatId)
                 .retrieve()
@@ -81,7 +73,7 @@ class ScrapperIntegrationContainerTest {
     }
 
     private void addLink(long chatId, String url) {
-        restClient
+        restClient()
                 .method(HttpMethod.POST)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
@@ -100,7 +92,7 @@ class ScrapperIntegrationContainerTest {
         registerChat(chatId);
         addLink(chatId, link);
 
-        String response = restClient
+        String response = restClient()
                 .method(HttpMethod.GET)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
@@ -120,7 +112,7 @@ class ScrapperIntegrationContainerTest {
         registerChat(chatId);
         addLink(chatId, link);
 
-        restClient
+        restClient()
                 .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
@@ -129,7 +121,7 @@ class ScrapperIntegrationContainerTest {
                 .retrieve()
                 .toBodilessEntity();
 
-        String response = restClient
+        String response = restClient()
                 .method(HttpMethod.GET)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
@@ -143,7 +135,7 @@ class ScrapperIntegrationContainerTest {
     @Test
     @DisplayName("Тест 3.3: Удаление ссылки из несуществующего чата")
     void test3_3_deleteFromMissingChat() {
-        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient
+        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient()
                 .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header("Tg-Chat-Id", "999")
@@ -158,7 +150,7 @@ class ScrapperIntegrationContainerTest {
     @Test
     @DisplayName("Тест 3.4: Добавление ссылки в несуществующий чат")
     void test3_4_addToMissingChat() {
-        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient
+        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient()
                 .method(HttpMethod.POST)
                 .uri("/links")
                 .header("Tg-Chat-Id", "2")
@@ -177,13 +169,13 @@ class ScrapperIntegrationContainerTest {
 
         registerChat(chatId);
 
-        restClient
+        restClient()
                 .method(HttpMethod.DELETE)
                 .uri("/tg-chat/{id}", chatId)
                 .retrieve()
                 .toBodilessEntity();
 
-        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient
+        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient()
                 .method(HttpMethod.POST)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(chatId))
@@ -198,7 +190,7 @@ class ScrapperIntegrationContainerTest {
     @Test
     @DisplayName("Тест 3.6: Удаление несуществующего чата")
     void test3_6_deleteMissingChat() {
-        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient
+        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient()
                 .method(HttpMethod.DELETE)
                 .uri("/tg-chat/100500")
                 .retrieve()
