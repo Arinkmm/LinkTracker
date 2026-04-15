@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.configuration;
 
-import backend.academy.linktracker.scrapper.client.github.GitHubClient;
-import backend.academy.linktracker.scrapper.client.stackoverflow.StackOverflowClient;
+import backend.academy.linktracker.scrapper.client.api.github.GitHubClient;
+import backend.academy.linktracker.scrapper.client.api.stackoverflow.StackOverflowClient;
 import backend.academy.linktracker.scrapper.properties.GithubProperties;
 import backend.academy.linktracker.scrapper.properties.StackoverflowProperties;
 import lombok.RequiredArgsConstructor;

@@ -12,6 +12,7 @@ import backend.academy.linktracker.scrapper.properties.DBProperties;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,16 @@ public class LinkService {
         response.setSize(responseLinks.size());
 
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Link> getStaleLinks(Instant threshold, int page, int size) {
+        return linkRepository.findStaleLinks(threshold, page, size);
+    }
+
+    @Transactional
+    public void updateLastChecked(Long id, Instant time) {
+        linkRepository.updateLastChecked(id, time);
     }
 
     private LinkResponse mapToResponse(Link link, List<String> tags) {

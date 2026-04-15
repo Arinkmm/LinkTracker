@@ -14,6 +14,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "subscriptions")
@@ -31,6 +32,7 @@ public class SubscriptionEntity {
     @Column(name = "link_id")
     private Long linkId;
 
+    @BatchSize(size = 20)
     @OneToMany(mappedBy = "subscription", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubscriptionTagEntity> tags = new ArrayList<>();
 

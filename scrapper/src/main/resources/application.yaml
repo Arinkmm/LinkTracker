@@ -17,6 +17,8 @@ app:
     access-type: orm
   pagination:
     default-page-size: 20
+  threading:
+    pool-size: 4
   client:
     type: http
   bot:
@@ -26,6 +28,9 @@ app:
     port: 9091
 
   stackoverflow:
+    site: stackoverflow
+    filter: "!*JK2R6f)iUdB8zQn9e6hYTcT)El5NN*4fKw)Y0vPLkly"
+    batch-size: 100
     url: https://api.stackexchange.com/2.3
     key: ${STACKOVERFLOW_KEY}
     access-token: ${STACKOVERFLOW_ACCESS_KEY}
@@ -34,9 +39,28 @@ app:
     token: ${GITHUB_TOKEN}
 
 notifications:
-  default:
+  divider: "────────────────"
+  date-time-format: "yyyy-MM-dd HH:mm 'UTC'"
+  labels:
+    title: "Название: "
+    question: "Вопрос: "
+    author: "Автор: "
+    time: "Время: "
+    description: "Описание: "
+    type-issue: "Issue"
+    type-pr: "Pull Request"
+    type-answer: "Ответ"
+    type-comment: "Комментарий"
+    empty-content: "—"
+  limits:
+    github-body: 200
+    stackoverflow-answer: 200
+    stackoverflow-comment: 200
+  error:
+    title: "Не удалось обработать ссылку!"
+  defaulting:
     title: "Обновление!"
-    body: "%s"
+
 errors:
   invalid-response: "Непредвиденная ошибка при обращении к внешнему сервису"
 
