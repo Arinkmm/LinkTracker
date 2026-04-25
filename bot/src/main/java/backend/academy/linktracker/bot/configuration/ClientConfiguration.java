@@ -19,7 +19,7 @@ import org.springframework.web.client.RestClient;
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-public class HttpConfiguration {
+public class ClientConfiguration {
     private final MessagesProperties properties;
 
     @Bean
@@ -28,7 +28,7 @@ public class HttpConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "app.client.type", havingValue = "http", matchIfMissing = true)
+    @ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "http", matchIfMissing = true)
     public RestClient scrapperRestClient(@Value("${app.scrapper.url}") String url, ObjectMapper objectMapper) {
         return RestClient.builder()
                 .baseUrl(url)
@@ -50,7 +50,7 @@ public class HttpConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "app.client.type", havingValue = "grpc")
+    @ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "grpc")
     public ScrapperServiceGrpc.ScrapperServiceBlockingStub scrapperGrpcStub(
             @Value("${app.grpc.host}") String host, @Value("${app.grpc.port}") int port) {
         return ScrapperServiceGrpc.newBlockingStub(

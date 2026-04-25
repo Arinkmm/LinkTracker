@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-@ConditionalOnProperty(name = "app.client.type", havingValue = "http")
+@ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "http")
 @RequiredArgsConstructor
 public class ScrapperHttpClient implements ScrapperClient {
     private final RestClient restClient;

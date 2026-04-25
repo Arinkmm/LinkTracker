@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "app.client.type", havingValue = "grpc")
+@ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "grpc")
 public class ScrapperGrpcClient implements ScrapperClient {
     private final ScrapperServiceGrpc.ScrapperServiceBlockingStub blockingStub;
     private final GrpcMapper mapper;
