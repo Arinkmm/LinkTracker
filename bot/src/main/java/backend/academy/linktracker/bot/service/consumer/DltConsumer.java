@@ -14,10 +14,9 @@ import org.springframework.stereotype.Component;
 public class DltConsumer {
 
     @KafkaListener(
-        topics = "${app.kafka.dlt-topic}",
-        groupId = "${app.kafka.group-id}-dlt",
-        containerFactory = "kafkaListenerContainerFactory"
-    )
+            topics = "${app.kafka.dlt-topic}",
+            groupId = "${app.kafka.group-id}-dlt",
+            containerFactory = "kafkaListenerContainerFactory")
     public void consume(LinkUpdateEvent linkUpdateEvent) {
         log.atError().addKeyValue("linkUpdateEvent", linkUpdateEvent).log("Message moved to DLT");
     }

@@ -8,7 +8,6 @@ import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
 import backend.academy.linktracker.scrapper.exception.ApiException;
 import backend.academy.linktracker.scrapper.properties.ErrorProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.grpc.ManagedChannelBuilder;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;

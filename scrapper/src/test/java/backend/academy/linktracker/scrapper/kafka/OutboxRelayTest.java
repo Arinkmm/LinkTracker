@@ -1,5 +1,7 @@
 package backend.academy.linktracker.scrapper.kafka;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import backend.academy.linktracker.avro.LinkUpdateEvent;
 import backend.academy.linktracker.scrapper.configuration.KafkaIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.configuration.SharedKafkaContainer;
@@ -13,6 +15,13 @@ import backend.academy.linktracker.scrapper.service.user.LinkService;
 import backend.academy.linktracker.scrapper.service.user.OutboxMessageService;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
+import java.net.URI;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -27,16 +36,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.net.URI;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class OutboxRelayTest extends KafkaIntegrationEnvironment {
@@ -149,15 +148,14 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
 
         List<OutboxMessageEntity> remainingNew = outboxMessageService.getOutboxMessages(0, 10);
         assertThat(remainingNew)
-            .filteredOn(m -> m.getStatus() == OutboxStatus.NEW)
-            .isEmpty();
+                .filteredOn(m -> m.getStatus() == OutboxStatus.NEW)
+                .isEmpty();
     }
 
     private String createPayload(Long id, String url) {
         return String.format(
-            "{\"id\":%d, \"url\":\"%s\", \"description\":\"Update detected\", \"tgChatIds\":[%d]}",
-            id, url, currentChatId
-        );
+                "{\"id\":%d, \"url\":\"%s\", \"description\":\"Update detected\", \"tgChatIds\":[%d]}",
+                id, url, currentChatId);
     }
 
     private void saveOutboxMessage(Long linkId, String payload, OutboxStatus status) {

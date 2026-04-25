@@ -81,17 +81,17 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
         LinkUpdate update = captor.getAllValues().stream()
-            .filter(u -> u.getId().equals(link.id()))
-            .findFirst()
-            .orElseThrow();
+                .filter(u -> u.getId().equals(link.id()))
+                .findFirst()
+                .orElseThrow();
 
         String msg = update.getDescription();
         assertAll(
-            () -> assertTrue(msg.contains("My Issue Title")),
-            () -> assertTrue(msg.contains("author123")),
-            () -> assertTrue(msg.contains("...")),
-            () -> assertTrue(msg.contains("X".repeat(200))),
-            () -> assertFalse(msg.contains("X".repeat(201))));
+                () -> assertTrue(msg.contains("My Issue Title")),
+                () -> assertTrue(msg.contains("author123")),
+                () -> assertTrue(msg.contains("...")),
+                () -> assertTrue(msg.contains("X".repeat(200))),
+                () -> assertFalse(msg.contains("X".repeat(201))));
     }
 
     @Test
@@ -118,8 +118,10 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
         String msg = captor.getAllValues().stream()
-            .filter(u -> u.getId().equals(link.id()))
-            .findFirst().orElseThrow().getDescription();
+                .filter(u -> u.getId().equals(link.id()))
+                .findFirst()
+                .orElseThrow()
+                .getDescription();
 
         assertTrue(msg.toLowerCase().contains("pull request") || msg.contains("PR"));
     }
@@ -152,12 +154,14 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
         String msg = captor.getAllValues().stream()
-            .filter(u -> u.getId().equals(link.id()))
-            .findFirst().orElseThrow().getDescription();
+                .filter(u -> u.getId().equals(link.id()))
+                .findFirst()
+                .orElseThrow()
+                .getDescription();
 
         assertAll(
-            () -> assertTrue(msg.contains("expert_user")),
-            () -> assertTrue(msg.contains("Here is my detailed answer")));
+                () -> assertTrue(msg.contains("expert_user")),
+                () -> assertTrue(msg.contains("Here is my detailed answer")));
     }
 
     @Test
@@ -188,8 +192,10 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
         String msg = captor.getAllValues().stream()
-            .filter(u -> u.getId().equals(link.id()))
-            .findFirst().orElseThrow().getDescription();
+                .filter(u -> u.getId().equals(link.id()))
+                .findFirst()
+                .orElseThrow()
+                .getDescription();
 
         assertTrue(msg.contains("commenter") && msg.contains("Useful comment"));
     }
@@ -218,8 +224,10 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier, timeout(5000).atLeastOnce()).notify(argThat(u -> u.getId().equals(link1.id())));
-        verify(botNotifier, timeout(5000).atLeastOnce()).notify(argThat(u -> u.getId().equals(link2.id())));
+        verify(botNotifier, timeout(5000).atLeastOnce())
+                .notify(argThat(u -> u.getId().equals(link1.id())));
+        verify(botNotifier, timeout(5000).atLeastOnce())
+                .notify(argThat(u -> u.getId().equals(link2.id())));
     }
 
     @Test
@@ -247,6 +255,7 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier, timeout(5000).atLeastOnce()).notify(argThat(u -> u.getId().equals(soLink.id())));
+        verify(botNotifier, timeout(5000).atLeastOnce())
+                .notify(argThat(u -> u.getId().equals(soLink.id())));
     }
 }

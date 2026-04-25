@@ -2,9 +2,9 @@ package backend.academy.linktracker.scrapper.repository.orm;
 
 import backend.academy.linktracker.scrapper.repository.OutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class OrmOutboxMessageRepository implements OutboxMessageRepository {
@@ -17,7 +17,11 @@ public class OrmOutboxMessageRepository implements OutboxMessageRepository {
 
     @Override
     public void update(OutboxMessageEntity outboxMessageEntity) {
-        jpaOutboxMessageRepository.update(outboxMessageEntity.getId(), outboxMessageEntity.getStatus(), outboxMessageEntity.getRetryCount(), outboxMessageEntity.getProcessedAt());
+        jpaOutboxMessageRepository.update(
+                outboxMessageEntity.getId(),
+                outboxMessageEntity.getStatus(),
+                outboxMessageEntity.getRetryCount(),
+                outboxMessageEntity.getProcessedAt());
     }
 
     @Override

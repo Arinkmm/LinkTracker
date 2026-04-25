@@ -1,7 +1,6 @@
 package backend.academy.linktracker.bot.configuration;
 
 import backend.academy.linktracker.avro.LinkUpdateEvent;
-import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.properties.KafkaProperties;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;
@@ -19,46 +18,28 @@ import org.springframework.util.backoff.FixedBackOff;
 public class KafkaConfiguration {
     @Bean
     public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(
-        KafkaOperations<Object, Object> kafkaTemplate,
-        KafkaProperties kafkaProperties
-    ) {
+            KafkaOperations<Object, Object> kafkaTemplate, KafkaProperties kafkaProperties) {
         return new DeadLetterPublishingRecoverer(
-            kafkaTemplate,
-            (record, ex) -> new TopicPartition(
-                kafkaProperties.getDltTopic(),
-                record.partition()
-            )
-        );
+                kafkaTemplate, (record, ex) -> new TopicPartition(kafkaProperties.getDltTopic(), record.partition()));
     }
 
     @Bean
-    public DefaultErrorHandler errorHandler(
-        DeadLetterPublishingRecoverer recoverer,
-        KafkaProperties kafkaProperties
-    ) {
-        FixedBackOff backOff = new FixedBackOff(
-            kafkaProperties.getBackoffMs(),
-            kafkaProperties.getAttempts()
-        );
+    public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer, KafkaProperties kafkaProperties) {
+        FixedBackOff backOff = new FixedBackOff(kafkaProperties.getBackoffMs(), kafkaProperties.getAttempts());
 
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
 
         errorHandler.addNotRetryableExceptions(
-            DeserializationException.class,
-            MessageConversionException.class,
-            IllegalArgumentException.class
-        );
+                DeserializationException.class, MessageConversionException.class, IllegalArgumentException.class);
 
         return errorHandler;
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, LinkUpdateEvent> kafkaListenerContainerFactory(
-        ConsumerFactory<String, LinkUpdateEvent> consumerFactory,
-        DefaultErrorHandler errorHandler
-    ) {
+            ConsumerFactory<String, LinkUpdateEvent> consumerFactory, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, LinkUpdateEvent> factory =
-            new ConcurrentKafkaListenerContainerFactory<>();
+                new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler);

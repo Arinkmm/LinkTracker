@@ -42,9 +42,9 @@ public class LinkChecker {
             batch = linkService.getStaleLinks(threshold, page, size);
             if (!batch.isEmpty()) {
                 log.atInfo()
-                    .addKeyValue("page", page)
-                    .addKeyValue("batchSize", batch.size())
-                    .log("Processing batch from database");
+                        .addKeyValue("page", page)
+                        .addKeyValue("batchSize", batch.size())
+                        .log("Processing batch from database");
 
                 processBatchParallel(batch, allFailedLinks);
             }
@@ -53,15 +53,15 @@ public class LinkChecker {
 
         if (!allFailedLinks.isEmpty()) {
             log.atWarn()
-                .addKeyValue("failedCount", allFailedLinks.size())
-                .log("Sending error notifications for failed links");
+                    .addKeyValue("failedCount", allFailedLinks.size())
+                    .log("Sending error notifications for failed links");
             allFailedLinks.forEach(linkNotificationService::notifyError);
         }
 
         log.atInfo()
-            .addKeyValue("totalFailed", allFailedLinks.size())
-            .addKeyValue("totalPages", page)
-            .log("Link check cycle completed");
+                .addKeyValue("totalFailed", allFailedLinks.size())
+                .addKeyValue("totalPages", page)
+                .log("Link check cycle completed");
     }
 
     private void processBatchParallel(List<Link> batch, List<Link> globalFailedList) {
@@ -77,9 +77,9 @@ public class LinkChecker {
             futures.add(linkUpdateExecutor.submit(() -> linkBatchProcessor.processBatch(partition)));
 
             log.atDebug()
-                .addKeyValue("partitionSize", partition.size())
-                .addKeyValue("range", i + "-" + end)
-                .log("Submitted task to executor service");
+                    .addKeyValue("partitionSize", partition.size())
+                    .addKeyValue("range", i + "-" + end)
+                    .log("Submitted task to executor service");
         }
 
         for (Future<List<Link>> future : futures) {

@@ -36,53 +36,54 @@ class ScrapperKafkaBotE2EContainerTest {
 
     @Container
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse(POSTGRES_IMAGE))
-        .withNetwork(NETWORK)
-        .withNetworkAliases(DB_NETWORK_ALIAS)
-        .withDatabaseName(DB_NAME)
-        .withUsername(DB_USER)
-        .withPassword(DB_PASSWORD);
+            .withNetwork(NETWORK)
+            .withNetworkAliases(DB_NETWORK_ALIAS)
+            .withDatabaseName(DB_NAME)
+            .withUsername(DB_USER)
+            .withPassword(DB_PASSWORD);
 
     @Container
     static final KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE))
-        .withNetwork(NETWORK)
-        .withNetworkAliases(KAFKA_ALIAS);
+            .withNetwork(NETWORK)
+            .withNetworkAliases(KAFKA_ALIAS);
 
     @Container
-    static final GenericContainer<?> schemaRegistry = new GenericContainer<>(DockerImageName.parse(SCHEMA_REGISTRY_IMAGE))
-        .withNetwork(NETWORK)
-        .withNetworkAliases(SCHEMA_REGISTRY_ALIAS)
-        .dependsOn(kafka)
-        .withEnv("SCHEMA_REGISTRY_HOST_NAME", SCHEMA_REGISTRY_ALIAS)
-        .withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://" + KAFKA_ALIAS + ":9092")
-        .withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:" + SCHEMA_REGISTRY_PORT)
-        .withExposedPorts(SCHEMA_REGISTRY_PORT)
-        .waitingFor(Wait.forHttp("/subjects").forStatusCode(200));
+    static final GenericContainer<?> schemaRegistry = new GenericContainer<>(
+                    DockerImageName.parse(SCHEMA_REGISTRY_IMAGE))
+            .withNetwork(NETWORK)
+            .withNetworkAliases(SCHEMA_REGISTRY_ALIAS)
+            .dependsOn(kafka)
+            .withEnv("SCHEMA_REGISTRY_HOST_NAME", SCHEMA_REGISTRY_ALIAS)
+            .withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://" + KAFKA_ALIAS + ":9092")
+            .withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:" + SCHEMA_REGISTRY_PORT)
+            .withExposedPorts(SCHEMA_REGISTRY_PORT)
+            .waitingFor(Wait.forHttp("/subjects").forStatusCode(200));
 
     @Container
     static final GenericContainer<?> wireMockExt = new GenericContainer<>(DockerImageName.parse(WIREMOCK_IMAGE))
-        .withNetwork(NETWORK)
-        .withNetworkAliases(WIREMOCK_EXT_ALIAS)
-        .withExposedPorts(WIREMOCK_PORT)
-        .waitingFor(Wait.forHttp("/__admin/mappings").forPort(WIREMOCK_PORT).forStatusCode(200));
+            .withNetwork(NETWORK)
+            .withNetworkAliases(WIREMOCK_EXT_ALIAS)
+            .withExposedPorts(WIREMOCK_PORT)
+            .waitingFor(Wait.forHttp("/__admin/mappings").forPort(WIREMOCK_PORT).forStatusCode(200));
 
     @Container
     static final GenericContainer<?> wireMockTg = new GenericContainer<>(DockerImageName.parse(WIREMOCK_IMAGE))
-        .withNetwork(NETWORK)
-        .withNetworkAliases(WIREMOCK_TG_ALIAS)
-        .withCopyToContainer(Transferable.of("""
+            .withNetwork(NETWORK)
+            .withNetworkAliases(WIREMOCK_TG_ALIAS)
+            .withCopyToContainer(Transferable.of("""
             {
               "request": { "method": "POST", "urlPathPattern": "/bot.*/setMyCommands" },
               "response": { "status": 200, "jsonBody": { "ok": true, "result": true } }
             }
             """), "/home/wiremock/mappings/set_commands.json")
-        .withCopyToContainer(Transferable.of("""
+            .withCopyToContainer(Transferable.of("""
             {
               "request": { "method": "POST", "urlPathPattern": "/bot.*/sendMessage" },
               "response": { "status": 200, "jsonBody": { "ok": true, "result": { "message_id": 1 } } }
             }
             """), "/home/wiremock/mappings/send_message.json")
-        .withExposedPorts(WIREMOCK_PORT)
-        .waitingFor(Wait.forHttp("/__admin/mappings").forPort(WIREMOCK_PORT).forStatusCode(200));
+            .withExposedPorts(WIREMOCK_PORT)
+            .waitingFor(Wait.forHttp("/__admin/mappings").forPort(WIREMOCK_PORT).forStatusCode(200));
 
     @Container
     static final GenericContainer<?> scrapper = createScrapperContainer();
@@ -91,49 +92,50 @@ class ScrapperKafkaBotE2EContainerTest {
     static final GenericContainer<?> bot = createBotContainer();
 
     private static GenericContainer<?> createScrapperContainer() {
-        return new GenericContainer<>(
-            new ImageFromDockerfile("localhost/scrapper-e2e:latest", false)
-                .withFileFromPath("app.jar", Paths.get(SCRAPPER_JAR))
-                .withDockerfileFromBuilder(builder -> builder
-                    .from("eclipse-temurin:25-jre-alpine")
-                    .copy("app.jar", "/app.jar")
-                    .expose(SCRAPPER_PORT)
-                    .entryPoint("java", "-jar", "/app.jar")
-                    .build()))
-            .withNetwork(NETWORK)
-            .withNetworkAliases(SCRAPPER_ALIAS)
-            .dependsOn(postgres, kafka, schemaRegistry, wireMockExt)
-            .withEnv("SPRING_DATASOURCE_URL", "jdbc:postgresql://" + DB_NETWORK_ALIAS + ":5432/" + DB_NAME)
-            .withEnv("SPRING_DATASOURCE_USERNAME", DB_USER)
-            .withEnv("SPRING_DATASOURCE_PASSWORD", DB_PASSWORD)
-            .withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", DB_DRIVER)
-            .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", LIQUIBASE_PATH)
-            .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
-            .withEnv("SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL", "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
-            .withEnv("APP_GITHUB_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
-            .withEnv("APP_KAFKA_TOPIC", TOPIC)
-            .withExposedPorts(SCRAPPER_PORT)
-            .waitingFor(Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200));
+        return new GenericContainer<>(new ImageFromDockerfile("localhost/scrapper-e2e:latest", false)
+                        .withFileFromPath("app.jar", Paths.get(SCRAPPER_JAR))
+                        .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
+                                .copy("app.jar", "/app.jar")
+                                .expose(SCRAPPER_PORT)
+                                .entryPoint("java", "-jar", "/app.jar")
+                                .build()))
+                .withNetwork(NETWORK)
+                .withNetworkAliases(SCRAPPER_ALIAS)
+                .dependsOn(postgres, kafka, schemaRegistry, wireMockExt)
+                .withEnv("SPRING_DATASOURCE_URL", "jdbc:postgresql://" + DB_NETWORK_ALIAS + ":5432/" + DB_NAME)
+                .withEnv("SPRING_DATASOURCE_USERNAME", DB_USER)
+                .withEnv("SPRING_DATASOURCE_PASSWORD", DB_PASSWORD)
+                .withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", DB_DRIVER)
+                .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", LIQUIBASE_PATH)
+                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
+                .withEnv(
+                        "SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL",
+                        "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
+                .withEnv("APP_GITHUB_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
+                .withEnv("APP_KAFKA_TOPIC", TOPIC)
+                .withExposedPorts(SCRAPPER_PORT)
+                .waitingFor(
+                        Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200));
     }
 
     private static GenericContainer<?> createBotContainer() {
-        return new GenericContainer<>(
-            new ImageFromDockerfile("localhost/bot-e2e:latest", false)
-                .withFileFromPath("app.jar", Paths.get(BOT_JAR))
-                .withDockerfileFromBuilder(builder -> builder
-                    .from("eclipse-temurin:25-jre-alpine")
-                    .copy("app.jar", "/app.jar")
-                    .expose(BOT_PORT)
-                    .entryPoint("java", "-jar", "/app.jar")
-                    .build()))
-            .withNetwork(NETWORK)
-            .dependsOn(kafka, schemaRegistry, wireMockTg)
-            .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
-            .withEnv("SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL", "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
-            .withEnv("APP_TELEGRAM_URL", "http://" + WIREMOCK_TG_ALIAS + ":" + WIREMOCK_PORT + "/bot")
-            .withEnv("APP_SCRAPPER_URL", "http://" + SCRAPPER_ALIAS + ":" + SCRAPPER_PORT)
-            .withExposedPorts(BOT_PORT)
-            .waitingFor(Wait.forHttp("/actuator/health").forPort(BOT_PORT).forStatusCode(200));
+        return new GenericContainer<>(new ImageFromDockerfile("localhost/bot-e2e:latest", false)
+                        .withFileFromPath("app.jar", Paths.get(BOT_JAR))
+                        .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
+                                .copy("app.jar", "/app.jar")
+                                .expose(BOT_PORT)
+                                .entryPoint("java", "-jar", "/app.jar")
+                                .build()))
+                .withNetwork(NETWORK)
+                .dependsOn(kafka, schemaRegistry, wireMockTg)
+                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
+                .withEnv(
+                        "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL",
+                        "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
+                .withEnv("APP_TELEGRAM_URL", "http://" + WIREMOCK_TG_ALIAS + ":" + WIREMOCK_PORT + "/bot")
+                .withEnv("APP_SCRAPPER_URL", "http://" + SCRAPPER_ALIAS + ":" + SCRAPPER_PORT)
+                .withExposedPorts(BOT_PORT)
+                .waitingFor(Wait.forHttp("/actuator/health").forPort(BOT_PORT).forStatusCode(200));
     }
 
     private WireMock extWireMock;
@@ -158,37 +160,35 @@ class ScrapperKafkaBotE2EContainerTest {
         stubGitHub(owner, repo, Instant.now().plus(1, ChronoUnit.DAYS).toString());
 
         RestClient scrClient = RestClient.builder()
-            .baseUrl("http://" + scrapper.getHost() + ":" + scrapper.getMappedPort(SCRAPPER_PORT))
-            .build();
+                .baseUrl("http://" + scrapper.getHost() + ":" + scrapper.getMappedPort(SCRAPPER_PORT))
+                .build();
 
         assertDoesNotThrow(() -> {
             scrClient.post().uri("/tg-chat/{id}", chatId).retrieve().toBodilessEntity();
 
             AddLinkRequest req = new AddLinkRequest();
             req.setLink(URI.create(url));
-            scrClient.post().uri("/links")
-                .header("Tg-Chat-Id", String.valueOf(chatId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(req).retrieve().toBodilessEntity();
+            scrClient
+                    .post()
+                    .uri("/links")
+                    .header("Tg-Chat-Id", String.valueOf(chatId))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(req)
+                    .retrieve()
+                    .toBodilessEntity();
         });
 
         Awaitility.await()
-            .atMost(Duration.ofSeconds(30))
-            .pollInterval(Duration.ofSeconds(2))
-            .untilAsserted(() ->
-                extWireMock.verifyThat(getRequestedFor(urlPathMatching("/repos/.*")))
-            );
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofSeconds(2))
+                .untilAsserted(() -> extWireMock.verifyThat(getRequestedFor(urlPathMatching("/repos/.*"))));
 
         try {
             Awaitility.await()
-                .atMost(Duration.ofSeconds(60))
-                .pollInterval(Duration.ofSeconds(2))
-                .untilAsserted(() ->
-                    tgWireMock.verifyThat(
-                        postRequestedFor(urlPathMatching("/bot.*/sendMessage"))
-                            .withRequestBody(containing("chat_id=" + chatId))
-                    )
-                );
+                    .atMost(Duration.ofSeconds(60))
+                    .pollInterval(Duration.ofSeconds(2))
+                    .untilAsserted(() -> tgWireMock.verifyThat(postRequestedFor(urlPathMatching("/bot.*/sendMessage"))
+                            .withRequestBody(containing("chat_id=" + chatId))));
         } catch (Throwable t) {
             System.err.println("--- FAILURE DIAGNOSTICS ---");
             System.err.println("SCRAPPER LOGS:\n" + scrapper.getLogs());
@@ -198,11 +198,10 @@ class ScrapperKafkaBotE2EContainerTest {
     }
 
     private void stubGitHub(String owner, String repo, String createdAt) {
-        extWireMock.register(
-            WireMock.get(WireMock.urlPathMatching("/repos/" + owner + "/" + repo + "/issues"))
+        extWireMock.register(WireMock.get(WireMock.urlPathMatching("/repos/" + owner + "/" + repo + "/issues"))
                 .willReturn(WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withBody("[{\"id\":1, \"created_at\":\"" + createdAt + "\", \"state\":\"open\"}]")));
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("[{\"id\":1, \"created_at\":\"" + createdAt + "\", \"state\":\"open\"}]")));
     }
 }

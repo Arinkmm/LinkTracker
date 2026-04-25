@@ -3,11 +3,11 @@ package backend.academy.linktracker.scrapper.service.user;
 import backend.academy.linktracker.scrapper.repository.OutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxStatus;
+import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

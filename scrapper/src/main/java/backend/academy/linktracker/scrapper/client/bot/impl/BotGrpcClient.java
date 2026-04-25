@@ -8,8 +8,6 @@ import backend.academy.linktracker.scrapper.exception.ApiException;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 public class BotGrpcClient implements BotClient {

@@ -65,8 +65,8 @@ public class LinkNotificationService {
         } while (batch.size() == size);
 
         log.atDebug()
-            .addKeyValue("linkId", link.id())
-            .addKeyValue("subscriberCount", totalNotified)
-            .log("Notifications queued in outbox");
+                .addKeyValue("linkId", link.id())
+                .addKeyValue("subscriberCount", totalNotified)
+                .log("Notifications queued in outbox");
     }
 }

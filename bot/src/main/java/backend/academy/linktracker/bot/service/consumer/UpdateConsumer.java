@@ -16,24 +16,27 @@ public class UpdateConsumer {
     private final TelegramSender telegramSender;
 
     @KafkaListener(
-        topics = "${app.kafka.topic}",
-        groupId = "${app.kafka.group-id}",
-        containerFactory = "kafkaListenerContainerFactory"
-    )
+            topics = "${app.kafka.topic}",
+            groupId = "${app.kafka.group-id}",
+            containerFactory = "kafkaListenerContainerFactory")
     public void consume(LinkUpdateEvent linkUpdateEvent) {
         validate(linkUpdateEvent);
         log.atInfo().addKeyValue("linkUpdateEvent", linkUpdateEvent).log("Message received");
-        linkUpdateEvent.getTgChatIds().forEach(chatId -> telegramSender.sendMessage(chatId, linkUpdateEvent.getDescription()));
+        linkUpdateEvent
+                .getTgChatIds()
+                .forEach(chatId -> telegramSender.sendMessage(chatId, linkUpdateEvent.getDescription()));
     }
 
     private void validate(LinkUpdateEvent linkUpdateEvent) {
         if (linkUpdateEvent.getId() == 0L) {
             throw new IllegalArgumentException("link id is required");
         }
-        if (linkUpdateEvent.getDescription() == null || linkUpdateEvent.getDescription().isBlank()) {
+        if (linkUpdateEvent.getDescription() == null
+                || linkUpdateEvent.getDescription().isBlank()) {
             throw new IllegalArgumentException("description is required");
         }
-        if (linkUpdateEvent.getTgChatIds() == null || linkUpdateEvent.getTgChatIds().isEmpty()) {
+        if (linkUpdateEvent.getTgChatIds() == null
+                || linkUpdateEvent.getTgChatIds().isEmpty()) {
             throw new IllegalArgumentException("tgChatIds must not be empty");
         }
     }
