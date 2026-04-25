@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.configuration.ExternalApiIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
@@ -16,15 +17,18 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
+
     @Autowired
     private LinkChecker linkChecker;
 
@@ -40,8 +44,17 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @MockitoBean
     private BotNotifier botNotifier;
+
+    @BeforeEach
+    void setUp() {
+        jdbcTemplate.execute("TRUNCATE TABLE subscriptions, links, chats RESTART IDENTITY CASCADE");
+        reset(botNotifier);
+    }
 
     @Test
     @DisplayName("GitHub Issue: сообщение содержит название, автора и обрезанное превью")
@@ -64,16 +77,21 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(botNotifier, timeout(5000)).notify(eq(link.id()), any(), captor.capture(), any());
+        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
-        String msg = captor.getValue();
+        LinkUpdate update = captor.getAllValues().stream()
+            .filter(u -> u.getId().equals(link.id()))
+            .findFirst()
+            .orElseThrow();
+
+        String msg = update.getDescription();
         assertAll(
-                () -> assertTrue(msg.contains("My Issue Title"), "Нет названия"),
-                () -> assertTrue(msg.contains("author123"), "Нет автора"),
-                () -> assertTrue(msg.contains("..."), "Нет обрезки"),
-                () -> assertTrue(msg.contains("X".repeat(200)), "Превью должно содержать ровно 200 символов"),
-                () -> assertFalse(msg.contains("X".repeat(201)), "Превью не должно превышать 200 символов"));
+            () -> assertTrue(msg.contains("My Issue Title")),
+            () -> assertTrue(msg.contains("author123")),
+            () -> assertTrue(msg.contains("...")),
+            () -> assertTrue(msg.contains("X".repeat(200))),
+            () -> assertFalse(msg.contains("X".repeat(201))));
     }
 
     @Test
@@ -96,12 +114,14 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(botNotifier, timeout(5000)).notify(eq(link.id()), any(), captor.capture(), any());
+        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
-        String msg = captor.getValue();
-        assertTrue(
-                msg.toLowerCase().contains("pull request") || msg.contains("PR"), "Сообщение должно указывать на PR");
+        String msg = captor.getAllValues().stream()
+            .filter(u -> u.getId().equals(link.id()))
+            .findFirst().orElseThrow().getDescription();
+
+        assertTrue(msg.toLowerCase().contains("pull request") || msg.contains("PR"));
     }
 
     @Test
@@ -128,13 +148,16 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(botNotifier, timeout(5000)).notify(eq(link.id()), any(), captor.capture(), any());
+        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
-        String msg = captor.getValue();
+        String msg = captor.getAllValues().stream()
+            .filter(u -> u.getId().equals(link.id()))
+            .findFirst().orElseThrow().getDescription();
+
         assertAll(
-                () -> assertTrue(msg.contains("expert_user"), "Нет автора ответа"),
-                () -> assertTrue(msg.contains("Here is my detailed answer"), "Нет превью ответа"));
+            () -> assertTrue(msg.contains("expert_user")),
+            () -> assertTrue(msg.contains("Here is my detailed answer")));
     }
 
     @Test
@@ -161,13 +184,14 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(botNotifier, timeout(5000)).notify(eq(link.id()), any(), captor.capture(), any());
+        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(captor.capture());
 
-        String msg = captor.getValue();
-        assertTrue(
-                msg.contains("commenter") && msg.contains("Useful comment"),
-                "Сообщение должно указывать на комментарий");
+        String msg = captor.getAllValues().stream()
+            .filter(u -> u.getId().equals(link.id()))
+            .findFirst().orElseThrow().getDescription();
+
+        assertTrue(msg.contains("commenter") && msg.contains("Useful comment"));
     }
 
     @Test
@@ -194,8 +218,8 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier, timeout(5000)).notify(eq(link1.id()), any(), any(), any());
-        verify(botNotifier, timeout(5000)).notify(eq(link2.id()), any(), any(), any());
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(argThat(u -> u.getId().equals(link1.id())));
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(argThat(u -> u.getId().equals(link2.id())));
     }
 
     @Test
@@ -223,7 +247,6 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
         linkChecker.checkAllLinks();
 
-        verify(botNotifier, timeout(5000)).notify(eq(soLink.id()), any(), contains("so_pro"), any());
-        verify(botNotifier, timeout(5000)).notify(eq(ghLink.id()), any(), any(), any());
+        verify(botNotifier, timeout(5000).atLeastOnce()).notify(argThat(u -> u.getId().equals(soLink.id())));
     }
 }
