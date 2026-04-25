@@ -25,16 +25,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class ScrapperIntegrationContainerTest {
     @Container
     static final GenericContainer<?> scrapper = new GenericContainer<>(
-                    new ImageFromDockerfile(ContainerConstants.APP_IMAGE, false)
-                            .withFileFromPath("app.jar", Paths.get(ContainerConstants.APP_JAR))
+                    new ImageFromDockerfile(ContainerConstants.SCRAPPER_IMAGE, false)
+                            .withFileFromPath("app.jar", Paths.get(ContainerConstants.SCRAPPER_JAR))
                             .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
                                     .copy("app.jar", "app.jar")
-                                    .expose(ContainerConstants.APP_PORT)
+                                    .expose(ContainerConstants.SCRAPPER_PORT)
                                     .entryPoint("java", "-Dspring.profiles.active=test", "-jar", "app.jar")
                                     .build()))
             .withNetwork(SharedPostgresContainer.NETWORK)
             .dependsOn(SharedPostgresContainer.INSTANCE)
-            .withExposedPorts(ContainerConstants.APP_PORT)
+            .withExposedPorts(ContainerConstants.SCRAPPER_PORT)
             .withEnv(
                     "DB_URL",
                     "jdbc:postgresql://" + ContainerConstants.DB_NETWORK_ALIAS + ":5432/" + ContainerConstants.DB_NAME)
@@ -44,7 +44,7 @@ class ScrapperIntegrationContainerTest {
             .withEnv("SPRING_LIQUIBASE_ENABLED", "true")
             .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", ContainerConstants.LIQUIBASE_PATH)
             .waitingFor(Wait.forHttp("/actuator/health")
-                    .forPort(ContainerConstants.APP_PORT)
+                    .forPort(ContainerConstants.SCRAPPER_PORT)
                     .forStatusCode(200))
             .withStartupTimeout(Duration.ofSeconds(120));
 
