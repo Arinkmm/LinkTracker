@@ -7,10 +7,33 @@ spring:
   grpc:
     server:
       port: 9091
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092,localhost:29092,localhost:39092}
+    consumer:
+      group-id: ${app.kafka.group-id}
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        spring.json.value.default.type: backend.academy.linktracker.bot.dto.LinkUpdate
+        spring.json.trusted.packages: "*"
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8085}
+        specific.avro.reader: true
+
 
 app:
-  client:
-    type: http
+  updates:
+    type: kafka
+  scrapper-client:
+    type: grpc
+  kafka:
+    topic: link-updates
+    group-id: bot-group
+    dlt-topic: link-updates-dlt
+    attempts: 3
+    backoff-ms: 1000
   scrapper:
     url: ${APP_SCRAPPER_URL:http://localhost:8081}
   grpc:
