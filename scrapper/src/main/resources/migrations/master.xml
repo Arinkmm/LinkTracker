@@ -8,4 +8,5 @@
 
     <include relativeToChangelogFile="true" file="changesets/01-initial-schema.sql"/>
     <include relativeToChangelogFile="true" file="changesets/02-add-indexes.sql"/>
+    <include relativeToChangelogFile="true" file="changesets/03-outbox-table.sql"/>
 </databaseChangeLog>
