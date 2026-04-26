@@ -106,6 +106,7 @@ class ScrapperKafkaBotE2EContainerTest {
                 .withEnv("SPRING_DATASOURCE_USERNAME", DB_USER)
                 .withEnv("SPRING_DATASOURCE_PASSWORD", DB_PASSWORD)
                 .withEnv("SPRING_DATASOURCE_DRIVER_CLASS_NAME", DB_DRIVER)
+                .withEnv("SPRING_LIQUIBASE_ENABLED", "true")
                 .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", LIQUIBASE_PATH)
                 .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
                 .withEnv(

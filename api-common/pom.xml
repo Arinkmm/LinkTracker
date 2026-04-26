@@ -113,6 +113,7 @@
                     <excludeRoots>
                         <excludeRoot>${project.build.directory}/generated-sources/openapi</excludeRoot>
                         <excludeRoot>${project.build.directory}/generated-sources/protobuf</excludeRoot>
+                        <excludeRoot>${project.build.directory}/generated-sources/avro</excludeRoot>
                     </excludeRoots>
                 </configuration>
             </plugin>

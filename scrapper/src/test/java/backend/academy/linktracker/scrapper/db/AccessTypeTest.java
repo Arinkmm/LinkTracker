@@ -7,6 +7,7 @@ import backend.academy.linktracker.scrapper.configuration.SharedPostgresContaine
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaChatRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaLinkRepository;
+import backend.academy.linktracker.scrapper.repository.orm.JpaOutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaSubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaSubscriptionTagRepository;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,6 +35,7 @@ class AccessTypeTest {
             .withBean(JpaLinkRepository.class, () -> Mockito.mock(JpaLinkRepository.class))
             .withBean(JpaSubscriptionRepository.class, () -> Mockito.mock(JpaSubscriptionRepository.class))
             .withBean(JpaSubscriptionTagRepository.class, () -> Mockito.mock(JpaSubscriptionTagRepository.class))
+            .withBean(JpaOutboxMessageRepository.class, () -> Mockito.mock(JpaOutboxMessageRepository.class))
             .withPropertyValues(
                     "spring.datasource.url=" + postgres.getJdbcUrl(),
                     "spring.datasource.username=" + postgres.getUsername(),
