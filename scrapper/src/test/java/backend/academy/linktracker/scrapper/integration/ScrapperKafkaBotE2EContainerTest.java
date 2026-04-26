@@ -93,7 +93,7 @@ class ScrapperKafkaBotE2EContainerTest {
 
     private static GenericContainer<?> createScrapperContainer() {
         return new GenericContainer<>(new ImageFromDockerfile("localhost/scrapper-e2e:latest", false)
-                        .withFileFromPath("app.jar", Paths.get(SCRAPPER_JAR))
+                        .withFileFromPath("app.jar", Paths.get(SCRAPPER_JAR).toAbsolutePath())
                         .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
                                 .copy("app.jar", "/app.jar")
                                 .expose(SCRAPPER_PORT)
@@ -113,15 +113,17 @@ class ScrapperKafkaBotE2EContainerTest {
                         "SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL",
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
                 .withEnv("APP_GITHUB_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
+                .withEnv("APP_STACKOVERFLOW_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
                 .withEnv("APP_KAFKA_TOPIC", TOPIC)
                 .withExposedPorts(SCRAPPER_PORT)
                 .waitingFor(
-                        Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200));
+                        Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200))
+                .withStartupTimeout(Duration.ofSeconds(120));
     }
 
     private static GenericContainer<?> createBotContainer() {
         return new GenericContainer<>(new ImageFromDockerfile("localhost/bot-e2e:latest", false)
-                        .withFileFromPath("app.jar", Paths.get(BOT_JAR))
+                        .withFileFromPath("app.jar", Paths.get(BOT_JAR).toAbsolutePath())
                         .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
                                 .copy("app.jar", "/app.jar")
                                 .expose(BOT_PORT)
@@ -136,7 +138,8 @@ class ScrapperKafkaBotE2EContainerTest {
                 .withEnv("APP_TELEGRAM_URL", "http://" + WIREMOCK_TG_ALIAS + ":" + WIREMOCK_PORT + "/bot")
                 .withEnv("APP_SCRAPPER_URL", "http://" + SCRAPPER_ALIAS + ":" + SCRAPPER_PORT)
                 .withExposedPorts(BOT_PORT)
-                .waitingFor(Wait.forHttp("/actuator/health").forPort(BOT_PORT).forStatusCode(200));
+                .waitingFor(Wait.forHttp("/actuator/health").forPort(BOT_PORT).forStatusCode(200))
+                .withStartupTimeout(Duration.ofSeconds(120));
     }
 
     private WireMock extWireMock;
@@ -146,7 +149,8 @@ class ScrapperKafkaBotE2EContainerTest {
     void initWireMockClients() {
         extWireMock = new WireMock(wireMockExt.getHost(), wireMockExt.getMappedPort(WIREMOCK_PORT));
         tgWireMock = new WireMock(wireMockTg.getHost(), wireMockTg.getMappedPort(WIREMOCK_PORT));
-        extWireMock.resetMappings();
+
+        extWireMock.resetRequests();
         tgWireMock.resetRequests();
     }
 
@@ -184,18 +188,11 @@ class ScrapperKafkaBotE2EContainerTest {
                 .pollInterval(Duration.ofSeconds(2))
                 .untilAsserted(() -> extWireMock.verifyThat(getRequestedFor(urlPathMatching("/repos/.*"))));
 
-        try {
-            Awaitility.await()
-                    .atMost(Duration.ofSeconds(60))
-                    .pollInterval(Duration.ofSeconds(2))
-                    .untilAsserted(() -> tgWireMock.verifyThat(postRequestedFor(urlPathMatching("/bot.*/sendMessage"))
-                            .withRequestBody(containing("chat_id=" + chatId))));
-        } catch (Throwable t) {
-            System.err.println("--- FAILURE DIAGNOSTICS ---");
-            System.err.println("SCRAPPER LOGS:\n" + scrapper.getLogs());
-            System.err.println("BOT LOGS:\n" + bot.getLogs());
-            throw t;
-        }
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(60))
+                .pollInterval(Duration.ofSeconds(2))
+                .untilAsserted(() -> tgWireMock.verifyThat(postRequestedFor(urlPathMatching("/bot.*/sendMessage"))
+                        .withRequestBody(containing("chat_id=" + chatId))));
     }
 
     private void stubGitHub(String owner, String repo, String createdAt) {

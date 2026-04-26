@@ -69,6 +69,8 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("TRUNCATE subscriptions, outbox_messages, links, chats CASCADE");
+
         testTopic = "outbox.test." + UUID.randomUUID();
         currentChatId = ThreadLocalRandom.current().nextLong(1000, 1000000);
         ReflectionTestUtils.setField(kafkaProperties, "topic", testTopic);
