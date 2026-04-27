@@ -28,7 +28,8 @@ build:
     - ./mvnw package -DskipTests=true -Djacoco.skip=true
   artifacts:
     paths:
-      - target/
+      - bot/target/
+      - scrapper/target/
     expire_in: 1h
 
 lint:
@@ -59,4 +60,4 @@ test:
     - apk add --no-cache docker-cli libc6-compat
     - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin
   script:
-    - ./mvnw clean verify
+    - ./mvnw verify
