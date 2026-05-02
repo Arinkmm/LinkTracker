@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Scrapper Cache Load Test" enabled="true">
+      <stringProp name="TestPlan.comments">Final Version: Fixed BindException and Thread Count</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="currentLink" elementType="Argument">
+            <stringProp name="Argument.name">currentLink</stringProp>
+            <stringProp name="Argument.value">https://github.com/project/${__Random(1,100000,)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
+        <stringProp name="HTTPSampler.domain">localhost</stringProp>
+        <stringProp name="HTTPSampler.port">8081</stringProp>
+        <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+      </ConfigTestElement>
+      <hashTree/>
+
+      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="User IDs CSV" enabled="true">
+        <stringProp name="filename">users.csv</stringProp>
+        <stringProp name="variableNames">chatId</stringProp>
+        <boolProp name="ignoreFirstLine">false</boolProp>
+        <stringProp name="delimiter">,</stringProp>
+        <boolProp name="recycle">true</boolProp>
+        <boolProp name="stopThread">false</boolProp>
+        <stringProp name="shareMode">shareMode.all</stringProp>
+      </CSVDataSet>
+      <hashTree/>
+
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Load Traffic" enabled="true">
+        <intProp name="ThreadGroup.num_threads">16</intProp>
+        <intProp name="ThreadGroup.ramp_time">60</intProp>
+        <longProp name="ThreadGroup.duration">300</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <stringProp name="LoopController.loops">-1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="Write Operations (1%)" enabled="true">
+          <intProp name="ThroughputController.style">1</intProp>
+          <doubleProp>
+            <name>ThroughputController.maxThroughput</name>
+            <value>1.0</value>
+          </doubleProp>
+          <boolProp name="ThroughputController.perThread">false</boolProp>
+        </ThroughputController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /links" enabled="true">
+            <stringProp name="HTTPSampler.path">/links</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <stringProp name="Argument.value">{&quot;link&quot;: &quot;${currentLink}&quot;}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="JSON Header" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Tg-Chat-Id</stringProp>
+                  <stringProp name="Header.value">${chatId}</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Content-Type</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+          </hashTree>
+
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="DELETE /links" enabled="true">
+            <stringProp name="HTTPSampler.path">/links</stringProp>
+            <stringProp name="HTTPSampler.method">DELETE</stringProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <stringProp name="Argument.value">{&quot;link&quot;: &quot;${currentLink}&quot;}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="JSON Header" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Tg-Chat-Id</stringProp>
+                  <stringProp name="Header.value">${chatId}</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Content-Type</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+            <BeanShellPostProcessor guiclass="TestBeanGUI" testclass="BeanShellPostProcessor" testname="New Link Generator" enabled="true">
+              <stringProp name="script">vars.put(&quot;currentLink&quot;, &quot;https://github.com/project/&quot; + (Math.random() * 1000000));</stringProp>
+            </BeanShellPostProcessor>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="Read Operations (99%)" enabled="true">
+          <intProp name="ThroughputController.style">1</intProp>
+          <doubleProp>
+            <name>ThroughputController.maxThroughput</name>
+            <value>99.0</value>
+          </doubleProp>
+          <boolProp name="ThroughputController.perThread">false</boolProp>
+        </ThroughputController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /links" enabled="true">
+            <stringProp name="HTTPSampler.path">/links</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" enabled="true">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Auth Header" enabled="true">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Tg-Chat-Id</stringProp>
+                  <stringProp name="Header.value">${chatId}</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
