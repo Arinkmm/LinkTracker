@@ -139,6 +139,89 @@ services:
        kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link-updates-dlt --partitions 3 --replication-factor 3"
     networks:
       - kafka-net
+  valkey-1:
+    image: valkey/valkey:7.2
+    container_name: valkey-1
+    ports:
+      - "6379:6379"
+      - "16379:16379"
+    command:
+      - "valkey-server"
+      - "--cluster-enabled"
+      - "yes"
+      - "--cluster-config-file"
+      - "nodes.conf"
+      - "--cluster-node-timeout"
+      - "5000"
+      - "--appendonly"
+      - "yes"
+      - "--notify-keyspace-events"
+      - "AKE"
+    volumes:
+      - valkey-1-data:/data
+    networks:
+      - valkey-net
+
+  valkey-2:
+    image: valkey/valkey:7.2
+    container_name: valkey-2
+    ports:
+      - "6380:6379"
+      - "16380:16379"
+    command:
+      - "valkey-server"
+      - "--cluster-enabled"
+      - "yes"
+      - "--cluster-config-file"
+      - "nodes.conf"
+      - "--cluster-node-timeout"
+      - "5000"
+      - "--appendonly"
+      - "yes"
+      - "--notify-keyspace-events"
+      - "AKE"
+    volumes:
+      - valkey-2-data:/data
+    networks:
+      - valkey-net
+
+  valkey-3:
+    image: valkey/valkey:7.2
+    container_name: valkey-3
+    ports:
+      - "6381:6379"
+      - "16381:16379"
+    command:
+      - "valkey-server"
+      - "--cluster-enabled"
+      - "yes"
+      - "--cluster-config-file"
+      - "nodes.conf"
+      - "--cluster-node-timeout"
+      - "5000"
+      - "--appendonly"
+      - "yes"
+      - "--notify-keyspace-events"
+      - "AKE"
+    volumes:
+      - valkey-3-data:/data
+    networks:
+      - valkey-net
+
+  valkey-init:
+    image: valkey/valkey:7.2
+    container_name: valkey-init
+    depends_on:
+      - valkey-1
+      - valkey-2
+      - valkey-3
+    networks:
+      - valkey-net
+    command: >
+      sh -c "
+        sleep 5 &&
+        echo 'yes' | valkey-cli --cluster create valkey-1:6379 valkey-2:6379 valkey-3:6379 --cluster-replicas 0
+      "
 
   scrapper:
     build:
@@ -154,6 +237,8 @@ services:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
+      valkey-init:
+        condition: service_completed_successfully
     environment:
       DB_DRIVER: ${DB_DRIVER}
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
@@ -166,12 +251,14 @@ services:
       GITHUB_TOKEN: ${GITHUB_TOKEN}
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      REDIS_CLUSTER_NODES: valkey-1:6379,valkey-2:6379,valkey-3:6379
     ports:
       - "8081:8081"
       - "9090:9090"
     networks:
       - backend
       - kafka-net
+      - valkey-net
 
   bot:
     build:
@@ -201,6 +288,11 @@ networks:
     driver: bridge
   kafka-net:
     driver: bridge
+  valkey-net:
+    driver: bridge
 
 volumes:
   pg_data:
+  valkey-1-data:
+  valkey-2-data:
+  valkey-3-data:

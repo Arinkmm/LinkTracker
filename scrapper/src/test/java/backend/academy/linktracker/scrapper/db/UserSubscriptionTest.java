@@ -3,7 +3,7 @@ package backend.academy.linktracker.scrapper.db;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
-import backend.academy.linktracker.scrapper.configuration.DatabaseIntegrationEnvironment;
+import backend.academy.linktracker.scrapper.configuration.ValkeyIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.Subscription;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
-class UserSubscriptionTest extends DatabaseIntegrationEnvironment {
+class UserSubscriptionTest extends ValkeyIntegrationEnvironment {
     @Autowired
     private LinkService linkService;
 

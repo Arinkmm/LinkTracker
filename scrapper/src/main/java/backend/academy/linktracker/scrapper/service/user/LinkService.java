@@ -1,23 +1,17 @@
 package backend.academy.linktracker.scrapper.service.user;
 
-import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
-import backend.academy.linktracker.scrapper.dto.Link;
-import backend.academy.linktracker.scrapper.dto.LinkResponse;
-import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
-import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
-import backend.academy.linktracker.scrapper.dto.Subscription;
-import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
-import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
+import backend.academy.linktracker.scrapper.dto.*;
+import backend.academy.linktracker.scrapper.exception.*;
 import backend.academy.linktracker.scrapper.properties.DBProperties;
-import backend.academy.linktracker.scrapper.repository.ChatRepository;
-import backend.academy.linktracker.scrapper.repository.LinkRepository;
-import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
+import backend.academy.linktracker.scrapper.repository.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +24,7 @@ public class LinkService {
     private final DBProperties dbProperties;
 
     @Transactional
+    @CacheEvict(value = "links", key = "#chatId")
     public LinkResponse addLink(Long chatId, AddLinkRequest request) {
         if (!chatRepository.exists(chatId)) {
             throw new ChatNotFoundException();
@@ -42,11 +37,11 @@ public class LinkService {
         }
 
         subscriptionRepository.save(chatId, link.id(), request.getTags());
-
         return mapToResponse(link, request.getTags());
     }
 
     @Transactional
+    @CacheEvict(value = "links", key = "#chatId")
     public LinkResponse removeLink(Long chatId, RemoveLinkRequest request) {
         if (!chatRepository.exists(chatId)) {
             throw new ChatNotFoundException();
@@ -59,13 +54,13 @@ public class LinkService {
         }
 
         subscriptionRepository.remove(chatId, link.id());
-
         linkRepository.removeIfOrphan(link.id());
 
         return mapToResponse(link, List.of());
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "links", key = "#chatId")
     public ListLinksResponse getLinks(Long chatId) {
         if (!chatRepository.exists(chatId)) {
             throw new ChatNotFoundException();

@@ -3,7 +3,7 @@ package backend.academy.linktracker.scrapper.configuration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-public abstract class KafkaIntegrationEnvironment extends DatabaseIntegrationEnvironment {
+public abstract class KafkaIntegrationEnvironment extends ValkeyIntegrationEnvironment {
     protected static final String MOCK_SCHEMA_REGISTRY = "mock://test-scope";
     protected static final String TEST_TOPIC = "link-updates-test";
     protected static final String TEST_DLT_TOPIC = "link-updates-test.DLT";
