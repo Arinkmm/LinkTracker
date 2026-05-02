@@ -34,7 +34,7 @@ spring:
 
 app:
   cache:
-    l1-capacity: 10000
+    l1-capacity: 1000
   db:
     access-type: orm
   pagination:
