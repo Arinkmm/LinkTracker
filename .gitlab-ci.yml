@@ -1,10 +1,8 @@
 image: "${GITLAB_DOCKER_PROXY}/eclipse-temurin:25-jdk-alpine"
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dmaven.artifact.threads=8"
-  MAVEN_CLI_OPTS: "--no-transfer-progress --batch-mode"
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
   GITLAB_DOCKER_PROXY: "gitlab.education.tbank.ru:443/backend-academy-java-2025/lecture-materials/dependency_proxy/containers"
-  GIT_DEPTH: "1"
 
 workflow:
   rules:
@@ -17,25 +15,17 @@ stages:
   - lint
   - test
 
-.cache_base: &cache_base
-  key:
-    files:
-      - pom.xml
-      - "**/pom.xml"
-    prefix: "$CI_COMMIT_REF_SLUG"
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .m2/repository/
-    - .mvn/wrapper/
 
 build:
   stage: build
   before_script:
     - apk add --no-cache libc6-compat
   script:
-    - ./mvnw $MAVEN_CLI_OPTS package -DskipTests=true -Djacoco.skip=true
-  cache:
-    <<: *cache_base
-    policy: pull-push
+    - ./mvnw package -DskipTests=true -Djacoco.skip=true
 
 lint:
   stage: lint
@@ -44,10 +34,7 @@ lint:
   before_script:
     - apk add --no-cache libc6-compat
   script:
-    - ./mvnw $MAVEN_CLI_OPTS compile -am -o spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
-  cache:
-    <<: *cache_base
-    policy: pull
+    - ./mvnw compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
 
 test:
   stage: test
@@ -68,8 +55,5 @@ test:
     - apk add --no-cache docker-cli libc6-compat
     - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin
   script:
-    - ./mvnw $MAVEN_CLI_OPTS clean package -DskipTests=true
-    - ./mvnw $MAVEN_CLI_OPTS verify -o
-  cache:
-    <<: *cache_base
-    policy: pull
+    - ./mvnw clean package -DskipTests=true
+    - ./mvnw verify
