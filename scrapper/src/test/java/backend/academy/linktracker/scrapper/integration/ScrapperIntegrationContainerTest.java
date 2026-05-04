@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import backend.academy.linktracker.scrapper.configuration.ContainerConstants;
 import backend.academy.linktracker.scrapper.configuration.SharedPostgresContainer;
+import backend.academy.linktracker.scrapper.configuration.ValkeyIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import java.net.URI;
 import java.nio.file.Paths;
@@ -22,7 +23,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
-class ScrapperIntegrationContainerTest {
+class ScrapperIntegrationContainerTest extends ValkeyIntegrationEnvironment {
     @Container
     static final GenericContainer<?> scrapper = new GenericContainer<>(
                     new ImageFromDockerfile(ContainerConstants.SCRAPPER_IMAGE, false)
@@ -33,7 +34,7 @@ class ScrapperIntegrationContainerTest {
                                     .entryPoint("java", "-Dspring.profiles.active=test", "-jar", "app.jar")
                                     .build()))
             .withNetwork(SharedPostgresContainer.NETWORK)
-            .dependsOn(SharedPostgresContainer.INSTANCE)
+            .dependsOn(SharedPostgresContainer.INSTANCE, valkey)
             .withExposedPorts(ContainerConstants.SCRAPPER_PORT)
             .withEnv(
                     "DB_URL",
@@ -43,6 +44,9 @@ class ScrapperIntegrationContainerTest {
             .withEnv("DB_DRIVER", ContainerConstants.DB_DRIVER)
             .withEnv("SPRING_LIQUIBASE_ENABLED", "true")
             .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", ContainerConstants.LIQUIBASE_PATH)
+            .withEnv("SPRING_DATA_REDIS_CLUSTER_NODES", "valkey-cluster:6379")
+            .withEnv("SPRING_DATA_REDIS_LETTUCE_CLUSTER_REFRESH_ADAPTIVE", "false")
+            .withEnv("SPRING_DATA_REDIS_LETTUCE_CLUSTER_REFRESH_PERIOD", "0")
             .waitingFor(Wait.forHttp("/actuator/health")
                     .forPort(ContainerConstants.SCRAPPER_PORT)
                     .forStatusCode(200))
