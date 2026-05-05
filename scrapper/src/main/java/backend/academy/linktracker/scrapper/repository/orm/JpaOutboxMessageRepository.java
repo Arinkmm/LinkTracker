@@ -17,16 +17,16 @@ public interface JpaOutboxMessageRepository extends JpaRepository<OutboxMessageE
     @Modifying
     @Query(
             value =
-                    "DELETE FROM outbox_messages WHERE status = 'SENT' AND processed_at < (NOW() - CAST(:days || ' DAYS' AS INTERVAL))",
+                    "DELETE FROM outbox_messages WHERE status = 'SENT' AND updated_at < (NOW() - CAST(:days || ' DAYS' AS INTERVAL))",
             nativeQuery = true)
     void deleteOldSentMessages(@Param("days") int daysOld);
 
     @Modifying
     @Query(
-            "UPDATE OutboxMessageEntity m SET m.status = :status, m.retryCount = :retryCount, m.processedAt = :processedAt WHERE m.id = :id")
+            "UPDATE OutboxMessageEntity m SET m.status = :status, m.retryCount = :retryCount,m.updatedAt = :updatedAt WHERE m.id = :id")
     void update(
             @Param("id") Long id,
             @Param("status") OutboxStatus status,
             @Param("retryCount") int retryCount,
-            @Param("processedAt") Instant processedAt);
+            @Param("updatedAt") Instant updatedAt);
 }

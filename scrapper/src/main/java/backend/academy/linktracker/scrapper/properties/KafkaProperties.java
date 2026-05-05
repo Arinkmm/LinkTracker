@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.kafka")
 public class KafkaProperties {
     private String topic;
-    private int outboxCheckingInterval;
+    private int outboxCheckingIntervalMs;
     private int outboxCheckingLimit;
     private int maxRetriesForMessagesOutbox;
     private int daysIntervalForCleaningOutbox;

@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.grpc.server.service.GrpcService;
 
 @GrpcService
-@ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "grpc")
+@ConditionalOnProperty(name = "app.updates.type", havingValue = "grpc")
 @RequiredArgsConstructor
 @Slf4j
 public class BotGrpcService extends BotServiceGrpc.BotServiceImplBase {

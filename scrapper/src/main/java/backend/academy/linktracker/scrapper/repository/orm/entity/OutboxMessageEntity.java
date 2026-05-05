@@ -40,6 +40,9 @@ public class OutboxMessageEntity {
     @Column(name = "retry_count")
     private int retryCount;
 
-    @Column(name = "processed_at")
-    private Instant processedAt;
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 }

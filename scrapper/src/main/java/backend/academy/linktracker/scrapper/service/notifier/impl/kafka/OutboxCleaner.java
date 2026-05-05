@@ -12,7 +12,7 @@ public class OutboxCleaner {
     private final OutboxMessageService outboxMessageService;
     private final KafkaProperties kafkaProperties;
 
-    @Scheduled(fixedDelayString = "${app.kafka.days-interval-for-cleaning-outbox}")
+    @Scheduled(cron = "${app.kafka.outbox-cleaning-cron}")
     public void cleanOutboxMessages() {
         log.info("Start cleaning outbox messages");
         outboxMessageService.deleteOldSentMessages(kafkaProperties.getDaysIntervalForCleaningOutbox());

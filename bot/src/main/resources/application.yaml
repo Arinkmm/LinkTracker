@@ -17,11 +17,8 @@ spring:
       properties:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
-        spring.json.value.default.type: backend.academy.linktracker.bot.dto.LinkUpdate
-        spring.json.trusted.packages: "*"
-        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8085}
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
         specific.avro.reader: true
-
 
 app:
   updates:
@@ -32,8 +29,10 @@ app:
     topic: link-updates
     group-id: bot-group
     dlt-topic: link-updates-dlt
-    attempts: 3
+    max-retries: 3
     backoff-ms: 1000
+    max-dedup-cache-size: 10000
+    dedup-ttl: 1h
   scrapper:
     url: ${APP_SCRAPPER_URL:http://localhost:8081}
   grpc:

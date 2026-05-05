@@ -7,6 +7,8 @@ import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageE
 import backend.academy.linktracker.scrapper.service.user.OutboxMessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,37 +22,55 @@ public class OutboxRelay {
     private final KafkaTemplate<String, LinkUpdateEvent> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @Scheduled(fixedDelayString = "${app.kafka.outbox-checking-interval}")
-    public void runRelay() {
+    @Scheduled(fixedDelayString = "${app.kafka.outbox-checking-interval-ms}")
+    public CompletableFuture<Void> runRelay() {
         List<OutboxMessageEntity> messages = outboxMessageService.getOutboxMessages(
                 kafkaProperties.getMaxRetriesForMessagesOutbox(), kafkaProperties.getOutboxCheckingLimit());
 
-        for (OutboxMessageEntity message : messages) {
-            try {
-                LinkUpdate linkUpdate = objectMapper.readValue(message.getPayload(), LinkUpdate.class);
+        if (messages.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
 
-                LinkUpdateEvent linkUpdateEvent = LinkUpdateEvent.newBuilder()
-                        .setId(linkUpdate.getId())
-                        .setUrl(linkUpdate.getUrl().toString())
-                        .setDescription(linkUpdate.getDescription())
-                        .setTgChatIds(linkUpdate.getTgChatIds())
-                        .build();
+        List<CompletableFuture<?>> futures =
+                messages.stream().map(this::processMessage).collect(Collectors.toList());
 
-                log.atInfo()
-                        .addKeyValue("id", message.getId())
-                        .addKeyValue("payload", message.getPayload())
-                        .log("Sending link update event");
-                kafkaTemplate
-                        .send(kafkaProperties.getTopic(), String.valueOf(linkUpdateEvent.getId()), linkUpdateEvent)
-                        .get();
-                outboxMessageService.markAsSent(message);
-            } catch (Exception e) {
-                log.atError()
-                        .addKeyValue("id", message.getId())
-                        .addKeyValue("payload", message.getPayload())
-                        .log("Error while sending link update event");
-                outboxMessageService.markAsError(message);
-            }
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+    }
+
+    private CompletableFuture<Void> processMessage(OutboxMessageEntity message) {
+        try {
+            LinkUpdate linkUpdate = objectMapper.readValue(message.getPayload(), LinkUpdate.class);
+
+            LinkUpdateEvent linkUpdateEvent = LinkUpdateEvent.newBuilder()
+                    .setId(linkUpdate.getId())
+                    .setUrl(linkUpdate.getUrl().toString())
+                    .setDescription(linkUpdate.getDescription())
+                    .setTgChatIds(linkUpdate.getTgChatIds())
+                    .build();
+
+            log.atInfo().addKeyValue("messageId", message.getId()).log("Sending link update event for message");
+
+            return kafkaTemplate
+                    .send(kafkaProperties.getTopic(), String.valueOf(linkUpdateEvent.getId()), linkUpdateEvent)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.atError()
+                                    .addKeyValue("messageId", message.getId())
+                                    .log("Failed to send message");
+                            outboxMessageService.markAsError(message);
+                        } else {
+                            log.atInfo()
+                                    .addKeyValue("messageId", message.getId())
+                                    .log("Successfully sent message");
+                            outboxMessageService.markAsSent(message);
+                        }
+                    })
+                    .thenApply(r -> null);
+
+        } catch (Exception e) {
+            log.atError().addKeyValue("messageId", message.getId()).log("Error serializing/processing message");
+            outboxMessageService.markAsError(message);
+            return CompletableFuture.completedFuture(null);
         }
     }
 }

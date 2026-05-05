@@ -17,7 +17,7 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       properties:
-        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8085}
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
         auto.register.schemas: true
 
 app:
@@ -31,10 +31,11 @@ app:
     type: kafka
   kafka:
     topic: link-updates
-    outbox-checking-interval: 60000
+    outbox-checking-interval-ms: 60000
     outbox-checking-limit: 20
     max-retries-for-messages-outbox: 5
     days-interval-for-cleaning-outbox: 1
+    outbox-cleaning-cron: "0 0 2 * * *"
   bot:
     url: ${APP_BOT_URL:http://localhost:8080}
   grpc:
@@ -79,4 +80,4 @@ errors:
   invalid-response: "Непредвиденная ошибка при обращении к внешнему сервису"
 
 scheduler:
-  interval: 60000
+  interval-ms: 60000

@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 
 @RequiredArgsConstructor
 public class OrmOutboxMessageRepository implements OutboxMessageRepository {
+
     private final JpaOutboxMessageRepository jpaOutboxMessageRepository;
 
     @Override
@@ -21,7 +22,7 @@ public class OrmOutboxMessageRepository implements OutboxMessageRepository {
                 outboxMessageEntity.getId(),
                 outboxMessageEntity.getStatus(),
                 outboxMessageEntity.getRetryCount(),
-                outboxMessageEntity.getProcessedAt());
+                outboxMessageEntity.getUpdatedAt());
     }
 
     @Override

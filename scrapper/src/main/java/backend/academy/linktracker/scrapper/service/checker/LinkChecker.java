@@ -33,7 +33,7 @@ public class LinkChecker {
         log.info("Starting link check cycle...");
         List<Link> allFailedLinks = Collections.synchronizedList(new ArrayList<>());
 
-        Instant threshold = Instant.now().minusMillis(schedulerProperties.getInterval());
+        Instant threshold = Instant.now().minusMillis(schedulerProperties.getIntervalMs());
         int page = 0;
         int size = dbProperties.getDefaultPageSize();
         List<Link> batch;

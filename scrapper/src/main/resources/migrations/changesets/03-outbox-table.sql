@@ -3,8 +3,9 @@
 CREATE TABLE IF NOT EXISTS outbox_messages (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     link_id BIGINT NOT NULL REFERENCES links(id) ON DELETE CASCADE,
-    payload JSON NOT NULL,
+    payload JSONB NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'NEW',
     retry_count INT DEFAULT 0,
-    processed_at TIMESTAMPTZ
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
 );

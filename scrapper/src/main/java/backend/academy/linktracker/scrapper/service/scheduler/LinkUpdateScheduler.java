@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class LinkUpdateScheduler {
     private final LinkChecker linkChecker;
 
-    @Scheduled(fixedDelayString = "${scheduler.interval}")
+    @Scheduled(fixedDelayString = "${scheduler.interval-ms}")
     public void checkUpdates() {
         log.atInfo().log("Starting scheduled link check");
 

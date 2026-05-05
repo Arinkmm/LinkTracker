@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class OutboxMessageService {
+
     private final OutboxMessageRepository outboxMessageRepository;
 
     @Transactional
@@ -19,7 +20,7 @@ public class OutboxMessageService {
         outboxMessageRepository.save(entity);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<OutboxMessageEntity> getOutboxMessages(int maxRetries, int limit) {
         return outboxMessageRepository.findAll(maxRetries, limit);
     }
@@ -27,7 +28,7 @@ public class OutboxMessageService {
     @Transactional
     public void markAsSent(OutboxMessageEntity message) {
         message.setStatus(OutboxStatus.SENT);
-        message.setProcessedAt(Instant.now());
+        message.setUpdatedAt(Instant.now());
         outboxMessageRepository.update(message);
     }
 
@@ -35,7 +36,7 @@ public class OutboxMessageService {
     public void markAsError(OutboxMessageEntity message) {
         message.setStatus(OutboxStatus.ERROR);
         message.setRetryCount(message.getRetryCount() + 1);
-        message.setProcessedAt(Instant.now());
+        message.setUpdatedAt(Instant.now());
         outboxMessageRepository.update(message);
     }
 

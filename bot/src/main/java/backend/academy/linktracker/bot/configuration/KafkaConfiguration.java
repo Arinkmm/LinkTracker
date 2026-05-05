@@ -3,6 +3,7 @@ package backend.academy.linktracker.bot.configuration;
 import backend.academy.linktracker.avro.LinkUpdateEvent;
 import backend.academy.linktracker.bot.properties.KafkaProperties;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -15,6 +16,7 @@ import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.util.backoff.FixedBackOff;
 
 @Configuration
+@ConditionalOnProperty(name = "app.updates.type", havingValue = "kafka")
 public class KafkaConfiguration {
     @Bean
     public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(
@@ -25,7 +27,7 @@ public class KafkaConfiguration {
 
     @Bean
     public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer, KafkaProperties kafkaProperties) {
-        FixedBackOff backOff = new FixedBackOff(kafkaProperties.getBackoffMs(), kafkaProperties.getAttempts());
+        FixedBackOff backOff = new FixedBackOff(kafkaProperties.getBackoffMs(), kafkaProperties.getMaxRetries());
 
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
 

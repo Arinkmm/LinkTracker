@@ -2,8 +2,8 @@ package backend.academy.linktracker.scrapper.configuration;
 
 public final class ContainerConstants {
     public static final String POSTGRES_IMAGE = "postgres:17";
-    public static final String KAFKA_IMAGE = "confluentinc/cp-kafka:7.6.0";
-    public static final String SCHEMA_REGISTRY_IMAGE = "confluentinc/cp-schema-registry:7.6.0";
+    public static final String KAFKA_IMAGE = "confluentinc/cp-kafka:8.2.0";
+    public static final String SCHEMA_REGISTRY_IMAGE = "confluentinc/cp-schema-registry:8.2.0";
     public static final String WIREMOCK_IMAGE = "wiremock/wiremock:3.13.1";
     public static final String SCRAPPER_IMAGE = "localhost/link-tracker-scrapper-e2e:latest";
 

@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "http")
+@ConditionalOnProperty(name = "app.updates.type", havingValue = "http")
 @RequiredArgsConstructor
 @Slf4j
 public class UpdateController implements UpdatesApi {

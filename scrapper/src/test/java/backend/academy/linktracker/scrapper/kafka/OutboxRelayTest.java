@@ -23,6 +23,8 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -64,25 +66,22 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
     private JdbcTemplate jdbcTemplate;
 
     private Long testLinkId;
-    private String testTopic;
     private Long currentChatId;
+
+    private static final String TEST_TOPIC = "outbox.test.relay";
 
     @BeforeEach
     void setUp() {
         jdbcTemplate.execute("TRUNCATE subscriptions, outbox_messages, links, chats CASCADE");
-
-        testTopic = "outbox.test." + UUID.randomUUID();
         currentChatId = ThreadLocalRandom.current().nextLong(1000, 1000000);
-        ReflectionTestUtils.setField(kafkaProperties, "topic", testTopic);
+        ReflectionTestUtils.setField(kafkaProperties, "topic", TEST_TOPIC);
 
         transactionTemplate.executeWithoutResult(status -> {
             chatService.registerChat(currentChatId);
-
             AddLinkRequest request = new AddLinkRequest();
             request.setLink(URI.create("https://github.com/user/test-repo-" + UUID.randomUUID()));
             request.setTags(List.of());
             request.setFilters(List.of());
-
             testLinkId = linkService.addLink(currentChatId, request).getId();
         });
     }
@@ -95,48 +94,52 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
     @Test
     @DisplayName("Успешная пересылка сообщения при валидном Avro-пайлоаде")
     void shouldRelayMessageToKafkaWhenPayloadIsValid() {
-        String validPayload = createPayload(testLinkId, "https://github.com/test");
+        String uniqueUrl = "https://github.com/test-" + UUID.randomUUID();
+        String validPayload = createPayload(testLinkId, uniqueUrl);
 
         transactionTemplate.executeWithoutResult(status -> {
             saveOutboxMessage(testLinkId, validPayload, OutboxStatus.NEW);
         });
 
-        outboxRelay.runRelay();
+        outboxRelay.runRelay().join();
 
-        List<LinkUpdateEvent> events = consumeEvents(testTopic, 1, Duration.ofSeconds(15));
+        List<LinkUpdateEvent> events = consumeEvents(TEST_TOPIC, 1, uniqueUrl, Duration.ofSeconds(15));
 
         assertThat(events).hasSize(1);
-        assertThat(events.get(0).getUrl().toString()).isEqualTo("https://github.com/test");
+        assertThat(events.get(0).getUrl().toString()).isEqualTo(uniqueUrl);
     }
 
     @Test
     @DisplayName("Пересылка нескольких сообщений за один запуск")
     void shouldRelayMultipleMessagesSuccessfully() {
+        String urlPrefix = "multi-url-" + UUID.randomUUID();
+
         transactionTemplate.executeWithoutResult(status -> {
-            saveOutboxMessage(testLinkId, createPayload(testLinkId, "url-1"), OutboxStatus.NEW);
-            saveOutboxMessage(testLinkId, createPayload(testLinkId, "url-2"), OutboxStatus.NEW);
-            saveOutboxMessage(testLinkId, createPayload(testLinkId, "url-3"), OutboxStatus.NEW);
+            saveOutboxMessage(testLinkId, createPayload(testLinkId, urlPrefix + "-1"), OutboxStatus.NEW);
+            saveOutboxMessage(testLinkId, createPayload(testLinkId, urlPrefix + "-2"), OutboxStatus.NEW);
+            saveOutboxMessage(testLinkId, createPayload(testLinkId, urlPrefix + "-3"), OutboxStatus.NEW);
         });
 
-        outboxRelay.runRelay();
+        outboxRelay.runRelay().join();
 
-        List<LinkUpdateEvent> events = consumeEvents(testTopic, 3, Duration.ofSeconds(20));
+        List<LinkUpdateEvent> events = consumeEvents(TEST_TOPIC, 3, urlPrefix, Duration.ofSeconds(20));
         assertThat(events).hasSize(3);
     }
 
     @Test
     @DisplayName("Relay игнорирует сообщения со статусом SENT")
     void shouldIgnoreAlreadyProcessedMessages() {
+        String newUrl = "new-url-" + UUID.randomUUID();
         transactionTemplate.executeWithoutResult(status -> {
             saveOutboxMessage(testLinkId, createPayload(testLinkId, "old"), OutboxStatus.SENT);
-            saveOutboxMessage(testLinkId, createPayload(testLinkId, "new"), OutboxStatus.NEW);
+            saveOutboxMessage(testLinkId, createPayload(testLinkId, newUrl), OutboxStatus.NEW);
         });
 
-        outboxRelay.runRelay();
+        outboxRelay.runRelay().join();
 
-        List<LinkUpdateEvent> events = consumeEvents(testTopic, 1, Duration.ofSeconds(10));
+        List<LinkUpdateEvent> events = consumeEvents(TEST_TOPIC, 1, newUrl, Duration.ofSeconds(10));
         assertThat(events).hasSize(1);
-        assertThat(events.get(0).getUrl().toString()).isEqualTo("new");
+        assertThat(events.get(0).getUrl().toString()).isEqualTo(newUrl);
     }
 
     @Test
@@ -146,7 +149,7 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
             saveOutboxMessage(testLinkId, createPayload(testLinkId, "status-check"), OutboxStatus.NEW);
         });
 
-        outboxRelay.runRelay();
+        outboxRelay.runRelay().join();
 
         List<OutboxMessageEntity> remainingNew = outboxMessageService.getOutboxMessages(0, 10);
         assertThat(remainingNew)
@@ -168,7 +171,7 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
         outboxMessageService.addMessage(message);
     }
 
-    private List<LinkUpdateEvent> consumeEvents(String topic, int expectedCount, Duration timeout) {
+    private List<LinkUpdateEvent> consumeEvents(String topic, int expectedCount, String urlFilter, Duration timeout) {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, SharedKafkaContainer.INSTANCE.getBootstrapServers());
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group-" + UUID.randomUUID());
@@ -184,8 +187,15 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
             long end = System.currentTimeMillis() + timeout.toMillis();
 
             while (System.currentTimeMillis() < end && results.size() < expectedCount) {
-                var records = consumer.poll(Duration.ofMillis(500));
-                records.forEach(r -> results.add(r.value()));
+                ConsumerRecords<String, LinkUpdateEvent> records = consumer.poll(Duration.ofMillis(500));
+                for (ConsumerRecord<String, LinkUpdateEvent> record : records) {
+                    if (record.value().getUrl().toString().contains(urlFilter)) {
+                        results.add(record.value());
+                    }
+                }
+                if (!records.isEmpty()) {
+                    consumer.commitSync();
+                }
             }
         }
         return results;
