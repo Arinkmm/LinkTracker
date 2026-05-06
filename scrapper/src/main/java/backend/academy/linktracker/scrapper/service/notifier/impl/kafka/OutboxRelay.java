@@ -23,18 +23,22 @@ public class OutboxRelay {
     private final ObjectMapper objectMapper;
 
     @Scheduled(fixedDelayString = "${app.kafka.outbox-checking-interval-ms}")
-    public CompletableFuture<Void> runRelay() {
+    public void runRelay() {
         List<OutboxMessageEntity> messages = outboxMessageService.getOutboxMessages(
                 kafkaProperties.getMaxRetriesForMessagesOutbox(), kafkaProperties.getOutboxCheckingLimit());
 
         if (messages.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
+            return;
         }
 
-        List<CompletableFuture<?>> futures =
+        List<CompletableFuture<Void>> futures =
                 messages.stream().map(this::processMessage).collect(Collectors.toList());
 
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (Exception e) {
+            log.error("Batch processing failed");
+        }
     }
 
     private CompletableFuture<Void> processMessage(OutboxMessageEntity message) {
@@ -48,11 +52,11 @@ public class OutboxRelay {
                     .setTgChatIds(linkUpdate.getTgChatIds())
                     .build();
 
-            log.atInfo().addKeyValue("messageId", message.getId()).log("Sending link update event for message");
+            log.atInfo().addKeyValue("messageId", message.getId()).log("Sending link update event");
 
             return kafkaTemplate
                     .send(kafkaProperties.getTopic(), String.valueOf(linkUpdateEvent.getId()), linkUpdateEvent)
-                    .whenComplete((result, ex) -> {
+                    .handle((result, ex) -> {
                         if (ex != null) {
                             log.atError()
                                     .addKeyValue("messageId", message.getId())
@@ -64,8 +68,8 @@ public class OutboxRelay {
                                     .log("Successfully sent message");
                             outboxMessageService.markAsSent(message);
                         }
-                    })
-                    .thenApply(r -> null);
+                        return null;
+                    });
 
         } catch (Exception e) {
             log.atError().addKeyValue("messageId", message.getId()).log("Error serializing/processing message");

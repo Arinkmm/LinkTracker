@@ -41,6 +41,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest
 class OutboxRelayTest extends KafkaIntegrationEnvironment {
+
     @MockitoBean
     private TaskScheduler taskScheduler;
 
@@ -92,19 +93,16 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Успешная пересылка сообщения при валидном Avro-пайлоаде")
+    @DisplayName("Успешная пересылка сообщения при валидном Avro-пейлоаде")
     void shouldRelayMessageToKafkaWhenPayloadIsValid() {
         String uniqueUrl = "https://github.com/test-" + UUID.randomUUID();
-        String validPayload = createPayload(testLinkId, uniqueUrl);
 
-        transactionTemplate.executeWithoutResult(status -> {
-            saveOutboxMessage(testLinkId, validPayload, OutboxStatus.NEW);
-        });
+        transactionTemplate.executeWithoutResult(
+                status -> saveOutboxMessage(testLinkId, createPayload(testLinkId, uniqueUrl), OutboxStatus.NEW));
 
-        outboxRelay.runRelay().join();
+        outboxRelay.runRelay();
 
         List<LinkUpdateEvent> events = consumeEvents(TEST_TOPIC, 1, uniqueUrl, Duration.ofSeconds(15));
-
         assertThat(events).hasSize(1);
         assertThat(events.get(0).getUrl().toString()).isEqualTo(uniqueUrl);
     }
@@ -120,7 +118,7 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
             saveOutboxMessage(testLinkId, createPayload(testLinkId, urlPrefix + "-3"), OutboxStatus.NEW);
         });
 
-        outboxRelay.runRelay().join();
+        outboxRelay.runRelay();
 
         List<LinkUpdateEvent> events = consumeEvents(TEST_TOPIC, 3, urlPrefix, Duration.ofSeconds(20));
         assertThat(events).hasSize(3);
@@ -130,12 +128,13 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
     @DisplayName("Relay игнорирует сообщения со статусом SENT")
     void shouldIgnoreAlreadyProcessedMessages() {
         String newUrl = "new-url-" + UUID.randomUUID();
+
         transactionTemplate.executeWithoutResult(status -> {
-            saveOutboxMessage(testLinkId, createPayload(testLinkId, "old"), OutboxStatus.SENT);
+            saveOutboxMessage(testLinkId, createPayload(testLinkId, "old-url"), OutboxStatus.SENT);
             saveOutboxMessage(testLinkId, createPayload(testLinkId, newUrl), OutboxStatus.NEW);
         });
 
-        outboxRelay.runRelay().join();
+        outboxRelay.runRelay();
 
         List<LinkUpdateEvent> events = consumeEvents(TEST_TOPIC, 1, newUrl, Duration.ofSeconds(10));
         assertThat(events).hasSize(1);
@@ -143,23 +142,20 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Статус сообщения в БД меняется после отправки")
-    void shouldUpdateStatusToProcessedAfterSuccessfulSend() {
-        transactionTemplate.executeWithoutResult(status -> {
-            saveOutboxMessage(testLinkId, createPayload(testLinkId, "status-check"), OutboxStatus.NEW);
-        });
+    @DisplayName("Статус сообщения меняется на SENT после успешной отправки")
+    void shouldUpdateStatusToSentAfterSuccessfulRelay() {
+        transactionTemplate.executeWithoutResult(
+                status -> saveOutboxMessage(testLinkId, createPayload(testLinkId, "status-check"), OutboxStatus.NEW));
 
-        outboxRelay.runRelay().join();
+        outboxRelay.runRelay();
 
-        List<OutboxMessageEntity> remainingNew = outboxMessageService.getOutboxMessages(0, 10);
-        assertThat(remainingNew)
-                .filteredOn(m -> m.getStatus() == OutboxStatus.NEW)
-                .isEmpty();
+        List<OutboxMessageEntity> remaining = outboxMessageService.getOutboxMessages(0, 10);
+        assertThat(remaining).filteredOn(m -> m.getStatus() == OutboxStatus.NEW).isEmpty();
     }
 
     private String createPayload(Long id, String url) {
         return String.format(
-                "{\"id\":%d, \"url\":\"%s\", \"description\":\"Update detected\", \"tgChatIds\":[%d]}",
+                "{\"id\":%d,\"url\":\"%s\",\"description\":\"Update detected\",\"tgChatIds\":[%d]}",
                 id, url, currentChatId);
     }
 
@@ -184,9 +180,9 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
         List<LinkUpdateEvent> results = new ArrayList<>();
         try (KafkaConsumer<String, LinkUpdateEvent> consumer = new KafkaConsumer<>(props)) {
             consumer.subscribe(List.of(topic));
-            long end = System.currentTimeMillis() + timeout.toMillis();
+            long deadline = System.currentTimeMillis() + timeout.toMillis();
 
-            while (System.currentTimeMillis() < end && results.size() < expectedCount) {
+            while (System.currentTimeMillis() < deadline && results.size() < expectedCount) {
                 ConsumerRecords<String, LinkUpdateEvent> records = consumer.poll(Duration.ofMillis(500));
                 for (ConsumerRecord<String, LinkUpdateEvent> record : records) {
                     if (record.value().getUrl().toString().contains(urlFilter)) {

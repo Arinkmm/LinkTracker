@@ -1,11 +1,8 @@
 package backend.academy.linktracker.bot.service.consumer;
 
 import backend.academy.linktracker.avro.LinkUpdateEvent;
-import backend.academy.linktracker.bot.properties.KafkaProperties;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import jakarta.annotation.PostConstruct;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,17 +16,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UpdateConsumer {
     private final TelegramSender telegramSender;
-    private final KafkaProperties kafkaProperties;
 
-    private Cache<String, Boolean> processedOffsets;
-
-    @PostConstruct
-    public void init() {
-        this.processedOffsets = CacheBuilder.newBuilder()
-                .maximumSize(kafkaProperties.getMaxDedupCacheSize())
-                .expireAfterWrite(kafkaProperties.getDedupTtl())
-                .build();
-    }
+    private final Cache<String, Boolean> dedupCache;
 
     @KafkaListener(
             topics = "${app.kafka.topic}",
@@ -37,35 +25,31 @@ public class UpdateConsumer {
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(ConsumerRecord<String, LinkUpdateEvent> record) {
         String key = record.topic() + "-" + record.partition() + "-" + record.offset();
-        if (processedOffsets.getIfPresent(key) != null) {
+        if (dedupCache.getIfPresent(key) != null) {
             log.atWarn().addKeyValue("key", key).log("Duplicate message, skipping");
             return;
         }
-        processedOffsets.put(key, Boolean.TRUE);
+        dedupCache.put(key, Boolean.TRUE);
 
-        LinkUpdateEvent linkUpdateEvent = record.value();
-        validate(linkUpdateEvent);
+        LinkUpdateEvent event = record.value();
+        validate(event);
 
         log.atInfo()
-                .addKeyValue("linkUpdateEvent", linkUpdateEvent)
+                .addKeyValue("linkUpdateEvent", event)
                 .addKeyValue("offset", record.offset())
                 .log("Message received");
 
-        linkUpdateEvent
-                .getTgChatIds()
-                .forEach(chatId -> telegramSender.sendMessage(chatId, linkUpdateEvent.getDescription()));
+        event.getTgChatIds().forEach(chatId -> telegramSender.sendMessage(chatId, event.getDescription()));
     }
 
-    private void validate(LinkUpdateEvent linkUpdateEvent) {
-        if (linkUpdateEvent.getId() == 0L) {
+    private void validate(LinkUpdateEvent event) {
+        if (event.getId() == 0L) {
             throw new IllegalArgumentException("link id is required");
         }
-        if (linkUpdateEvent.getDescription() == null
-                || linkUpdateEvent.getDescription().isBlank()) {
+        if (event.getDescription() == null || event.getDescription().isBlank()) {
             throw new IllegalArgumentException("description is required");
         }
-        if (linkUpdateEvent.getTgChatIds() == null
-                || linkUpdateEvent.getTgChatIds().isEmpty()) {
+        if (event.getTgChatIds() == null || event.getTgChatIds().isEmpty()) {
             throw new IllegalArgumentException("tgChatIds must not be empty");
         }
     }
