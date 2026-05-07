@@ -133,7 +133,7 @@ services:
       kafka-3:
         condition: service_healthy
     entrypoint: [ "/bin/sh", "-c" ]
-    command: |
+    command: >
       "kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link-updates --partitions 3 --replication-factor 3 &&
        kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link-updates-dlt --partitions 3 --replication-factor 3"
     networks:
@@ -141,6 +141,7 @@ services:
 
   valkey-1: &valkey-template
     image: valkey/valkey:8.0
+    container_name: valkey-1
     command: ["valkey-server", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes", "--notify-keyspace-events", "AKE"]
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
@@ -149,21 +150,27 @@ services:
       retries: 5
     networks:
       - valkey-net
+    volumes:
+      - valkey-1-data:/data
 
   valkey-2:
     <<: *valkey-template
     container_name: valkey-2
     ports:
       - "6380:6379"
+    volumes:
+      - valkey-2-data:/data
 
   valkey-3:
     <<: *valkey-template
     container_name: valkey-3
     ports:
       - "6381:6379"
+    volumes:
+      - valkey-3-data:/data
 
   valkey-init:
-    image: valkey/valkey:7.2
+    image: valkey/valkey:8.0
     container_name: valkey-init
     depends_on:
       valkey-1:

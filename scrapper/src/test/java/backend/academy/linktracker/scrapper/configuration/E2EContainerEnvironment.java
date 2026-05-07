@@ -77,7 +77,11 @@ public final class E2EContainerEnvironment {
                     "--appendonly",
                     "yes",
                     "--bind",
-                    "0.0.0.0")
+                    "0.0.0.0",
+                    "--cluster-announce-ip",
+                    "valkey-e2e",
+                    "--cluster-announce-port",
+                    "6379")
             .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
 
     static {

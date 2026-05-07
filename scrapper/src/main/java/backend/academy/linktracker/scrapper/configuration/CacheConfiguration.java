@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
@@ -35,9 +36,15 @@ public class CacheConfiguration {
                 .toList();
 
         RedisClusterClient client = RedisClusterClient.create(uris);
-        client.setOptions(ClusterClientOptions.builder()
+
+        ClusterClientOptions clusterOptions = ClusterClientOptions.builder()
                 .protocolVersion(ProtocolVersion.RESP3)
-                .build());
+                .topologyRefreshOptions(ClusterTopologyRefreshOptions.builder()
+                        .enableAllAdaptiveRefreshTriggers()
+                        .build())
+                .build();
+
+        client.setOptions(clusterOptions);
         return client;
     }
 
