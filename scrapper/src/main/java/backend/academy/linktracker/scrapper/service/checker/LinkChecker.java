@@ -20,18 +20,20 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class LinkChecker {
+
     private final DBProperties dbProperties;
     private final SchedulerProperties schedulerProperties;
-    private final LinkCheckerHelper linkCheckerHelper;
     private final ThreadProperties threadProperties;
     private final LinkService linkService;
+    private final LinkBatchProcessor linkBatchProcessor;
+    private final LinkNotificationService linkNotificationService;
     private final ThreadPoolTaskExecutor linkUpdateExecutor;
 
     public void checkAllLinks() {
         log.info("Starting link check cycle...");
         List<Link> allFailedLinks = Collections.synchronizedList(new ArrayList<>());
 
-        Instant threshold = Instant.now().minusMillis(schedulerProperties.getInterval());
+        Instant threshold = Instant.now().minusMillis(schedulerProperties.getIntervalMs());
         int page = 0;
         int size = dbProperties.getDefaultPageSize();
         List<Link> batch;
@@ -53,7 +55,7 @@ public class LinkChecker {
             log.atWarn()
                     .addKeyValue("failedCount", allFailedLinks.size())
                     .log("Sending error notifications for failed links");
-            allFailedLinks.forEach(linkCheckerHelper::notifyError);
+            allFailedLinks.forEach(linkNotificationService::notifyError);
         }
 
         log.atInfo()
@@ -72,7 +74,7 @@ public class LinkChecker {
             int end = Math.min(i + partitionSize, batch.size());
             List<Link> partition = new ArrayList<>(batch.subList(i, end));
 
-            futures.add(linkUpdateExecutor.submit(() -> linkCheckerHelper.checkBatch(partition)));
+            futures.add(linkUpdateExecutor.submit(() -> linkBatchProcessor.processBatch(partition)));
 
             log.atDebug()
                     .addKeyValue("partitionSize", partition.size())

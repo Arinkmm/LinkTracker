@@ -8,9 +8,11 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.grpc.server.service.GrpcService;
 
 @GrpcService
+@ConditionalOnProperty(name = "app.updates.type", havingValue = "grpc")
 @RequiredArgsConstructor
 @Slf4j
 public class BotGrpcService extends BotServiceGrpc.BotServiceImplBase {

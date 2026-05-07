@@ -8,5 +8,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 @ConfigurationProperties(prefix = "scheduler")
 public class SchedulerProperties {
-    private int interval;
+    private int intervalMs;
 }

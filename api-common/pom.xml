@@ -9,12 +9,6 @@
 
     <artifactId>api-common</artifactId>
 
-    <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.grpc</groupId>
@@ -35,9 +29,23 @@
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-avro-serializer</artifactId>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -55,7 +63,6 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.11.0</version>
                 <executions>
                     <execution>
                         <id>generate-bot-api</id>
@@ -63,7 +70,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>file:///${project.basedir}/src/main/resources/bot-api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/bot-api.yaml</inputSpec>
                             <skipValidateSpec>true</skipValidateSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
@@ -77,14 +84,13 @@
                             </configOptions>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>generate-scrapper-api</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>file:///${project.basedir}/src/main/resources/scrapper-api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/scrapper-api.yaml</inputSpec>
                             <skipValidateSpec>true</skipValidateSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
@@ -107,8 +113,44 @@
                     <excludeRoots>
                         <excludeRoot>${project.build.directory}/generated-sources/openapi</excludeRoot>
                         <excludeRoot>${project.build.directory}/generated-sources/protobuf</excludeRoot>
+                        <excludeRoot>${project.build.directory}/generated-sources/avro</excludeRoot>
                     </excludeRoots>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>schema</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/avro</sourceDirectory>
+                            <outputDirectory>${project.build.directory}/generated-sources/avro</outputDirectory>
+                            <stringType>String</stringType>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-avro-source</id>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/avro</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

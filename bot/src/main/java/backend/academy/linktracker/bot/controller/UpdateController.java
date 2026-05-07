@@ -5,10 +5,12 @@ import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@ConditionalOnProperty(name = "app.updates.type", havingValue = "http")
 @RequiredArgsConstructor
 @Slf4j
 public class UpdateController implements UpdatesApi {

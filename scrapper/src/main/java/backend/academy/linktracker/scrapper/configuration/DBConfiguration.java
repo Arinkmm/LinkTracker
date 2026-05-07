@@ -2,16 +2,20 @@ package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.OutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaChatRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaLinkRepository;
+import backend.academy.linktracker.scrapper.repository.orm.JpaOutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaSubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.orm.JpaSubscriptionTagRepository;
 import backend.academy.linktracker.scrapper.repository.orm.OrmChatRepository;
 import backend.academy.linktracker.scrapper.repository.orm.OrmLinkRepository;
+import backend.academy.linktracker.scrapper.repository.orm.OrmOutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.orm.OrmSubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.sql.SqlChatRepository;
 import backend.academy.linktracker.scrapper.repository.sql.SqlLinkRepository;
+import backend.academy.linktracker.scrapper.repository.sql.SqlOutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.sql.SqlSubscriptionRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -56,5 +60,17 @@ public class DBConfiguration {
             JpaSubscriptionRepository jpaSubscriptionRepository,
             JpaSubscriptionTagRepository jpaSubscriptionTagRepository) {
         return new OrmSubscriptionRepository(jpaSubscriptionTagRepository, jpaSubscriptionRepository);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "app.db.access-type", havingValue = "orm")
+    public OutboxMessageRepository outboxMessageJpaRepository(JpaOutboxMessageRepository jpaOutboxMessageRepository) {
+        return new OrmOutboxMessageRepository(jpaOutboxMessageRepository);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "app.db.access-type", havingValue = "sql", matchIfMissing = true)
+    public OutboxMessageRepository jdbcOutboxMessageRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+        return new SqlOutboxMessageRepository(jdbcTemplate);
     }
 }

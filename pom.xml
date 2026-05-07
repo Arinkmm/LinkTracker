@@ -44,6 +44,7 @@
         <java.version>25</java.version>
         <maven.version>3.9.12</maven.version>
 
+        <avro.version>1.12.1</avro.version>
         <awaitility.version>4.3.0</awaitility.version>
         <commons-codec.version>1.21.0</commons-codec.version>
         <commons-collections.version>4.5.0</commons-collections.version>
@@ -51,10 +52,12 @@
         <commons-io.version>2.21.0</commons-io.version>
         <commons-lang3.version>3.20.0</commons-lang3.version>
         <commons-text.version>1.15.0</commons-text.version>
+        <confluent.version>8.2.0</confluent.version>
         <datafaker.version>2.5.2</datafaker.version>
         <grpc.version>1.77.1</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
         <instancio.version>5.5.1</instancio.version>
+        <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
         <java-telegram-bot-api.version>9.3.0</java-telegram-bot-api.version>
         <modernizer.version>3.2.0</modernizer.version>
         <opentelemetry-instrumentation.version>2.24.0</opentelemetry-instrumentation.version>
@@ -64,9 +67,12 @@
         <spring-cloud.version>2025.1.1</spring-cloud.version>
         <spring-grpc.version>1.0.2</spring-grpc.version>
         <springdoc.version>3.0.1</springdoc.version>
+        <swagger-parser.version>2.1.22</swagger-parser.version>
         <wiremock-grpc.version>0.11.0</wiremock-grpc.version>
         <wiremock-spring-boot.version>4.1.0</wiremock-spring-boot.version>
 
+        <avro-maven-plugin.version>${avro.version}</avro-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
@@ -84,6 +90,31 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.swagger.parser.v3</groupId>
+                <artifactId>swagger-parser</artifactId>
+                <version>${swagger-parser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.parser.v3</groupId>
+                <artifactId>swagger-parser-v3</artifactId>
+                <version>${swagger-parser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro</artifactId>
+                <version>${avro.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.confluent</groupId>
+                <artifactId>kafka-avro-serializer</artifactId>
+                <version>${confluent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openapitools</groupId>
+                <artifactId>jackson-databind-nullable</artifactId>
+                <version>${jackson-databind-nullable.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -204,6 +235,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.gaul</groupId>
             <artifactId>modernizer-maven-annotations</artifactId>
             <version>${modernizer.version}</version>
@@ -260,6 +295,16 @@
                             </binaryMavenPlugin>
                         </binaryMavenPlugins>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.avro</groupId>
+                    <artifactId>avro-maven-plugin</artifactId>
+                    <version>${avro-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${build-helper-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>

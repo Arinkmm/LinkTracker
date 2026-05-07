@@ -1,8 +1,7 @@
 package backend.academy.linktracker.scrapper.service.notifier;
 
-import java.net.URI;
-import java.util.List;
+import backend.academy.linktracker.bot.dto.LinkUpdate;
 
 public interface BotNotifier {
-    void notify(Long id, URI url, String description, List<Long> tgChatIds);
+    void notify(LinkUpdate linkUpdate);
 }

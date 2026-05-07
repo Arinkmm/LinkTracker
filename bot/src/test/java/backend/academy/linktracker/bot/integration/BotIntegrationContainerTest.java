@@ -28,6 +28,7 @@ import org.testcontainers.utility.MountableFile;
 @Testcontainers
 class BotIntegrationContainerTest {
     private static final Network NETWORK = Network.newNetwork();
+    private static final Path JAR_PATH = Paths.get("target/bot-0.0.1.jar").toAbsolutePath();
 
     @Container
     static final GenericContainer<?> wiremockContainer = new GenericContainer<>("wiremock/wiremock:3.13.1")
@@ -47,11 +48,8 @@ class BotIntegrationContainerTest {
     static final GenericContainer<?> botContainer = createBotContainer();
 
     private static GenericContainer<?> createBotContainer() {
-        String jarName = "bot-0.0.1.jar";
-        Path jarPath = Paths.get("target").resolve(jarName);
-
         return new GenericContainer<>(new ImageFromDockerfile("localhost/link-tracker-bot:latest", false)
-                        .withFileFromPath("app.jar", jarPath)
+                        .withFileFromPath("app.jar", JAR_PATH)
                         .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
                                 .copy("app.jar", "/app.jar")
                                 .expose(8080)
@@ -61,15 +59,17 @@ class BotIntegrationContainerTest {
                 .withNetwork(NETWORK)
                 .withExposedPorts(8080)
                 .withEnv("APP_TELEGRAM_URL", "http://wiremock:8080/bot")
+                .withEnv("APP_SCRAPPER_CLIENT_TYPE", "http")
+                .withEnv("APP_UPDATES_TYPE", "http")
                 .withEnv("APP_TELEGRAM_TOKEN", "test-token")
                 .waitingFor(Wait.forHttp("/actuator/health").forPort(8080).forStatusCode(200))
                 .withStartupTimeout(Duration.ofSeconds(120));
     }
 
     private RestClient restClient() {
-        String host = botContainer.getHost();
-        Integer port = botContainer.getMappedPort(8080);
-        return RestClient.builder().baseUrl("http://" + host + ":" + port).build();
+        return RestClient.builder()
+                .baseUrl("http://" + botContainer.getHost() + ":" + botContainer.getMappedPort(8080))
+                .build();
     }
 
     @Test
@@ -102,15 +102,13 @@ class BotIntegrationContainerTest {
             }
             """;
 
-        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> {
-            restClient()
-                    .method(HttpMethod.POST)
-                    .uri("/updates")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(invalidBody)
-                    .retrieve()
-                    .toBodilessEntity();
-        });
+        HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> restClient()
+                .method(HttpMethod.POST)
+                .uri("/updates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(invalidBody)
+                .retrieve()
+                .toBodilessEntity());
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
