@@ -2,7 +2,6 @@ package backend.academy.linktracker.scrapper.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import backend.academy.linktracker.scrapper.configuration.CacheIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.configuration.ContainerConstants;
 import backend.academy.linktracker.scrapper.configuration.SharedPostgresContainer;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
@@ -17,13 +16,45 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
-class ScrapperIntegrationContainerTest extends CacheIntegrationEnvironment {
+class ScrapperIntegrationContainerTest {
+    static final Network NETWORK = SharedPostgresContainer.NETWORK;
+
+    static final GenericContainer<?> valkey = new GenericContainer<>(DockerImageName.parse("valkey/valkey:8.0"))
+            .withNetwork(NETWORK)
+            .withNetworkAliases("valkey")
+            .withCommand(
+                    "valkey-server",
+                    "--cluster-enabled",
+                    "yes",
+                    "--cluster-config-file",
+                    "nodes.conf",
+                    "--appendonly",
+                    "yes",
+                    "--bind",
+                    "0.0.0.0",
+                    "--cluster-announce-ip",
+                    "valkey",
+                    "--cluster-announce-port",
+                    "6379")
+            .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+
+    static {
+        valkey.start();
+        try {
+            valkey.execInContainer("sh", "-c", "valkey-cli cluster addslots $(seq 0 16383)");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init Valkey slots", e);
+        }
+    }
+
     @Container
     static final GenericContainer<?> scrapper = new GenericContainer<>(
                     new ImageFromDockerfile(ContainerConstants.SCRAPPER_IMAGE, false)
