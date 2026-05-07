@@ -44,7 +44,7 @@ class ScrapperIntegrationContainerTest extends CacheIntegrationEnvironment {
             .withEnv("DB_DRIVER", ContainerConstants.DB_DRIVER)
             .withEnv("SPRING_LIQUIBASE_ENABLED", "true")
             .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", ContainerConstants.LIQUIBASE_PATH)
-            .withEnv("SPRING_DATA_REDIS_CLUSTER_NODES", "valkey:6379")
+            .withEnv("REDIS_CLUSTER_NODES", "valkey:6379")
             .waitingFor(Wait.forHttp("/actuator/health")
                     .forPort(ContainerConstants.SCRAPPER_PORT)
                     .forStatusCode(200))
