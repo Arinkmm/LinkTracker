@@ -1,9 +1,9 @@
-package backend.academy.linktracker.scrapper.integration;
+package backend.academy.linktracker.scrapper.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import backend.academy.linktracker.scrapper.configuration.ValkeyIntegrationEnvironment;
+import backend.academy.linktracker.scrapper.configuration.CacheIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
@@ -23,8 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
-class RedisCacheIntegrationTest extends ValkeyIntegrationEnvironment {
-
+class CacheIntegrationTest extends CacheIntegrationEnvironment {
     @Autowired
     private LinkService linkService;
 

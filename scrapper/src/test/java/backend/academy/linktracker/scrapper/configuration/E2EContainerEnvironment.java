@@ -64,6 +64,31 @@ public final class E2EContainerEnvironment {
             .withExposedPorts(WIREMOCK_PORT)
             .waitingFor(Wait.forHttp("/__admin/mappings").forPort(WIREMOCK_PORT).forStatusCode(200));
 
+    public static final GenericContainer<?> VALKEY = new GenericContainer<>(DockerImageName.parse("valkey/valkey:8.0"))
+            .withNetwork(NETWORK)
+            .withNetworkAliases("valkey-e2e")
+            .withExposedPorts(6379)
+            .withCommand(
+                    "valkey-server",
+                    "--cluster-enabled",
+                    "yes",
+                    "--cluster-config-file",
+                    "nodes.conf",
+                    "--appendonly",
+                    "yes",
+                    "--bind",
+                    "0.0.0.0")
+            .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+
+    static {
+        VALKEY.start();
+        try {
+            VALKEY.execInContainer("sh", "-c", "valkey-cli cluster addslots $(seq 0 16383)");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init E2E Valkey slots");
+        }
+    }
+
     public static final GenericContainer<?> SCRAPPER = buildScrapper();
     public static final GenericContainer<?> BOT = buildBot();
 
@@ -77,7 +102,7 @@ public final class E2EContainerEnvironment {
                                 .build()))
                 .withNetwork(NETWORK)
                 .withNetworkAliases(SCRAPPER_ALIAS)
-                .dependsOn(POSTGRES, KAFKA, SCHEMA_REGISTRY, WIREMOCK_EXT)
+                .dependsOn(POSTGRES, KAFKA, SCHEMA_REGISTRY, WIREMOCK_EXT, VALKEY)
                 .withEnv("SPRING_DATASOURCE_URL", "jdbc:postgresql://" + DB_NETWORK_ALIAS + ":5432/" + DB_NAME)
                 .withEnv("SPRING_DATASOURCE_USERNAME", DB_USER)
                 .withEnv("SPRING_DATASOURCE_PASSWORD", DB_PASSWORD)
@@ -92,6 +117,7 @@ public final class E2EContainerEnvironment {
                 .withEnv("APP_GITHUB_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
                 .withEnv("APP_STACKOVERFLOW_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
                 .withEnv("APP_KAFKA_TOPIC", TOPIC)
+                .withEnv("SPRING_DATA_REDIS_CLUSTER_NODES", "valkey-e2e:6379")
                 .withExposedPorts(SCRAPPER_PORT)
                 .waitingFor(
                         Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200))

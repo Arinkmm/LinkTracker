@@ -3,7 +3,7 @@ package backend.academy.linktracker.scrapper.db;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import backend.academy.linktracker.scrapper.configuration.DatabaseIntegrationEnvironment;
+import backend.academy.linktracker.scrapper.configuration.CacheIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-class LinkRepositoryTest extends DatabaseIntegrationEnvironment {
+class LinkRepositoryTest extends CacheIntegrationEnvironment {
     @Autowired
     private LinkRepository linkRepository;
 

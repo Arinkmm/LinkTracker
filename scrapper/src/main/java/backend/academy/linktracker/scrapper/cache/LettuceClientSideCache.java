@@ -1,129 +1,112 @@
 package backend.academy.linktracker.scrapper.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.lettuce.core.cluster.RedisClusterClient;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import java.io.Closeable;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import org.springframework.cache.Cache;
-import org.springframework.cache.support.SimpleValueWrapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.caffeine.CaffeineCache;
 
-public class LettuceClientSideCache implements Cache, Closeable {
-    private final String name;
+@Slf4j
+public class LettuceClientSideCache extends CaffeineCache implements Closeable {
     private final StatefulRedisClusterConnection<String, String> connection;
     private final StatefulRedisClusterPubSubConnection<String, String> pubSubConnection;
     private final long ttlSeconds;
-    private final Map<String, String> l1Cache;
     private final ObjectMapper objectMapper;
 
-    public LettuceClientSideCache(String name, RedisClusterClient client, Duration ttl, ObjectMapper mapper, int cap) {
-        this.name = name;
-        this.ttlSeconds = ttl.toSeconds();
+    private final CacheInvalidationListener invalidationListener;
+
+    public LettuceClientSideCache(
+            String name,
+            StatefulRedisClusterConnection<String, String> connection,
+            StatefulRedisClusterPubSubConnection<String, String> pubSubConnection,
+            Duration l1Ttl,
+            ObjectMapper mapper,
+            int cap,
+            Duration l2Ttl) {
+        super(
+                name,
+                Caffeine.newBuilder().maximumSize(cap).expireAfterWrite(l1Ttl).build(),
+                false);
+
+        this.ttlSeconds = l2Ttl.toSeconds();
         this.objectMapper = mapper;
-        this.connection = client.connect();
+        this.connection = connection;
+        this.pubSubConnection = pubSubConnection;
 
-        this.l1Cache = Collections.synchronizedMap(new LinkedHashMap<>(cap, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-                return size() > cap;
-            }
-        });
-
-        this.pubSubConnection = client.connectPubSub();
-        this.pubSubConnection.addListener(new CacheInvalidationListener(name, l1Cache));
-        this.pubSubConnection.sync().psubscribe("__keyevent@*__:del", "__keyevent@*__:expired");
+        this.invalidationListener = new CacheInvalidationListener(name, getNativeCache());
+        this.pubSubConnection.addListener(invalidationListener);
     }
 
     @Override
-    public ValueWrapper get(Object key) {
-        String fullKey = name + ":" + key;
-
-        String cached = l1Cache.get(fullKey);
-        if (cached != null) {
-            return deserialize(cached);
+    protected Object lookup(Object key) {
+        Object fromL1 = super.lookup(key);
+        if (fromL1 != null) {
+            return fromL1;
         }
 
-        String fromRedis = connection.sync().get(fullKey);
-
-        if (fromRedis != null) {
-            l1Cache.put(fullKey, fromRedis);
-            return deserialize(fromRedis);
+        String fullKey = getName() + ":" + key;
+        try {
+            String fromRedis = connection.sync().get(fullKey);
+            if (fromRedis != null) {
+                Object value = deserialize(fromRedis);
+                if (value != null) {
+                    getNativeCache().put(key, value);
+                }
+                return value;
+            }
+        } catch (Exception e) {
+            log.atError()
+                    .addKeyValue("cacheName", getName())
+                    .addKeyValue("key", key)
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .log("Redis error during lookup");
         }
         return null;
     }
 
     @Override
     public void put(Object key, Object value) {
+        super.put(key, value);
         try {
             String json = objectMapper.writeValueAsString(value);
-            String fullKey = name + ":" + key;
-            connection.sync().setex(fullKey, ttlSeconds, json);
-            l1Cache.put(fullKey, json);
+            connection.sync().setex(getName() + ":" + key, ttlSeconds, json);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.atError()
+                    .addKeyValue("cacheName", getName())
+                    .addKeyValue("key", key)
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .log("Failed to sync put with Redis");
         }
     }
 
     @Override
     public void evict(Object key) {
-        String fullKey = name + ":" + key;
-        connection.sync().del(fullKey);
-        l1Cache.remove(fullKey);
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public Object getNativeCache() {
-        return connection;
-    }
-
-    @Override
-    public void clear() {
-        l1Cache.clear();
-    }
-
-    private ValueWrapper deserialize(String json) {
+        super.evict(key);
         try {
-            return new SimpleValueWrapper(objectMapper.readValue(json, Object.class));
+            connection.sync().del(getName() + ":" + key);
         } catch (Exception e) {
-            return null;
-        }
-    }
-
-    @Override
-    public <T> T get(Object key, Class<T> type) {
-        ValueWrapper w = get(key);
-        return w != null ? (T) w.get() : null;
-    }
-
-    @Override
-    public <T> T get(Object key, Callable<T> loader) {
-        ValueWrapper w = get(key);
-        if (w != null) return (T) w.get();
-        try {
-            T val = loader.call();
-            put(key, val);
-            return val;
-        } catch (Exception e) {
-            throw new ValueRetrievalException(key, loader, e);
+            log.atError()
+                    .addKeyValue("cacheName", getName())
+                    .addKeyValue("key", key)
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .log("Failed to evict key from Redis");
         }
     }
 
     @Override
     public void close() {
+        pubSubConnection.removeListener(invalidationListener);
+    }
+
+    private Object deserialize(String json) {
         try {
-            pubSubConnection.close();
-            connection.close();
-        } catch (Exception ignored) {
+            return objectMapper.readValue(json, Object.class);
+        } catch (Exception e) {
+            log.atError().addKeyValue("errorMessage", e.getMessage()).log("Deserialization error");
+            return null;
         }
     }
 }

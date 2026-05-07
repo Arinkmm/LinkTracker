@@ -1,22 +1,21 @@
 package backend.academy.linktracker.scrapper.cache;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
-import java.util.Map;
+import io.lettuce.core.cluster.pubsub.RedisClusterPubSubAdapter;
+import lombok.RequiredArgsConstructor;
 
-public class CacheInvalidationListener implements RedisClusterPubSubListener<String, String> {
+@RequiredArgsConstructor
+public class CacheInvalidationListener extends RedisClusterPubSubAdapter<String, String> {
     private final String cacheName;
-    private final Map<String, String> l1Cache;
-
-    public CacheInvalidationListener(String cacheName, Map<String, String> l1Cache) {
-        this.cacheName = cacheName;
-        this.l1Cache = l1Cache;
-    }
+    private final Cache<Object, Object> l1Cache;
 
     @Override
     public void message(RedisClusterNode node, String channel, String message) {
-        if (message.startsWith(cacheName + ":")) {
-            l1Cache.remove(message);
+        String prefix = cacheName + ":";
+        if (message.startsWith(prefix)) {
+            String localKey = message.substring(prefix.length());
+            l1Cache.invalidate(localKey);
         }
     }
 
@@ -24,16 +23,4 @@ public class CacheInvalidationListener implements RedisClusterPubSubListener<Str
     public void message(RedisClusterNode node, String pattern, String channel, String message) {
         message(node, channel, message);
     }
-
-    @Override
-    public void subscribed(RedisClusterNode node, String channel, long count) {}
-
-    @Override
-    public void psubscribed(RedisClusterNode node, String pattern, long count) {}
-
-    @Override
-    public void unsubscribed(RedisClusterNode node, String channel, long count) {}
-
-    @Override
-    public void punsubscribed(RedisClusterNode node, String pattern, long count) {}
 }

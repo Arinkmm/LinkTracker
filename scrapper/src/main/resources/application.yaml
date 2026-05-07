@@ -2,9 +2,6 @@ server:
   port: 8081
 
 spring:
-  cache:
-    redis:
-      time-to-live: 10m
   data:
     redis:
       cluster:
@@ -34,6 +31,8 @@ spring:
 
 app:
   cache:
+    l1-ttl: 1m
+    l2-ttl: 10m
     l1-capacity: 1000
   db:
     access-type: orm
@@ -48,7 +47,6 @@ app:
     outbox-checking-interval-ms: 60000
     outbox-checking-limit: 20
     max-retries-for-messages-outbox: 5
-    ms-interval-for-cleaning-outbox: 86400000
     days-interval-for-cleaning-outbox: 1
     outbox-cleaning-cron: "0 0 2 * * *"
   bot:

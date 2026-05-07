@@ -1,7 +1,6 @@
 package backend.academy.linktracker.scrapper.integration;
 
 import static backend.academy.linktracker.scrapper.configuration.ContainerConstants.*;
-import static backend.academy.linktracker.scrapper.configuration.SharedPostgresContainer.NETWORK;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -22,10 +21,8 @@ import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
 class ScrapperKafkaBotE2EContainerTest {
@@ -40,15 +37,7 @@ class ScrapperKafkaBotE2EContainerTest {
     @Container
     static final GenericContainer<?> schemaRegistry = E2EContainerEnvironment.SCHEMA_REGISTRY;
 
-    static final GenericContainer<?> valkey = new GenericContainer<>(DockerImageName.parse("valkey/valkey:8.0"))
-            .withNetwork(NETWORK)
-            .withNetworkAliases("valkey-e2e")
-            .withExposedPorts(6379)
-            .withCommand(
-                    "sh",
-                    "-c",
-                    "valkey-server --cluster-enabled yes --cluster-config-file nodes.conf --appendonly yes --bind 0.0.0.0 & sleep 2 && valkey-cli cluster addslots $(seq 0 16383) && wait")
-            .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+    static final GenericContainer<?> valkey = E2EContainerEnvironment.VALKEY;
 
     @Container
     static final GenericContainer<?> wireMockExt = E2EContainerEnvironment.WIREMOCK_EXT;
@@ -61,7 +50,6 @@ class ScrapperKafkaBotE2EContainerTest {
 
     @Container
     static final GenericContainer<?> bot = E2EContainerEnvironment.BOT;
-
 
     private WireMock extWireMock;
     private WireMock tgWireMock;

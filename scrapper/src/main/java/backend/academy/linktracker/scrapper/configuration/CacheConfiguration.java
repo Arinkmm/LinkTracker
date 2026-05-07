@@ -8,8 +8,9 @@ import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.protocol.ProtocolVersion;
-import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +22,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableCaching
 @Configuration
 @RequiredArgsConstructor
-public class RedisConfiguration {
-
+public class CacheConfiguration {
     private final CacheProperties properties;
 
     @Bean(destroyMethod = "shutdown")
@@ -41,6 +41,16 @@ public class RedisConfiguration {
         return client;
     }
 
+    @Bean(destroyMethod = "close")
+    public StatefulRedisClusterConnection<String, String> redisConnection(RedisClusterClient client) {
+        return client.connect();
+    }
+
+    @Bean(destroyMethod = "close")
+    public StatefulRedisClusterPubSubConnection<String, String> pubSubConnection(RedisClusterClient client) {
+        return client.connectPubSub();
+    }
+
     @Bean
     public ObjectMapper cacheObjectMapper() {
         return new ObjectMapper()
@@ -52,9 +62,15 @@ public class RedisConfiguration {
 
     @Bean
     public CacheManager cacheManager(
-            RedisClusterClient clusterClient,
-            @Value("${spring.cache.redis.time-to-live:10m}") Duration ttl,
+            StatefulRedisClusterConnection<String, String> connection,
+            StatefulRedisClusterPubSubConnection<String, String> pubSubConnection,
             ObjectMapper cacheObjectMapper) {
-        return new ClientSideCacheManager(clusterClient, ttl, properties.getL1Capacity(), cacheObjectMapper);
+        return new ClientSideCacheManager(
+                connection,
+                pubSubConnection,
+                properties.getL1Ttl(),
+                properties.getL2Ttl(),
+                properties.getL1Capacity(),
+                cacheObjectMapper);
     }
 }

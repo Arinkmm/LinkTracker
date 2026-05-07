@@ -37,7 +37,7 @@ public class OutboxRelay {
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (Exception e) {
-            log.error("Batch processing failed");
+            log.atError().addKeyValue("errorMessage", e.getMessage()).log("Batch processing failed");
         }
     }
 
@@ -70,7 +70,6 @@ public class OutboxRelay {
                         }
                         return null;
                     });
-
         } catch (Exception e) {
             log.atError().addKeyValue("messageId", message.getId()).log("Error serializing/processing message");
             outboxMessageService.markAsError(message);

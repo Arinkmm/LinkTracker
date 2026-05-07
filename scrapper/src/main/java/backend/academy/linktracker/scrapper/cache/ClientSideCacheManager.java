@@ -1,47 +1,66 @@
 package backend.academy.linktracker.scrapper.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
+import org.springframework.cache.support.AbstractCacheManager;
 
-public class ClientSideCacheManager implements CacheManager {
-    private final RedisClusterClient clusterClient;
-    private final Duration ttl;
+@Slf4j
+@RequiredArgsConstructor
+public class ClientSideCacheManager extends AbstractCacheManager {
+    private static final String[] KEYEVENT_PATTERNS = {"__keyevent@*__:del", "__keyevent@*__:expired"};
+
+    private final StatefulRedisClusterConnection<String, String> connection;
+    private final StatefulRedisClusterPubSubConnection<String, String> pubSubConnection;
+
+    private final Duration l1Ttl;
+    private final Duration l2Ttl;
     private final int l1Capacity;
     private final ObjectMapper objectMapper;
-    private final Map<String, LettuceClientSideCache> caches = new ConcurrentHashMap<>();
 
-    public ClientSideCacheManager(RedisClusterClient client, Duration ttl, int cap, ObjectMapper mapper) {
-        this.clusterClient = client;
-        this.ttl = ttl;
-        this.l1Capacity = cap;
-        this.objectMapper = mapper;
+    @Override
+    protected Collection<? extends Cache> loadCaches() {
+        return List.of();
     }
 
     @Override
-    public Cache getCache(String name) {
-        return caches.computeIfAbsent(
-                name, n -> new LettuceClientSideCache(n, clusterClient, ttl, objectMapper, l1Capacity));
+    protected Cache getMissingCache(String name) {
+        return new LettuceClientSideCache(name, connection, pubSubConnection, l1Ttl, objectMapper, l1Capacity, l2Ttl);
     }
 
     @Override
-    public Collection<String> getCacheNames() {
-        return Collections.unmodifiableSet(caches.keySet());
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
+        pubSubConnection.sync().psubscribe(KEYEVENT_PATTERNS);
+        log.atInfo().log("Subscribed to Redis keyevent patterns for cache invalidation");
     }
 
     @PreDestroy
     public void destroy() {
-        caches.values().forEach(cache -> {
-            try {
-                cache.close();
-            } catch (Exception ignored) {
+        try {
+            pubSubConnection.sync().punsubscribe(KEYEVENT_PATTERNS);
+        } catch (Exception e) {
+            log.atError().addKeyValue("errorMessage", e.getMessage()).log("Failed to punsubscribe on destroy");
+        }
+
+        getCacheNames().forEach(name -> {
+            Cache cache = getCache(name);
+            if (cache instanceof LettuceClientSideCache lettuceCache) {
+                try {
+                    lettuceCache.close();
+                } catch (Exception e) {
+                    log.atError()
+                            .addKeyValue("cacheName", name)
+                            .addKeyValue("errorMessage", e.getMessage())
+                            .log("Failed to close cache on destroy");
+                }
             }
         });
     }
