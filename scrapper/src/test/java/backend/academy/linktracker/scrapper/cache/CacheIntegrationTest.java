@@ -125,8 +125,6 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
 
         TimeUnit.SECONDS.sleep(3);
 
-        cacheManager.getCache("links").evict(CHAT_ID);
-
         linkService.getLinks(CHAT_ID);
 
         verify(subscriptionRepository, times(2)).findSubscriptionByChatId(eq(CHAT_ID), anyInt(), anyInt());

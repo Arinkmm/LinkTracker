@@ -208,10 +208,10 @@ services:
       valkey-init:
         condition: service_completed_successfully
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       DB_DRIVER: ${DB_DRIVER}
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       APP_BOT_URL: http://bot:8080
       APP_GRPC_HOST: bot
       STACKOVERFLOW_KEY: ${STACKOVERFLOW_KEY}

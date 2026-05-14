@@ -6,6 +6,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import java.io.Closeable;
 import java.time.Duration;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.caffeine.CaffeineCache;
 
@@ -62,6 +63,7 @@ public class LettuceClientSideCache extends CaffeineCache implements Closeable {
                     .addKeyValue("cacheName", getName())
                     .addKeyValue("key", key)
                     .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
                     .log("Redis error during lookup");
         }
         return null;
@@ -78,6 +80,7 @@ public class LettuceClientSideCache extends CaffeineCache implements Closeable {
                     .addKeyValue("cacheName", getName())
                     .addKeyValue("key", key)
                     .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
                     .log("Failed to sync put with Redis");
         }
     }
@@ -92,7 +95,25 @@ public class LettuceClientSideCache extends CaffeineCache implements Closeable {
                     .addKeyValue("cacheName", getName())
                     .addKeyValue("key", key)
                     .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
                     .log("Failed to evict key from Redis");
+        }
+    }
+
+    @Override
+    public void clear() {
+        super.clear();
+        try {
+            List<String> keys = connection.sync().keys(getName() + ":*");
+            if (!keys.isEmpty()) {
+                connection.sync().del(keys.toArray(new String[0]));
+            }
+        } catch (Exception e) {
+            log.atError()
+                    .addKeyValue("cacheName", getName())
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
+                    .log("Failed to clear L2 cache");
         }
     }
 
@@ -105,7 +126,10 @@ public class LettuceClientSideCache extends CaffeineCache implements Closeable {
         try {
             return objectMapper.readValue(json, Object.class);
         } catch (Exception e) {
-            log.atError().addKeyValue("errorMessage", e.getMessage()).log("Deserialization error");
+            log.atError()
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
+                    .log("Deserialization error");
             return null;
         }
     }

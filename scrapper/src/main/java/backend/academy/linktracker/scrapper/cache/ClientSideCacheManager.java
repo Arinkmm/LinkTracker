@@ -47,7 +47,10 @@ public class ClientSideCacheManager extends AbstractCacheManager {
         try {
             pubSubConnection.sync().punsubscribe(KEYEVENT_PATTERNS);
         } catch (Exception e) {
-            log.atError().addKeyValue("errorMessage", e.getMessage()).log("Failed to punsubscribe on destroy");
+            log.atError()
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
+                    .log("Failed to punsubscribe on destroy");
         }
 
         getCacheNames().forEach(name -> {
@@ -59,6 +62,7 @@ public class ClientSideCacheManager extends AbstractCacheManager {
                     log.atError()
                             .addKeyValue("cacheName", name)
                             .addKeyValue("errorMessage", e.getMessage())
+                            .setCause(e)
                             .log("Failed to close cache on destroy");
                 }
             }

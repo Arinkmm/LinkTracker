@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.service.notifier.impl.kafka;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.exception.MessageSerializationException;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
 import backend.academy.linktracker.scrapper.service.user.OutboxMessageService;
@@ -29,7 +30,11 @@ public class KafkaBotNotifier implements BotNotifier {
                     .log("Save message in outbox");
             outboxMessageService.addMessage(message);
         } catch (JsonProcessingException e) {
-            log.atError().addKeyValue("linkId", linkUpdate.getId()).log("Error while saving message in serialization");
+            log.atError()
+                    .addKeyValue("linkId", linkUpdate.getId())
+                    .setCause(e)
+                    .log("Error while saving message in serialization");
+            throw new MessageSerializationException("Error serializing link update", e);
         }
     }
 }

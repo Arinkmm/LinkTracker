@@ -23,8 +23,10 @@ public abstract class CacheIntegrationEnvironment extends DatabaseIntegrationEnv
                     "--appendonly",
                     "yes",
                     "--bind",
-                    "0.0.0.0")
-            .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+                    "0.0.0.0",
+                    "--notify-keyspace-events",
+                    "AKE")
+            .waitingFor(Wait.forListeningPort());
 
     static {
         valkey.start();
