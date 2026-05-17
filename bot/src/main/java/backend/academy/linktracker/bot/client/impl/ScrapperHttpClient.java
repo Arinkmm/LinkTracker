@@ -21,18 +21,12 @@ public class ScrapperHttpClient implements ScrapperTransportClient {
 
     @Override
     public void registerChat(Long id) {
-        restClient.method(HttpMethod.POST)
-                .uri("/tg-chat/{id}", id)
-                .retrieve()
-                .toBodilessEntity();
+        restClient.method(HttpMethod.POST).uri("/tg-chat/{id}", id).retrieve().toBodilessEntity();
     }
 
     @Override
     public void deleteChat(Long id) {
-        restClient.method(HttpMethod.DELETE)
-                .uri("/tg-chat/{id}", id)
-                .retrieve()
-                .toBodilessEntity();
+        restClient.method(HttpMethod.DELETE).uri("/tg-chat/{id}", id).retrieve().toBodilessEntity();
     }
 
     @Override
@@ -41,7 +35,8 @@ public class ScrapperHttpClient implements ScrapperTransportClient {
         request.setLink(url);
         request.setTags(tags);
 
-        return restClient.method(HttpMethod.POST)
+        return restClient
+                .method(HttpMethod.POST)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(id))
                 .body(request)
@@ -54,7 +49,8 @@ public class ScrapperHttpClient implements ScrapperTransportClient {
         RemoveLinkRequest request = new RemoveLinkRequest();
         request.setLink(url);
 
-        return restClient.method(HttpMethod.DELETE)
+        return restClient
+                .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(id))
                 .body(request)
@@ -64,7 +60,8 @@ public class ScrapperHttpClient implements ScrapperTransportClient {
 
     @Override
     public ListLinksResponse getLinks(Long id) {
-        return restClient.method(HttpMethod.GET)
+        return restClient
+                .method(HttpMethod.GET)
                 .uri("/links")
                 .header("Tg-Chat-Id", String.valueOf(id))
                 .retrieve()

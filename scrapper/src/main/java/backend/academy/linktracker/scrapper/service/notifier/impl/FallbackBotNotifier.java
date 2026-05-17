@@ -24,9 +24,7 @@ public class FallbackBotNotifier implements BotNotifier {
 
         try {
             decorated.run();
-            log.atDebug()
-                    .addKeyValue("id", linkUpdate.getId())
-                    .log("Notification sent via primary transport");
+            log.atDebug().addKeyValue("id", linkUpdate.getId()).log("Notification sent via primary transport");
         } catch (CallNotPermittedException ex) {
             log.atWarn()
                     .addKeyValue("id", linkUpdate.getId())

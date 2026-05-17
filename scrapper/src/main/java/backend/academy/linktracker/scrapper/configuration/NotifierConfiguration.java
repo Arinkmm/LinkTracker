@@ -31,10 +31,7 @@ public class NotifierConfiguration {
             CircuitBreaker botNotifierCircuitBreaker,
             Retry botNotifierRetry) {
         return new FallbackBotNotifier(
-                new SyncBotNotifier(botClient),
-                kafkaFallback,
-                botNotifierCircuitBreaker,
-                botNotifierRetry);
+                new SyncBotNotifier(botClient), kafkaFallback, botNotifierCircuitBreaker, botNotifierRetry);
     }
 
     @Bean
@@ -46,20 +43,14 @@ public class NotifierConfiguration {
 
     @Bean
     @ConditionalOnExpression(
-            "'${app.client.type}'=='http' "
-                    + "or '${app.client.type}'=='grpc' "
-                    + "or '${app.client.type}'=='kafka'")
-    public KafkaBotNotifier kafkaFallback(
-            ObjectMapper objectMapper,
-            OutboxMessageService outboxMessageService) {
+            "'${app.client.type}'=='http' " + "or '${app.client.type}'=='grpc' " + "or '${app.client.type}'=='kafka'")
+    public KafkaBotNotifier kafkaFallback(ObjectMapper objectMapper, OutboxMessageService outboxMessageService) {
         return new KafkaBotNotifier(objectMapper, outboxMessageService);
     }
 
     @Bean
     @ConditionalOnExpression(
-            "'${app.client.type}'=='http' "
-                    + "or '${app.client.type}'=='grpc' "
-                    + "or '${app.client.type}'=='kafka'")
+            "'${app.client.type}'=='http' " + "or '${app.client.type}'=='grpc' " + "or '${app.client.type}'=='kafka'")
     public OutboxRelay outboxRelay(
             OutboxMessageService outboxMessageService,
             KafkaProperties kafkaProperties,
@@ -70,12 +61,8 @@ public class NotifierConfiguration {
 
     @Bean
     @ConditionalOnExpression(
-            "'${app.client.type}'=='http' "
-                    + "or '${app.client.type}'=='grpc' "
-                    + "or '${app.client.type}'=='kafka'")
-    public OutboxCleaner outboxCleaner(
-            OutboxMessageService outboxMessageService,
-            KafkaProperties kafkaProperties) {
+            "'${app.client.type}'=='http' " + "or '${app.client.type}'=='grpc' " + "or '${app.client.type}'=='kafka'")
+    public OutboxCleaner outboxCleaner(OutboxMessageService outboxMessageService, KafkaProperties kafkaProperties) {
         return new OutboxCleaner(outboxMessageService, kafkaProperties);
     }
 }

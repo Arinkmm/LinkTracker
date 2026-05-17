@@ -24,10 +24,7 @@ public class ResilientScrapperClient implements ScrapperClient {
     private final CircuitBreaker circuitBreaker;
     private final Retry retry;
 
-    public ResilientScrapperClient(
-            ScrapperTransportClient delegate,
-            CircuitBreaker circuitBreaker,
-            Retry retry) {
+    public ResilientScrapperClient(ScrapperTransportClient delegate, CircuitBreaker circuitBreaker, Retry retry) {
         this.delegate = delegate;
         this.circuitBreaker = circuitBreaker;
         this.retry = retry;

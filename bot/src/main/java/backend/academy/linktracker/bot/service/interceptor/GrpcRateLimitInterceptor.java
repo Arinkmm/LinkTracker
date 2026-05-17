@@ -25,9 +25,7 @@ public class GrpcRateLimitInterceptor implements ServerInterceptor {
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
-            ServerCall<ReqT, RespT> call,
-            Metadata headers,
-            ServerCallHandler<ReqT, RespT> next) {
+            ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
         String client = resolveClient(call);
         RateLimiter rateLimiter = limiters.computeIfAbsent(client, this::createRateLimiter);
 
@@ -41,9 +39,7 @@ public class GrpcRateLimitInterceptor implements ServerInterceptor {
                 .addKeyValue("method", method)
                 .log("gRPC rate limit exceeded, returning RESOURCE_EXHAUSTED");
 
-        call.close(
-                Status.RESOURCE_EXHAUSTED.withDescription("Rate limit exceeded. Please slow down"),
-                new Metadata());
+        call.close(Status.RESOURCE_EXHAUSTED.withDescription("Rate limit exceeded. Please slow down"), new Metadata());
         return new ServerCall.Listener<>() {};
     }
 

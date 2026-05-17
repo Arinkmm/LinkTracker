@@ -59,9 +59,7 @@ public final class ApiExceptionMapper {
         return new ApiException(error);
     }
 
-    public static ApiException circuitBreakerOpen(
-            CallNotPermittedException exception,
-            String upstreamName) {
+    public static ApiException circuitBreakerOpen(CallNotPermittedException exception, String upstreamName) {
         ApiErrorResponse error = new ApiErrorResponse();
         error.setCode(String.valueOf(HttpStatus.SERVICE_UNAVAILABLE.value()));
         error.setDescription(upstreamName + " is temporarily unavailable");
@@ -73,10 +71,7 @@ public final class ApiExceptionMapper {
     }
 
     private static ApiErrorResponse fallbackHttpError(
-            HttpStatusCode statusCode,
-            String fallbackDescription,
-            String rawBody,
-            Exception cause) {
+            HttpStatusCode statusCode, String fallbackDescription, String rawBody, Exception cause) {
         ApiErrorResponse error = new ApiErrorResponse();
         error.setCode(String.valueOf(statusCode.value()));
         error.setDescription(fallbackDescription);

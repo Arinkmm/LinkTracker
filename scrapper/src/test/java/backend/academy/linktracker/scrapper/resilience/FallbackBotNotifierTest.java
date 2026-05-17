@@ -1,5 +1,9 @@
 package backend.academy.linktracker.scrapper.resilience;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.service.notifier.impl.FallbackBotNotifier;
 import backend.academy.linktracker.scrapper.service.notifier.impl.SyncBotNotifier;
@@ -18,15 +22,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class FallbackBotNotifierTest {
 
-    @Mock private SyncBotNotifier httpNotifier;
-    @Mock private KafkaBotNotifier kafkaNotifier;
+    @Mock
+    private SyncBotNotifier httpNotifier;
+
+    @Mock
+    private KafkaBotNotifier kafkaNotifier;
 
     private CircuitBreaker circuitBreaker;
     private Retry retry;
@@ -35,19 +38,23 @@ class FallbackBotNotifierTest {
 
     @BeforeEach
     void setUp() {
-        circuitBreaker = CircuitBreaker.of("test", CircuitBreakerConfig.custom()
-            .slidingWindowSize(3)
-            .minimumNumberOfCalls(3)
-            .failureRateThreshold(100)
-            .permittedNumberOfCallsInHalfOpenState(2)
-            .waitDurationInOpenState(Duration.ofMillis(200))
-            .build());
+        circuitBreaker = CircuitBreaker.of(
+                "test",
+                CircuitBreakerConfig.custom()
+                        .slidingWindowSize(3)
+                        .minimumNumberOfCalls(3)
+                        .failureRateThreshold(100)
+                        .permittedNumberOfCallsInHalfOpenState(2)
+                        .waitDurationInOpenState(Duration.ofMillis(200))
+                        .build());
 
-        retry = Retry.of("test", RetryConfig.custom()
-            .maxAttempts(2)
-            .waitDuration(Duration.ZERO)
-            .retryOnException(e -> e instanceof RuntimeException)
-            .build());
+        retry = Retry.of(
+                "test",
+                RetryConfig.custom()
+                        .maxAttempts(2)
+                        .waitDuration(Duration.ZERO)
+                        .retryOnException(e -> e instanceof RuntimeException)
+                        .build());
 
         notifier = new FallbackBotNotifier(httpNotifier, kafkaNotifier, circuitBreaker, retry);
 
@@ -83,10 +90,10 @@ class FallbackBotNotifierTest {
     @Test
     @DisplayName("Предохранитель переходит в состояние OPEN")
     void whenFailureRateExceeded_circuitBreakerOpens() {
-        Retry singleAttempt = Retry.of("single", RetryConfig.custom()
-            .maxAttempts(1).waitDuration(Duration.ZERO).build());
-        FallbackBotNotifier sut = new FallbackBotNotifier(
-            httpNotifier, kafkaNotifier, circuitBreaker, singleAttempt);
+        Retry singleAttempt = Retry.of(
+                "single",
+                RetryConfig.custom().maxAttempts(1).waitDuration(Duration.ZERO).build());
+        FallbackBotNotifier sut = new FallbackBotNotifier(httpNotifier, kafkaNotifier, circuitBreaker, singleAttempt);
 
         doThrow(new RuntimeException("fail")).when(httpNotifier).notify(any());
 
@@ -133,13 +140,13 @@ class FallbackBotNotifierTest {
         assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
     }
 
-
     private void forceCircuitBreakerOpen() {
         doThrow(new RuntimeException("fail")).when(httpNotifier).notify(any());
-        Retry singleAttempt = Retry.of("force", RetryConfig.custom()
-            .maxAttempts(1).waitDuration(Duration.ZERO).build());
-        FallbackBotNotifier helper = new FallbackBotNotifier(
-            httpNotifier, kafkaNotifier, circuitBreaker, singleAttempt);
+        Retry singleAttempt = Retry.of(
+                "force",
+                RetryConfig.custom().maxAttempts(1).waitDuration(Duration.ZERO).build());
+        FallbackBotNotifier helper =
+                new FallbackBotNotifier(httpNotifier, kafkaNotifier, circuitBreaker, singleAttempt);
         for (int i = 0; i < 3; i++) {
             helper.notify(linkUpdate);
         }

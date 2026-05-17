@@ -59,10 +59,7 @@ public final class ApiExceptionMapper {
     }
 
     private static ApiErrorResponse fallbackHttpError(
-            HttpStatusCode statusCode,
-            String fallbackDescription,
-            String rawBody,
-            Exception cause) {
+            HttpStatusCode statusCode, String fallbackDescription, String rawBody, Exception cause) {
         ApiErrorResponse error = new ApiErrorResponse();
         error.setCode(String.valueOf(statusCode.value()));
         error.setDescription(fallbackDescription);

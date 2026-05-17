@@ -39,10 +39,10 @@ public class ClientConfiguration {
         ResilienceProperties.Timeout t = resilienceProperties.getTimeout();
 
         RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(Timeout.of(t.getConnectTimeout()))
-            .setConnectionRequestTimeout(Timeout.of(t.getConnectTimeout()))
-            .setResponseTimeout(Timeout.of(t.getReadTimeout()))
-            .build();
+                .setConnectTimeout(Timeout.of(t.getConnectTimeout()))
+                .setConnectionRequestTimeout(Timeout.of(t.getConnectTimeout()))
+                .setResponseTimeout(Timeout.of(t.getReadTimeout()))
+                .build();
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(
                 HttpClients.custom().setDefaultRequestConfig(requestConfig).build());
         requestFactory.setReadTimeout(t.getReadTimeout());

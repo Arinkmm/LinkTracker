@@ -55,10 +55,10 @@ public class ScrapperGrpcClient implements ScrapperTransportClient {
     @Override
     public LinkResponse removeLink(Long id, URI url) {
         backend.academy.linktracker.grpc.LinkResponse response = grpcCall("removeLink", () -> stubWithDeadline()
-                        .removeLink(RemoveLinkRequest.newBuilder()
-                                .setTgChatId(id)
-                                .setLink(url.toString())
-                                .build()));
+                .removeLink(RemoveLinkRequest.newBuilder()
+                        .setTgChatId(id)
+                        .setLink(url.toString())
+                        .build()));
         return mapper.fromProto(response);
     }
 
@@ -71,17 +71,14 @@ public class ScrapperGrpcClient implements ScrapperTransportClient {
 
     private ScrapperServiceGrpc.ScrapperServiceBlockingStub stubWithDeadline() {
         return blockingStub.withDeadline(Deadline.after(
-                resilienceProperties.getTimeout().getReadTimeout().toNanos(),
-                TimeUnit.NANOSECONDS));
+                resilienceProperties.getTimeout().getReadTimeout().toNanos(), TimeUnit.NANOSECONDS));
     }
 
     private <T> T grpcCall(String operation, Supplier<T> call) {
         try {
             return call.get();
         } catch (StatusRuntimeException e) {
-            log.atDebug()
-                    .addKeyValue("operation", operation)
-                    .log("gRPC Scrapper call failed");
+            log.atDebug().addKeyValue("operation", operation).log("gRPC Scrapper call failed");
             throw fromGrpcException(e, "Scrapper");
         }
     }

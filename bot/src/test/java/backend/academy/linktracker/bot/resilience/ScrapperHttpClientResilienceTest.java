@@ -1,5 +1,9 @@
 package backend.academy.linktracker.bot.resilience;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.assertj.core.api.Assertions.*;
+
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.client.impl.ResilientScrapperClient;
 import backend.academy.linktracker.bot.client.impl.ScrapperHttpClient;
@@ -23,10 +27,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.assertj.core.api.Assertions.*;
-
 class ScrapperHttpClientResilienceTest {
     @RegisterExtension
     static WireMockExtension wireMock = WireMockExtension.newInstance()
@@ -48,22 +48,28 @@ class ScrapperHttpClientResilienceTest {
 
         RestClient restClient = RestClient.builder()
                 .baseUrl(wireMock.baseUrl())
-                .requestFactory(new HttpComponentsClientHttpRequestFactory(
-                        HttpClients.custom().setDefaultRequestConfig(requestConfig).build()))
+                .requestFactory(new HttpComponentsClientHttpRequestFactory(HttpClients.custom()
+                        .setDefaultRequestConfig(requestConfig)
+                        .build()))
                 .build();
 
-        CircuitBreaker cb = CircuitBreaker.of("test", CircuitBreakerConfig.custom()
-                .slidingWindowSize(100)
-                .minimumNumberOfCalls(100)
-                .failureRateThreshold(100)
-                .build());
+        CircuitBreaker cb = CircuitBreaker.of(
+                "test",
+                CircuitBreakerConfig.custom()
+                        .slidingWindowSize(100)
+                        .minimumNumberOfCalls(100)
+                        .failureRateThreshold(100)
+                        .build());
 
-        Retry retry = Retry.of("test", RetryConfig.custom()
-                .maxAttempts(MAX_ATTEMPTS)
-                .waitDuration(BACKOFF)
-                .retryOnException(ex -> ex instanceof HttpServerErrorException httpEx
-                        && List.of(500, 502, 503, 504).contains(httpEx.getStatusCode().value()))
-                .build());
+        Retry retry = Retry.of(
+                "test",
+                RetryConfig.custom()
+                        .maxAttempts(MAX_ATTEMPTS)
+                        .waitDuration(BACKOFF)
+                        .retryOnException(ex -> ex instanceof HttpServerErrorException httpEx
+                                && List.of(500, 502, 503, 504)
+                                        .contains(httpEx.getStatusCode().value()))
+                        .build());
 
         client = new ResilientScrapperClient(new ScrapperHttpClient(restClient), cb, retry);
     }
@@ -72,14 +78,11 @@ class ScrapperHttpClientResilienceTest {
     @DisplayName("Таймаут — сервис отвечает дольше настроенного времени ожидания")
     void whenServerTooSlow_requestTimesOut() {
         wireMock.stubFor(post(urlEqualTo("/tg-chat/1"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withFixedDelay(TIMEOUT_MS * 3)));
+                .willReturn(aResponse().withStatus(200).withFixedDelay(TIMEOUT_MS * 3)));
 
         Instant start = Instant.now();
 
-        assertThatThrownBy(() -> client.registerChat(1L))
-                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> client.registerChat(1L)).isInstanceOf(Exception.class);
 
         long elapsed = Duration.between(start, Instant.now()).toMillis();
         assertThat(elapsed).isLessThan((long) TIMEOUT_MS * 2);
@@ -113,11 +116,9 @@ class ScrapperHttpClientResilienceTest {
     @Test
     @DisplayName("Повторный запрос не выполняется на 4xx")
     void whenServerReturns400_noRetry() {
-        wireMock.stubFor(post(urlEqualTo("/tg-chat/99"))
-                .willReturn(aResponse().withStatus(400)));
+        wireMock.stubFor(post(urlEqualTo("/tg-chat/99")).willReturn(aResponse().withStatus(400)));
 
-        assertThatThrownBy(() -> client.registerChat(99L))
-                .isInstanceOf(HttpClientErrorException.class);
+        assertThatThrownBy(() -> client.registerChat(99L)).isInstanceOf(HttpClientErrorException.class);
 
         wireMock.verify(1, postRequestedFor(urlEqualTo("/tg-chat/99")));
     }
@@ -125,14 +126,12 @@ class ScrapperHttpClientResilienceTest {
     @Test
     @DisplayName("Постоянная задержка — интервал между попытками одинаковый")
     void whenRetryingWithConstantBackoff_intervalsAreEqual() {
-        wireMock.stubFor(post(urlEqualTo("/tg-chat/77"))
-                .willReturn(aResponse().withStatus(500)));
+        wireMock.stubFor(post(urlEqualTo("/tg-chat/77")).willReturn(aResponse().withStatus(500)));
 
         long expectedMinMs = BACKOFF.toMillis() * (MAX_ATTEMPTS - 1);
 
         Instant start = Instant.now();
-        assertThatThrownBy(() -> client.registerChat(77L))
-                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> client.registerChat(77L)).isInstanceOf(Exception.class);
         long elapsed = Duration.between(start, Instant.now()).toMillis();
 
         assertThat(elapsed).isGreaterThanOrEqualTo(expectedMinMs);

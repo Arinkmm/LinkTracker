@@ -58,7 +58,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Повторное получение списка ссылок не обращается к БД")
+    @DisplayName("Повторный вызов getLinks не обращается к БД (кэш работает)")
     void shouldReturnCachedResultOnSecondCall() {
         linkService.getLinks(CHAT_ID);
         linkService.getLinks(CHAT_ID);
@@ -67,7 +67,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Данные — валидный JSON с полями списка ссылок и размера")
+    @DisplayName("Данные — валидный JSON с полями links и size")
     void shouldStoreResponseAsJsonInValkey() throws Exception {
         linkService.addLink(CHAT_ID, addLinkRequest(LINK_URL));
         linkService.getLinks(CHAT_ID);
@@ -137,7 +137,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Добавление ссылки инвалидирует ключ")
+    @DisplayName("addLink инвалидирует ключ")
     void shouldEvictCacheOnLinkAdd() {
         linkService.getLinks(CHAT_ID);
 
@@ -155,7 +155,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("Удаление ссылки инвалидирует ключ")
+    @DisplayName("removeLink инвалидирует ключ")
     void shouldEvictCacheOnLinkRemove() {
         linkService.addLink(CHAT_ID, addLinkRequest(LINK_URL));
         linkService.getLinks(CHAT_ID);
@@ -170,7 +170,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("После инвалидации при добавлении ссылки список содержит актуальные данные")
+    @DisplayName("После инвалидации через addLink getLinks возвращает актуальные данные")
     void shouldReturnFreshDataAfterAddEviction() {
         assertThat(linkService.getLinks(CHAT_ID).getSize()).isZero();
 
@@ -182,7 +182,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("После инвалидации при удалении ссылки список становится пустым")
+    @DisplayName("После инвалидации через removeLink getLinks возвращает пустой список")
     void shouldReturnEmptyListAfterRemoveEviction() {
         linkService.addLink(CHAT_ID, addLinkRequest(LINK_URL));
         assertThat(linkService.getLinks(CHAT_ID).getSize()).isEqualTo(1);

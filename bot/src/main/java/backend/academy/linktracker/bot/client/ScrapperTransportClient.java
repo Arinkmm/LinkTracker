@@ -1,4 +1,3 @@
 package backend.academy.linktracker.bot.client;
 
-public interface ScrapperTransportClient extends ScrapperClient {
-}
+public interface ScrapperTransportClient extends ScrapperClient {}

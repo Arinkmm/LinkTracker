@@ -39,10 +39,10 @@ public class ApiConfiguration {
     @Bean
     public GitHubClient gitHubClient() {
         RestClient restClient = baseRestClientBuilder("github-api")
-            .baseUrl(githubProperties.getUrl())
-            .defaultHeader("Authorization", "Bearer " + githubProperties.getToken())
-            .defaultHeader("Accept", "application/vnd.github+json")
-            .build();
+                .baseUrl(githubProperties.getUrl())
+                .defaultHeader("Authorization", "Bearer " + githubProperties.getToken())
+                .defaultHeader("Accept", "application/vnd.github+json")
+                .build();
 
         return createHttpProxy(restClient, GitHubClient.class);
     }
@@ -50,8 +50,8 @@ public class ApiConfiguration {
     @Bean
     public StackOverflowClient stackOverflowClient() {
         RestClient restClient = baseRestClientBuilder("stackoverflow-api")
-            .baseUrl(stackoverflowProperties.getUrl())
-            .build();
+                .baseUrl(stackoverflowProperties.getUrl())
+                .build();
 
         return createHttpProxy(restClient, StackOverflowClient.class);
     }
@@ -59,40 +59,36 @@ public class ApiConfiguration {
     private RestClient.Builder baseRestClientBuilder(String name) {
         ResilienceProperties.Timeout timeout = resilienceProperties.getTimeout();
         RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(Timeout.of(timeout.getConnectTimeout()))
-            .setConnectionRequestTimeout(Timeout.of(timeout.getConnectTimeout()))
-            .setResponseTimeout(Timeout.of(timeout.getReadTimeout()))
-            .build();
+                .setConnectTimeout(Timeout.of(timeout.getConnectTimeout()))
+                .setConnectionRequestTimeout(Timeout.of(timeout.getConnectTimeout()))
+                .setResponseTimeout(Timeout.of(timeout.getReadTimeout()))
+                .build();
 
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(
-            HttpClients.custom().setDefaultRequestConfig(requestConfig).build());
+                HttpClients.custom().setDefaultRequestConfig(requestConfig).build());
         requestFactory.setReadTimeout(timeout.getReadTimeout());
 
         Retry retry = Retry.of(name, createRetryConfig());
         CircuitBreaker circuitBreaker = CircuitBreaker.of(name, createCircuitBreakerConfig());
 
-        return RestClient.builder()
-            .requestFactory(requestFactory)
-            .requestInterceptor((request, body, execution) -> {
-                try {
-                    return circuitBreaker.executeSupplier(
+        return RestClient.builder().requestFactory(requestFactory).requestInterceptor((request, body, execution) -> {
+            try {
+                return circuitBreaker.executeSupplier(
                         () -> retry.executeSupplier(() -> executeWithRetryableStatusCheck(request, body, execution)));
-                } catch (UncheckedIOException e) {
-                    throw e.getCause();
-                }
-            });
+            } catch (UncheckedIOException e) {
+                throw e.getCause();
+            }
+        });
     }
 
     private <T> T createHttpProxy(RestClient restClient, Class<T> clientClass) {
         return HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
-            .build()
-            .createClient(clientClass);
+                .build()
+                .createClient(clientClass);
     }
 
     private ClientHttpResponse executeWithRetryableStatusCheck(
-        HttpRequest request,
-        byte[] body,
-        ClientHttpRequestExecution execution) {
+            HttpRequest request, byte[] body, ClientHttpRequestExecution execution) {
         try {
             ClientHttpResponse response = execution.execute(request, body);
             if (!isRetryable(response)) {
@@ -101,12 +97,12 @@ public class ApiConfiguration {
 
             try {
                 throw new RestClientResponseException(
-                    "Retryable status code hit: " + response.getStatusCode(),
-                    response.getStatusCode(),
-                    response.getStatusText(),
-                    response.getHeaders(),
-                    response.getBody().readAllBytes(),
-                    StandardCharsets.UTF_8);
+                        "Retryable status code hit: " + response.getStatusCode(),
+                        response.getStatusCode(),
+                        response.getStatusText(),
+                        response.getHeaders(),
+                        response.getBody().readAllBytes(),
+                        StandardCharsets.UTF_8);
             } finally {
                 response.close();
             }
@@ -118,38 +114,38 @@ public class ApiConfiguration {
     private RetryConfig createRetryConfig() {
         ResilienceProperties.Retry retry = resilienceProperties.getRetry();
         return RetryConfig.custom()
-            .maxAttempts(retry.getMaxAttempts())
-            .intervalFunction(createIntervalFunction(retry))
-            .retryOnException(throwable -> throwable instanceof IOException
-                || throwable instanceof UncheckedIOException
-                || throwable instanceof RestClientResponseException httpException
-                    && retry.getRetryableStatusCodes().contains(httpException.getStatusCode().value()))
-            .build();
+                .maxAttempts(retry.getMaxAttempts())
+                .intervalFunction(createIntervalFunction(retry))
+                .retryOnException(throwable -> throwable instanceof IOException
+                        || throwable instanceof UncheckedIOException
+                        || throwable instanceof RestClientResponseException httpException
+                                && retry.getRetryableStatusCodes()
+                                        .contains(httpException.getStatusCode().value()))
+                .build();
     }
 
     private CircuitBreakerConfig createCircuitBreakerConfig() {
         ResilienceProperties.CircuitBreaker cb = resilienceProperties.getCircuitBreaker();
         return CircuitBreakerConfig.custom()
-            .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-            .slidingWindowSize(cb.getSlidingWindowSize())
-            .minimumNumberOfCalls(cb.getMinimumNumberOfCalls())
-            .failureRateThreshold(cb.getFailureRateThreshold())
-            .permittedNumberOfCallsInHalfOpenState(cb.getPermittedCallsInHalfOpenState())
-            .waitDurationInOpenState(cb.getWaitDurationInOpenState())
-            .build();
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(cb.getSlidingWindowSize())
+                .minimumNumberOfCalls(cb.getMinimumNumberOfCalls())
+                .failureRateThreshold(cb.getFailureRateThreshold())
+                .permittedNumberOfCallsInHalfOpenState(cb.getPermittedCallsInHalfOpenState())
+                .waitDurationInOpenState(cb.getWaitDurationInOpenState())
+                .build();
     }
 
     private boolean isRetryable(ClientHttpResponse response) throws IOException {
         return resilienceProperties
-            .getRetry()
-            .getRetryableStatusCodes()
-            .contains(response.getStatusCode().value());
+                .getRetry()
+                .getRetryableStatusCodes()
+                .contains(response.getStatusCode().value());
     }
 
     private IntervalFunction createIntervalFunction(ResilienceProperties.Retry retry) {
         if ("exponential".equalsIgnoreCase(retry.getBackoffStrategy())) {
-            return IntervalFunction.ofExponentialBackoff(
-                retry.getWaitDuration(), retry.getExponentialMultiplier());
+            return IntervalFunction.ofExponentialBackoff(retry.getWaitDuration(), retry.getExponentialMultiplier());
         }
         return IntervalFunction.of(retry.getWaitDuration());
     }

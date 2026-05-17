@@ -49,7 +49,8 @@ public class ResilienceConfiguration {
 
     private boolean isRetryable(Throwable ex, ResilienceProperties.Retry retry) {
         if (ex instanceof HttpStatusCodeException httpEx) {
-            return retry.getRetryableStatusCodes().contains(httpEx.getStatusCode().value());
+            return retry.getRetryableStatusCodes()
+                    .contains(httpEx.getStatusCode().value());
         }
         if (ex instanceof ApiException apiEx) {
             return isRetryableApiError(apiEx, retry);
@@ -59,15 +60,15 @@ public class ResilienceConfiguration {
 
     private IntervalFunction intervalFunction(ResilienceProperties.Retry retry) {
         if ("exponential".equalsIgnoreCase(retry.getBackoffStrategy())) {
-            return IntervalFunction.ofExponentialBackoff(
-                    retry.getWaitDuration(), retry.getExponentialMultiplier());
+            return IntervalFunction.ofExponentialBackoff(retry.getWaitDuration(), retry.getExponentialMultiplier());
         }
         return IntervalFunction.of(retry.getWaitDuration());
     }
 
     private boolean isRetryableApiError(ApiException exception, ResilienceProperties.Retry retry) {
         try {
-            return retry.getRetryableStatusCodes().contains(Integer.parseInt(exception.getApiError().getCode()));
+            return retry.getRetryableStatusCodes()
+                    .contains(Integer.parseInt(exception.getApiError().getCode()));
         } catch (NumberFormatException e) {
             return false;
         }

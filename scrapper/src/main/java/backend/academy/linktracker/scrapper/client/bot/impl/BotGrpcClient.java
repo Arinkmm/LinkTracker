@@ -22,8 +22,7 @@ public class BotGrpcClient implements BotClient {
     public void sendUpdate(LinkUpdate linkUpdate) {
         try {
             stub.withDeadline(Deadline.after(
-                            resilienceProperties.getTimeout().getReadTimeout().toNanos(),
-                            TimeUnit.NANOSECONDS))
+                            resilienceProperties.getTimeout().getReadTimeout().toNanos(), TimeUnit.NANOSECONDS))
                     .sendUpdate(backend.academy.linktracker.grpc.LinkUpdate.newBuilder()
                             .setId(linkUpdate.getId())
                             .setUrl(linkUpdate.getUrl().toString())
@@ -31,9 +30,7 @@ public class BotGrpcClient implements BotClient {
                             .addAllTgChatIds(linkUpdate.getTgChatIds())
                             .build());
         } catch (StatusRuntimeException e) {
-            log.atDebug()
-                    .addKeyValue("id", linkUpdate.getId())
-                    .log("gRPC Bot notification failed");
+            log.atDebug().addKeyValue("id", linkUpdate.getId()).log("gRPC Bot notification failed");
             throw fromGrpcException(e, "Bot");
         }
     }

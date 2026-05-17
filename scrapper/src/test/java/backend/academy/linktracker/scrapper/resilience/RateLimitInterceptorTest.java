@@ -1,5 +1,8 @@
 package backend.academy.linktracker.scrapper.resilience;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import backend.academy.linktracker.scrapper.exception.RateLimitExceededException;
 import backend.academy.linktracker.scrapper.properties.RateLimitProperties;
 import backend.academy.linktracker.scrapper.service.interceptor.RateLimitInterceptor;
@@ -9,9 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RateLimitInterceptorTest {
     private static final int LIMIT = 3;
@@ -30,7 +30,8 @@ class RateLimitInterceptorTest {
         MockHttpServletRequest request = requestFrom("1.2.3.4");
 
         for (int i = 0; i < LIMIT; i++) {
-            assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), null)).isTrue();
+            assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), null))
+                    .isTrue();
         }
     }
 
@@ -61,7 +62,8 @@ class RateLimitInterceptorTest {
         assertThatThrownBy(() -> interceptor.preHandle(ip1, new MockHttpServletResponse(), null))
                 .isInstanceOf(RateLimitExceededException.class);
 
-        assertThat(interceptor.preHandle(ip2, new MockHttpServletResponse(), null)).isTrue();
+        assertThat(interceptor.preHandle(ip2, new MockHttpServletResponse(), null))
+                .isTrue();
     }
 
     @Test

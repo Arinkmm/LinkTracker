@@ -36,9 +36,7 @@ public class ClientConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.client.type", havingValue = "http")
     public RestClient botRestClient(
-            @Value("${app.bot.url}") String url,
-            ObjectMapper objectMapper,
-            ResilienceProperties resilienceProperties) {
+            @Value("${app.bot.url}") String url, ObjectMapper objectMapper, ResilienceProperties resilienceProperties) {
 
         ResilienceProperties.Timeout t = resilienceProperties.getTimeout();
 
@@ -70,8 +68,7 @@ public class ClientConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.client.type", havingValue = "grpc")
     public BotServiceGrpc.BotServiceBlockingStub botGrpcStub(
-            @Value("${app.grpc.host}") String host,
-            @Value("${app.grpc.port}") int port) {
+            @Value("${app.grpc.host}") String host, @Value("${app.grpc.port}") int port) {
         return BotServiceGrpc.newBlockingStub(
                 ManagedChannelBuilder.forAddress(host, port).usePlaintext().build());
     }
@@ -85,8 +82,7 @@ public class ClientConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.client.type", havingValue = "grpc")
     public BotClient grpcBotClient(
-            BotServiceGrpc.BotServiceBlockingStub botGrpcStub,
-            ResilienceProperties resilienceProperties) {
+            BotServiceGrpc.BotServiceBlockingStub botGrpcStub, ResilienceProperties resilienceProperties) {
         return new BotGrpcClient(botGrpcStub, resilienceProperties);
     }
 }
