@@ -13,6 +13,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ApiErrorResponse handleRateLimitExceeded(RateLimitExceededException e) {
+        log.atWarn()
+                .addKeyValue("error", e.getClass().getSimpleName())
+                .addKeyValue("message", e.getMessage())
+                .log("Rate limit exceeded");
+
+        return createError(e, "429", e.getMessage());
+    }
+
     @ExceptionHandler(ChatNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleChatNotFound(ChatNotFoundException e) {

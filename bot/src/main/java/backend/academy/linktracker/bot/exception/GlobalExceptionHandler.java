@@ -12,6 +12,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ApiErrorResponse handleRateLimitExceeded(RateLimitExceededException e) {
+        log.atWarn()
+                .addKeyValue("error", e.getClass().getSimpleName())
+                .addKeyValue("message", e.getMessage())
+                .log("Rate limit exceeded");
+
+        ApiErrorResponse error = new ApiErrorResponse();
+        error.setDescription(e.getMessage());
+        error.setCode("429");
+        error.setExceptionName(e.getClass().getSimpleName());
+        error.setExceptionMessage(e.getMessage());
+        error.setStacktrace(getStackTrace(e));
+
+        return error;
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiErrorResponse handleError(Exception e) {
