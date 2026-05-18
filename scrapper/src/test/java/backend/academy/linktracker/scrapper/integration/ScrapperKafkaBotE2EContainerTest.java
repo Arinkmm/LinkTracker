@@ -37,6 +37,8 @@ class ScrapperKafkaBotE2EContainerTest {
     @Container
     static final GenericContainer<?> schemaRegistry = E2EContainerEnvironment.SCHEMA_REGISTRY;
 
+    static final GenericContainer<?> valkey = E2EContainerEnvironment.VALKEY;
+
     @Container
     static final GenericContainer<?> wireMockExt = E2EContainerEnvironment.WIREMOCK_EXT;
 

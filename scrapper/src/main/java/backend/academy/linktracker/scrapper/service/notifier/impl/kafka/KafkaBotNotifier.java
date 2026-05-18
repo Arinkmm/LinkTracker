@@ -30,7 +30,10 @@ public class KafkaBotNotifier implements BotNotifier {
                     .log("Save message in outbox");
             outboxMessageService.addMessage(message);
         } catch (JsonProcessingException e) {
-            log.atError().addKeyValue("linkId", linkUpdate.getId()).log("Error while saving message in serialization");
+            log.atError()
+                    .addKeyValue("linkId", linkUpdate.getId())
+                    .setCause(e)
+                    .log("Error while saving message in serialization");
             throw new MessageSerializationException("Error serializing link update", e);
         }
     }
