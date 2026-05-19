@@ -67,7 +67,7 @@ app:
     pool-size: 4
 
   client:
-    type: http
+    type: kafka
 
   kafka:
     topic: link-updates

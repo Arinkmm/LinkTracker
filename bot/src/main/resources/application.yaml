@@ -48,9 +48,9 @@ app:
     capacity: 20
     refill-period: 1m
   updates:
-    type: http
+    type: kafka
   scrapper-client:
-    type: http
+    type: grpc
   kafka:
     topic: link-updates
     group-id: bot-group
