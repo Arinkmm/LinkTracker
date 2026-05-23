@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +41,7 @@ import org.springframework.http.HttpStatus;
 })
 class FallbackBotNotifierTest {
     @Autowired
+    @Qualifier("testFallbackBotNotifier")
     private BotNotifier notifier;
 
     @Autowired

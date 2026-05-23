@@ -55,6 +55,7 @@ class ScrapperHttpClientResilienceTest {
             .build();
 
     @Autowired
+    @Qualifier("resilientScrapperClient")
     private ScrapperClient client;
 
     @Autowired
