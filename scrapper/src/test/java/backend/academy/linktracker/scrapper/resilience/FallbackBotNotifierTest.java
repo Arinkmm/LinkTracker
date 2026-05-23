@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.resilience;
 
-import static backend.academy.linktracker.scrapper.resilience.FallbackBotNotifierTestConfiguration.KAFKA_NOTIFIER;
-import static backend.academy.linktracker.scrapper.resilience.FallbackBotNotifierTestConfiguration.PRIMARY_NOTIFIER;
+import static backend.academy.linktracker.scrapper.resilience.FallbackBotNotifierTestEnvironment.KAFKA_NOTIFIER;
+import static backend.academy.linktracker.scrapper.resilience.FallbackBotNotifierTestEnvironment.PRIMARY_NOTIFIER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -18,8 +18,6 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
-import io.github.resilience4j.springboot3.retry.autoconfigure.RetryAutoConfiguration;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -28,18 +26,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
-@SpringBootTest(classes = FallbackBotNotifierTestConfiguration.class)
-@ImportAutoConfiguration({
-    AopAutoConfiguration.class,
-    RetryAutoConfiguration.class,
-    CircuitBreakerAutoConfiguration.class
-})
-class FallbackBotNotifierTest {
+class FallbackBotNotifierTest extends FallbackBotNotifierTestEnvironment {
     @Autowired
     @Qualifier("testFallbackBotNotifier")
     private BotNotifier notifier;

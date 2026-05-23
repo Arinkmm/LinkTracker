@@ -59,23 +59,28 @@ public class ResilientScrapperClient implements ScrapperClient {
         return delegate.getLinks(id);
     }
 
+    @SuppressWarnings({"PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter"})
     private void registerChatFallback(Long id, CallNotPermittedException exception) {
         throw circuitBreakerOpen("registerChat", exception);
     }
 
+    @SuppressWarnings({"PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter"})
     private void deleteChatFallback(Long id, CallNotPermittedException exception) {
         throw circuitBreakerOpen("deleteChat", exception);
     }
 
+    @SuppressWarnings({"PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter"})
     private LinkResponse addLinkFallback(
             Long id, URI url, List<String> tags, List<String> filters, CallNotPermittedException exception) {
         throw circuitBreakerOpen("addLink", exception);
     }
 
+    @SuppressWarnings({"PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter"})
     private LinkResponse removeLinkFallback(Long id, URI url, CallNotPermittedException exception) {
         throw circuitBreakerOpen("removeLink", exception);
     }
 
+    @SuppressWarnings({"PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter"})
     private ListLinksResponse getLinksFallback(Long id, CallNotPermittedException exception) {
         throw circuitBreakerOpen("getLinks", exception);
     }

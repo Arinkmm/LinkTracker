@@ -1,10 +1,9 @@
 package backend.academy.linktracker.bot.resilience;
 
-import static backend.academy.linktracker.bot.resilience.ScrapperHttpClientResilienceTestConfiguration.SCRAPPER_TRANSPORT_CLIENT;
+import static backend.academy.linktracker.bot.resilience.ScrapperHttpClientResilienceTestEnvironment.SCRAPPER_TRANSPORT_CLIENT;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,40 +19,22 @@ import backend.academy.linktracker.bot.dto.ApiErrorResponse;
 import backend.academy.linktracker.bot.exception.ApiException;
 import backend.academy.linktracker.bot.exception.RetryableApiException;
 import backend.academy.linktracker.bot.properties.ClientTimeoutProperties;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.core.functions.Either;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
-import io.github.resilience4j.springboot3.retry.autoconfigure.RetryAutoConfiguration;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-@SpringBootTest(classes = ScrapperHttpClientResilienceTestConfiguration.class)
-@ImportAutoConfiguration({
-    AopAutoConfiguration.class,
-    RetryAutoConfiguration.class,
-    CircuitBreakerAutoConfiguration.class
-})
-class ScrapperHttpClientResilienceTest {
-    @RegisterExtension
-    static WireMockExtension wireMock = WireMockExtension.newInstance()
-            .options(wireMockConfig().dynamicPort())
-            .build();
-
+class ScrapperHttpClientResilienceTest extends ScrapperHttpClientResilienceTestEnvironment {
     @Autowired
     @Qualifier("resilientScrapperClient")
     private ScrapperClient client;
@@ -75,14 +56,6 @@ class ScrapperHttpClientResilienceTest {
     private RetryRegistry retryRegistry;
 
     private Retry retry;
-
-    @DynamicPropertySource
-    static void scrapperProperties(DynamicPropertyRegistry registry) {
-        registry.add("app.scrapper.url", wireMock::baseUrl);
-        registry.add("app.scrapper-client.type", () -> "http");
-        registry.add("app.client.timeout.connect-timeout", () -> "1s");
-        registry.add("app.client.timeout.read-timeout", () -> "1s");
-    }
 
     @BeforeEach
     void setUp() {
@@ -135,7 +108,7 @@ class ScrapperHttpClientResilienceTest {
     void whenRetryingWithConstantBackoff_intervalsAreEqual() {
         doThrow(apiException(HttpStatus.INTERNAL_SERVER_ERROR)).when(delegate).registerChat(77L);
 
-        long backoffMs = retry.getRetryConfig().getIntervalFunction().apply(1);
+        long backoffMs = retryBackoffMs();
         long expectedMinMs = backoffMs * (retry.getRetryConfig().getMaxAttempts() - 1);
 
         Instant start = Instant.now();
@@ -146,6 +119,14 @@ class ScrapperHttpClientResilienceTest {
         assertThat(elapsed).isLessThan(expectedMinMs + backoffMs + 500);
 
         verify(delegate, times(retry.getRetryConfig().getMaxAttempts())).registerChat(77L);
+    }
+
+    private long retryBackoffMs() {
+        Function<Integer, Long> intervalFunction = retry.getRetryConfig().getIntervalFunction();
+        if (intervalFunction != null) {
+            return intervalFunction.apply(1);
+        }
+        return retry.getRetryConfig().getIntervalBiFunction().apply(1, Either.right(null));
     }
 
     private static ApiException apiException(HttpStatus status) {

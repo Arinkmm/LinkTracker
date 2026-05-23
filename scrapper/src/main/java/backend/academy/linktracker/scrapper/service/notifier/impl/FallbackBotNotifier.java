@@ -23,6 +23,7 @@ public class FallbackBotNotifier implements BotNotifier {
         log.atDebug().addKeyValue("id", linkUpdate.getId()).log("Notification sent via primary transport");
     }
 
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
     private void notifyWhenCircuitOpen(LinkUpdate linkUpdate, CallNotPermittedException ex) {
         log.atWarn()
                 .setCause(ex)
@@ -31,6 +32,7 @@ public class FallbackBotNotifier implements BotNotifier {
         kafkaNotifier.notify(linkUpdate);
     }
 
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
     private void notifyViaKafka(LinkUpdate linkUpdate, RuntimeException ex) {
         if (ex instanceof ApiException apiException) {
             log.atWarn()
