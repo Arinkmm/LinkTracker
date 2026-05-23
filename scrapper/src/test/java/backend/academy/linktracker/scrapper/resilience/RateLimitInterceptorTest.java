@@ -20,7 +20,7 @@ class RateLimitInterceptorTest {
 
     @BeforeEach
     void setUp() {
-        RateLimitProperties properties = new RateLimitProperties(LIMIT, Duration.ofMinutes(1));
+        RateLimitProperties properties = new RateLimitProperties(LIMIT, Duration.ofMinutes(1), 100);
         interceptor = new RateLimitInterceptor(properties);
     }
 
@@ -67,8 +67,8 @@ class RateLimitInterceptorTest {
     }
 
     @Test
-    @DisplayName("Заголовок X-Forwarded-For используется как IP клиента")
-    void whenForwardedHeader_usesRealIp() {
+    @DisplayName("Заголовок X-Forwarded-For игнорируется при определении клиента")
+    void whenForwardedHeader_usesRemoteAddress() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("X-Forwarded-For", "192.168.1.100, 10.0.0.1");
         request.setRemoteAddr("172.16.0.1");
@@ -79,7 +79,7 @@ class RateLimitInterceptorTest {
 
         assertThatThrownBy(() -> interceptor.preHandle(request, new MockHttpServletResponse(), null))
                 .isInstanceOf(RateLimitExceededException.class)
-                .hasMessageContaining("192.168.1.100");
+                .hasMessageContaining("172.16.0.1");
     }
 
     private MockHttpServletRequest requestFrom(String ip) {

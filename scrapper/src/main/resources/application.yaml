@@ -30,30 +30,16 @@ spring:
         auto.register.schemas: true
 
 app:
-  resilience:
+  client:
+    type: kafka
     timeout:
       connect-timeout: 3s
       read-timeout: 5s
-    retry:
-      max-attempts: 3
-      wait-duration: 500ms
-      backoff-strategy: constant
-      exponential-multiplier: 2.0
-      retryable-status-codes:
-        - 500
-        - 502
-        - 503
-        - 504
-    circuit-breaker:
-      sliding-window-size: 10
-      minimum-number-of-calls: 5
-      failure-rate-threshold: 50
-      permitted-calls-in-half-open-state: 5
-      wait-duration-in-open-state: 1s
 
   rate-limit:
     capacity: 20
     refill-period: 1m
+    max-entries: 10000
 
   cache:
     l1-ttl: 1m
@@ -65,9 +51,6 @@ app:
     default-page-size: 20
   threading:
     pool-size: 4
-
-  client:
-    type: kafka
 
   kafka:
     topic: link-updates
@@ -92,6 +75,50 @@ app:
   github:
     url: https://api.github.com
     token: ${GITHUB_TOKEN}
+
+resilience4j:
+  retry:
+    retry-aspect-order: 1
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+        enable-exponential-backoff: false
+        exponential-backoff-multiplier: 2.0
+        retryable-status-codes:
+          - 500
+          - 502
+          - 503
+          - 504
+        retry-exceptions:
+          - backend.academy.linktracker.scrapper.exception.RetryableApiException
+          - org.springframework.web.client.ResourceAccessException
+          - java.io.IOException
+          - java.io.UncheckedIOException
+    instances:
+      bot-notifier:
+        base-config: default
+      github-api:
+        base-config: default
+      stackoverflow-api:
+        base-config: default
+  circuitbreaker:
+    circuit-breaker-aspect-order: 2
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 5
+        wait-duration-in-open-state: 1s
+    instances:
+      bot-notifier:
+        base-config: default
+      github-api:
+        base-config: default
+      stackoverflow-api:
+        base-config: default
 
 notifications:
   divider: "────────────────"

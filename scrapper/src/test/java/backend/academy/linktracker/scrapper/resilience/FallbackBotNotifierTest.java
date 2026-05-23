@@ -1,62 +1,63 @@
 package backend.academy.linktracker.scrapper.resilience;
 
+import static backend.academy.linktracker.scrapper.resilience.FallbackBotNotifierTestConfiguration.KAFKA_NOTIFIER;
+import static backend.academy.linktracker.scrapper.resilience.FallbackBotNotifierTestConfiguration.PRIMARY_NOTIFIER;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
-import backend.academy.linktracker.scrapper.service.notifier.impl.FallbackBotNotifier;
-import backend.academy.linktracker.scrapper.service.notifier.impl.SyncBotNotifier;
-import backend.academy.linktracker.scrapper.service.notifier.impl.kafka.KafkaBotNotifier;
+import backend.academy.linktracker.scrapper.dto.ApiErrorResponse;
+import backend.academy.linktracker.scrapper.exception.RetryableApiException;
+import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
+import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
+import io.github.resilience4j.springboot3.retry.autoconfigure.RetryAutoConfiguration;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = FallbackBotNotifierTestConfiguration.class)
+@ImportAutoConfiguration({
+    AopAutoConfiguration.class,
+    RetryAutoConfiguration.class,
+    CircuitBreakerAutoConfiguration.class
+})
 class FallbackBotNotifierTest {
+    @Autowired
+    private BotNotifier notifier;
 
-    @Mock
-    private SyncBotNotifier httpNotifier;
+    @Autowired
+    private CircuitBreakerRegistry circuitBreakerRegistry;
 
-    @Mock
-    private KafkaBotNotifier kafkaNotifier;
+    @Autowired
+    private RetryRegistry retryRegistry;
 
     private CircuitBreaker circuitBreaker;
     private Retry retry;
-    private FallbackBotNotifier notifier;
     private LinkUpdate linkUpdate;
 
     @BeforeEach
     void setUp() {
-        circuitBreaker = CircuitBreaker.of(
-                "test",
-                CircuitBreakerConfig.custom()
-                        .slidingWindowSize(3)
-                        .minimumNumberOfCalls(3)
-                        .failureRateThreshold(100)
-                        .permittedNumberOfCallsInHalfOpenState(2)
-                        .waitDurationInOpenState(Duration.ofMillis(200))
-                        .build());
-
-        retry = Retry.of(
-                "test",
-                RetryConfig.custom()
-                        .maxAttempts(2)
-                        .waitDuration(Duration.ZERO)
-                        .retryOnException(e -> e instanceof RuntimeException)
-                        .build());
-
-        notifier = new FallbackBotNotifier(httpNotifier, kafkaNotifier, circuitBreaker, retry);
+        reset(PRIMARY_NOTIFIER, KAFKA_NOTIFIER);
+        circuitBreaker = circuitBreakerRegistry.circuitBreaker("bot-notifier");
+        retry = retryRegistry.retry("bot-notifier");
+        circuitBreaker.reset();
 
         linkUpdate = new LinkUpdate();
         linkUpdate.setId(1L);
@@ -66,91 +67,98 @@ class FallbackBotNotifierTest {
     }
 
     @Test
-    @DisplayName("HTTP работает → Kafka НЕ вызывается")
+    @DisplayName("Fallback: HTTP работает, Kafka не вызывается")
     void whenHttpSucceeds_kafkaNotUsed() {
-        doNothing().when(httpNotifier).notify(any());
+        doNothing().when(PRIMARY_NOTIFIER).notify(linkUpdate);
 
         notifier.notify(linkUpdate);
 
-        verify(httpNotifier, times(1)).notify(linkUpdate);
-        verify(kafkaNotifier, never()).notify(any());
+        verify(PRIMARY_NOTIFIER, times(1)).notify(linkUpdate);
+        verify(KAFKA_NOTIFIER, never()).notify(linkUpdate);
     }
 
     @Test
-    @DisplayName("HTTP недоступен → используется Kafka как резервный транспорт")
+    @DisplayName("Fallback: HTTP недоступен, используется Kafka")
     void whenHttpFails_kafkaUsedAsFallback() {
-        doThrow(new RuntimeException("bot unavailable")).when(httpNotifier).notify(any());
+        doThrow(retryableApiException()).when(PRIMARY_NOTIFIER).notify(linkUpdate);
 
         notifier.notify(linkUpdate);
 
-        verify(httpNotifier, times(2)).notify(linkUpdate);
-        verify(kafkaNotifier, times(1)).notify(linkUpdate);
+        verify(PRIMARY_NOTIFIER, times(retry.getRetryConfig().getMaxAttempts())).notify(linkUpdate);
+        verify(KAFKA_NOTIFIER, times(1)).notify(linkUpdate);
     }
 
     @Test
-    @DisplayName("Предохранитель переходит в состояние OPEN")
+    @DisplayName("Circuit Breaker: при превышении процента ошибок переходит в OPEN")
     void whenFailureRateExceeded_circuitBreakerOpens() {
-        Retry singleAttempt = Retry.of(
-                "single",
-                RetryConfig.custom().maxAttempts(1).waitDuration(Duration.ZERO).build());
-        FallbackBotNotifier sut = new FallbackBotNotifier(httpNotifier, kafkaNotifier, circuitBreaker, singleAttempt);
-
-        doThrow(new RuntimeException("fail")).when(httpNotifier).notify(any());
-
-        sut.notify(linkUpdate);
-        sut.notify(linkUpdate);
-        sut.notify(linkUpdate);
-
-        assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
-
-        reset(httpNotifier, kafkaNotifier);
-        sut.notify(linkUpdate);
-
-        verify(httpNotifier, never()).notify(any());
-        verify(kafkaNotifier, times(1)).notify(linkUpdate);
-    }
-
-    @Test
-    @DisplayName("Состояние HALF-OPEN → CLOSED при успешных пробных вызовах")
-    void whenHalfOpenSuccessful_circuitBreakerCloses() throws InterruptedException {
         forceCircuitBreakerOpen();
 
-        Thread.sleep(250);
-
-        doNothing().when(httpNotifier).notify(any());
-
+        reset(PRIMARY_NOTIFIER, KAFKA_NOTIFIER);
         notifier.notify(linkUpdate);
-        notifier.notify(linkUpdate);
+
+        verify(PRIMARY_NOTIFIER, never()).notify(linkUpdate);
+        verify(KAFKA_NOTIFIER, times(1)).notify(linkUpdate);
+    }
+
+    @Test
+    @DisplayName("Circuit Breaker: HALF-OPEN переходит в CLOSED после успешных пробных вызовов")
+    void whenHalfOpenSuccessful_circuitBreakerCloses() throws InterruptedException {
+        forceCircuitBreakerOpen();
+        waitUntilHalfOpenCallsAreAllowed();
+
+        doNothing().when(PRIMARY_NOTIFIER).notify(linkUpdate);
+
+        int permittedCalls = circuitBreaker.getCircuitBreakerConfig().getPermittedNumberOfCallsInHalfOpenState();
+        for (int i = 0; i < permittedCalls; i++) {
+            notifier.notify(linkUpdate);
+        }
 
         assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
     }
 
     @Test
-    @DisplayName("Состояние HALF-OPEN → OPEN при неуспешных пробных вызовах")
+    @DisplayName("Circuit Breaker: HALF-OPEN возвращается в OPEN после неуспешных пробных вызовов")
     void whenHalfOpenFails_circuitBreakerReopens() throws InterruptedException {
         forceCircuitBreakerOpen();
+        waitUntilHalfOpenCallsAreAllowed();
 
-        Thread.sleep(250);
+        doThrow(retryableApiException()).when(PRIMARY_NOTIFIER).notify(linkUpdate);
 
-        doThrow(new RuntimeException("still down")).when(httpNotifier).notify(any());
-
-        notifier.notify(linkUpdate);
-        notifier.notify(linkUpdate);
+        int maxCalls = circuitBreaker.getCircuitBreakerConfig().getPermittedNumberOfCallsInHalfOpenState() + 1;
+        for (int i = 0; i < maxCalls && circuitBreaker.getState() != CircuitBreaker.State.OPEN; i++) {
+            notifier.notify(linkUpdate);
+        }
 
         assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
     }
 
     private void forceCircuitBreakerOpen() {
-        doThrow(new RuntimeException("fail")).when(httpNotifier).notify(any());
-        Retry singleAttempt = Retry.of(
-                "force",
-                RetryConfig.custom().maxAttempts(1).waitDuration(Duration.ZERO).build());
-        FallbackBotNotifier helper =
-                new FallbackBotNotifier(httpNotifier, kafkaNotifier, circuitBreaker, singleAttempt);
-        for (int i = 0; i < 3; i++) {
-            helper.notify(linkUpdate);
+        doThrow(retryableApiException()).when(PRIMARY_NOTIFIER).notify(linkUpdate);
+
+        int maxCalls = circuitBreaker.getCircuitBreakerConfig().getSlidingWindowSize() + 1;
+        for (int i = 0; i < maxCalls && circuitBreaker.getState() != CircuitBreaker.State.OPEN; i++) {
+            notifier.notify(linkUpdate);
         }
+
         assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
-        reset(httpNotifier, kafkaNotifier);
+        reset(PRIMARY_NOTIFIER, KAFKA_NOTIFIER);
+    }
+
+    private void waitUntilHalfOpenCallsAreAllowed() throws InterruptedException {
+        long waitMillis = circuitBreaker
+                .getCircuitBreakerConfig()
+                .getWaitIntervalFunctionInOpenState()
+                .apply(1);
+        Thread.sleep(Duration.ofMillis(waitMillis).plusMillis(50).toMillis());
+    }
+
+    private static RetryableApiException retryableApiException() {
+        ApiErrorResponse error = new ApiErrorResponse();
+        error.setCode(String.valueOf(HttpStatus.SERVICE_UNAVAILABLE.value()));
+        error.setDescription("Bot unavailable");
+        error.setExceptionName(RetryableApiException.class.getSimpleName());
+        error.setExceptionMessage("Bot unavailable");
+        error.setStacktrace(List.of());
+        return new RetryableApiException(error);
     }
 }

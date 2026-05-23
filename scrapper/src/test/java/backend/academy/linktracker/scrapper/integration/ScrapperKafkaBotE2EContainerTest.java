@@ -64,8 +64,8 @@ class ScrapperKafkaBotE2EContainerTest {
     }
 
     @Test
-    @DisplayName("E2E: Scrapper -> Kafka -> Bot -> Telegram")
-    void shouldDeliverGithubUpdateFromScrapperViаKafkaToBot() {
+    @DisplayName("E2E: Scrapper отправляет обновление в Bot через Kafka")
+    void shouldDeliverGithubUpdateFromScrapperViaKafkaToBot() {
         long chatId = chatIdGen.getAndIncrement();
         String owner = "test-user";
         String repo = "test-repo";

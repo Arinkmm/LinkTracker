@@ -7,9 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @RequiredArgsConstructor
-@ConfigurationProperties(prefix = "app.rate-limit")
-public class RateLimitProperties {
-    private final int capacity;
-    private final Duration refillPeriod;
-    private final int maxEntries;
+@ConfigurationProperties(prefix = "app.client.timeout")
+public class ClientTimeoutProperties {
+    private final Duration connectTimeout;
+    private final Duration readTimeout;
 }

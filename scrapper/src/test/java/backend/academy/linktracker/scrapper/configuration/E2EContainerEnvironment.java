@@ -57,6 +57,12 @@ public final class E2EContainerEnvironment {
                             """), "/home/wiremock/mappings/set_commands.json")
             .withCopyToContainer(Transferable.of("""
                             {
+                              "request": { "method": "POST", "urlPathPattern": "/bot.*/getUpdates" },
+                              "response": { "status": 200, "jsonBody": { "ok": true, "result": [] } }
+                            }
+                            """), "/home/wiremock/mappings/get_updates.json")
+            .withCopyToContainer(Transferable.of("""
+                            {
                               "request": { "method": "POST", "urlPathPattern": "/bot.*/sendMessage" },
                               "response": { "status": 200, "jsonBody": { "ok": true, "result": { "message_id": 1 } } }
                             }
@@ -120,6 +126,7 @@ public final class E2EContainerEnvironment {
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
                 .withEnv("APP_GITHUB_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
                 .withEnv("APP_STACKOVERFLOW_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
+                .withEnv("APP_CLIENT_TYPE", "kafka")
                 .withEnv("APP_KAFKA_TOPIC", TOPIC)
                 .withEnv("SPRING_DATA_REDIS_CLUSTER_NODES", "valkey-e2e:6379")
                 .withExposedPorts(SCRAPPER_PORT)
@@ -143,6 +150,8 @@ public final class E2EContainerEnvironment {
                         "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL",
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
                 .withEnv("APP_TELEGRAM_URL", "http://" + WIREMOCK_TG_ALIAS + ":" + WIREMOCK_PORT + "/bot")
+                .withEnv("APP_UPDATES_TYPE", "kafka")
+                .withEnv("TELEGRAM_TOKEN", "test-token")
                 .withEnv("APP_SCRAPPER_URL", "http://" + SCRAPPER_ALIAS + ":" + SCRAPPER_PORT)
                 .withExposedPorts(BOT_PORT)
                 .waitingFor(Wait.forHttp("/actuator/health").forPort(BOT_PORT).forStatusCode(200))

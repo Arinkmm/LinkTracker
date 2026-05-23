@@ -11,8 +11,6 @@ import backend.academy.linktracker.scrapper.service.notifier.impl.kafka.OutboxCl
 import backend.academy.linktracker.scrapper.service.notifier.impl.kafka.OutboxRelay;
 import backend.academy.linktracker.scrapper.service.user.OutboxMessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.retry.Retry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -25,13 +23,8 @@ public class NotifierConfiguration {
     @Bean
     @Primary
     @ConditionalOnExpression("'${app.client.type}'=='http' or '${app.client.type}'=='grpc'")
-    public BotNotifier syncNotifier(
-            BotClient botClient,
-            KafkaBotNotifier kafkaFallback,
-            CircuitBreaker botNotifierCircuitBreaker,
-            Retry botNotifierRetry) {
-        return new FallbackBotNotifier(
-                new SyncBotNotifier(botClient), kafkaFallback, botNotifierCircuitBreaker, botNotifierRetry);
+    public BotNotifier syncNotifier(BotClient botClient, KafkaBotNotifier kafkaFallback) {
+        return new FallbackBotNotifier(new SyncBotNotifier(botClient), kafkaFallback);
     }
 
     @Bean
