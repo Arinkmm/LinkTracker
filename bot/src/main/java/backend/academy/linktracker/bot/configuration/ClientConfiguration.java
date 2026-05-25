@@ -1,27 +1,24 @@
 package backend.academy.linktracker.bot.configuration;
 
-import backend.academy.linktracker.bot.dto.ApiErrorResponse;
-import backend.academy.linktracker.bot.exception.ApiException;
-import backend.academy.linktracker.bot.properties.MessagesProperties;
+import backend.academy.linktracker.bot.exception.ScrapperClientExceptionFactory;
+import backend.academy.linktracker.bot.properties.ClientTimeoutProperties;
 import backend.academy.linktracker.grpc.ScrapperServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ManagedChannelBuilder;
 import java.nio.charset.StandardCharsets;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@Slf4j
-@RequiredArgsConstructor
 public class ClientConfiguration {
-    private final MessagesProperties properties;
-
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
@@ -29,22 +26,25 @@ public class ClientConfiguration {
 
     @Bean
     @ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "http", matchIfMissing = true)
-    public RestClient scrapperRestClient(@Value("${app.scrapper.url}") String url, ObjectMapper objectMapper) {
+    public RestClient scrapperRestClient(
+            @Value("${app.scrapper.url}") String url,
+            ClientTimeoutProperties clientTimeoutProperties,
+            ScrapperClientExceptionFactory exceptionFactory) {
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(Timeout.of(clientTimeoutProperties.getConnectTimeout()))
+                .setConnectionRequestTimeout(Timeout.of(clientTimeoutProperties.getConnectTimeout()))
+                .setResponseTimeout(Timeout.of(clientTimeoutProperties.getReadTimeout()))
+                .build();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(
+                HttpClients.custom().setDefaultRequestConfig(requestConfig).build());
+        requestFactory.setReadTimeout(clientTimeoutProperties.getReadTimeout());
+
         return RestClient.builder()
                 .baseUrl(url)
+                .requestFactory(requestFactory)
                 .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
                     String rawBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
-                    ApiErrorResponse error;
-                    try {
-                        error = objectMapper.readValue(rawBody, ApiErrorResponse.class);
-                    } catch (Exception e) {
-                        log.error("Failed to parse Scrapper error response: {}", rawBody, e);
-
-                        error = new ApiErrorResponse();
-                        error.setCode(String.valueOf(response.getStatusCode().value()));
-                        error.setDescription(properties.getInvalidResponse());
-                    }
-                    throw new ApiException(error);
+                    throw exceptionFactory.fromHttpStatus(response.getStatusCode(), rawBody);
                 })
                 .build();
     }

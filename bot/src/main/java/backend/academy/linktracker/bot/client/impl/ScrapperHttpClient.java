@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.client.impl;
 
-import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.client.ScrapperTransportClient;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-@ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "http")
+@ConditionalOnProperty(name = "app.scrapper-client.type", havingValue = "http", matchIfMissing = true)
 @RequiredArgsConstructor
-public class ScrapperHttpClient implements ScrapperClient {
+public class ScrapperHttpClient implements ScrapperTransportClient {
     private final RestClient restClient;
 
     @Override

@@ -21,6 +21,15 @@ spring:
         specific.avro.reader: true
 
 app:
+  client:
+    timeout:
+      connect-timeout: 3s
+      read-timeout: 5s
+
+  rate-limit:
+    capacity: 20
+    refill-period: 1m
+    max-entries: 10000
   updates:
     type: kafka
   scrapper-client:
@@ -43,6 +52,42 @@ app:
     token: ${TELEGRAM_TOKEN}
     update-listener-sleep: 1s
     debug: false
+
+resilience4j:
+  retry:
+    retry-aspect-order: 1
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+        enable-exponential-backoff: false
+        exponential-backoff-multiplier: 2.0
+        retryable-status-codes:
+          - 500
+          - 502
+          - 503
+          - 504
+        retry-exceptions:
+          - backend.academy.linktracker.bot.exception.RetryableApiException
+          - org.springframework.web.client.ResourceAccessException
+          - java.io.IOException
+          - java.io.UncheckedIOException
+    instances:
+      scrapper-client:
+        base-config: default
+  circuitbreaker:
+    circuit-breaker-aspect-order: 2
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 5
+        wait-duration-in-open-state: 1s
+    instances:
+      scrapper-client:
+        base-config: default
 
 bot:
   messages:
