@@ -16,6 +16,7 @@ public final class ContainerConstants {
 
     public static final int SCRAPPER_PORT = 8081;
     public static final int BOT_PORT = 8080;
+    public static final int AI_AGENT_PORT = 8082;
     public static final int WIREMOCK_PORT = 8080;
     public static final int SCHEMA_REGISTRY_PORT = 8081;
 
@@ -24,11 +25,14 @@ public final class ContainerConstants {
     public static final String WIREMOCK_TG_ALIAS = "wiremock-tg";
     public static final String WIREMOCK_EXT_ALIAS = "wiremock-ext";
     public static final String SCRAPPER_ALIAS = "scrapper";
+    public static final String AI_AGENT_ALIAS = "ai-agent";
 
-    public static final String TOPIC = "link-updates";
+    public static final String RAW_TOPIC = "link.raw-updates";
+    public static final String PROCESSED_TOPIC = "link.processed-updates";
 
     public static final String SCRAPPER_JAR = "target/scrapper-0.0.1.jar";
     public static final String BOT_JAR = "../bot/target/bot-0.0.1.jar";
+    public static final String AI_AGENT_JAR = "../ai-agent/target/ai-agent-0.0.1.jar";
 
     private ContainerConstants() {}
 }

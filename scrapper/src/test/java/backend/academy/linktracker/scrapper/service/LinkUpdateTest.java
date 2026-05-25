@@ -57,8 +57,8 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
     }
 
     @Test
-    @DisplayName("GitHub Issue: сообщение содержит название, автора и обрезанное превью")
-    void githubUpdate_MessageContainsTitleAuthorAndTruncatedAt200() {
+    @DisplayName("GitHub Issue: message contains title, author and full body")
+    void githubUpdate_MessageContainsTitleAuthorAndFullBody() {
         Long chatId = 43L;
         chatRepository.save(chatId);
         Link link = linkRepository.save(URI.create("https://github.com/user/repo2"));
@@ -89,9 +89,8 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
         assertAll(
                 () -> assertTrue(msg.contains("My Issue Title")),
                 () -> assertTrue(msg.contains("author123")),
-                () -> assertTrue(msg.contains("...")),
-                () -> assertTrue(msg.contains("X".repeat(200))),
-                () -> assertFalse(msg.contains("X".repeat(201))));
+                () -> assertTrue(msg.contains(body)),
+                () -> assertFalse(msg.contains("X".repeat(200) + "...")));
     }
 
     @Test

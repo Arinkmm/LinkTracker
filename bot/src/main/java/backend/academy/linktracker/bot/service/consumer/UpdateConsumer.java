@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.service.consumer;
 
-import backend.academy.linktracker.avro.LinkUpdateEvent;
+import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class UpdateConsumer {
             topics = "${app.kafka.topic}",
             groupId = "${app.kafka.group-id}",
             containerFactory = "kafkaListenerContainerFactory")
-    public void consume(ConsumerRecord<String, LinkUpdateEvent> record) {
+    public void consume(ConsumerRecord<String, ProcessedLinkUpdateEvent> record) {
         String key = record.topic() + "-" + record.partition() + "-" + record.offset();
         if (dedupCache.getIfPresent(key) != null) {
             log.atWarn().addKeyValue("key", key).log("Duplicate message, skipping");
@@ -31,18 +31,19 @@ public class UpdateConsumer {
         }
         dedupCache.put(key, Boolean.TRUE);
 
-        LinkUpdateEvent event = record.value();
+        ProcessedLinkUpdateEvent event = record.value();
         validate(event);
 
         log.atInfo()
                 .addKeyValue("linkUpdateEvent", event)
                 .addKeyValue("offset", record.offset())
+                .addKeyValue("priority", event.getPriority())
                 .log("Message received");
 
         event.getTgChatIds().forEach(chatId -> telegramSender.sendMessage(chatId, event.getDescription()));
     }
 
-    private void validate(LinkUpdateEvent event) {
+    private void validate(ProcessedLinkUpdateEvent event) {
         if (event.getId() == 0L) {
             throw new IllegalArgumentException("link id is required");
         }

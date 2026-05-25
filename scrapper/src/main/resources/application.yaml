@@ -53,7 +53,7 @@ app:
     pool-size: 4
 
   kafka:
-    topic: link-updates
+    topic: link.raw-updates
     outbox-checking-interval-ms: 60000
     outbox-checking-limit: 20
     max-retries-for-messages-outbox: 5
@@ -134,10 +134,6 @@ notifications:
     type-answer: "Ответ"
     type-comment: "Комментарий"
     empty-content: "—"
-  limits:
-    github-body: 200
-    stackoverflow-answer: 200
-    stackoverflow-comment: 200
   error:
     title: "Не удалось обработать ссылку!"
   defaulting:

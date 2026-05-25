@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import backend.academy.linktracker.avro.LinkUpdateEvent;
+import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
 import backend.academy.linktracker.bot.configuration.BotKafkaTestEnvironment;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
@@ -33,7 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UpdateConsumerInvalidEventTest extends BotKafkaTestEnvironment {
     private static final String MOCK_REGISTRY = "mock://bot-invalid-test-scope";
-    private static final String TOPIC = "link-updates-invalid-test";
+    private static final String TOPIC = "link.processed-updates-invalid-test";
     private static final String DLT_TOPIC = TOPIC + ".DLT";
     private static final String GROUP_ID = "bot-invalid-test-group";
 
@@ -58,11 +58,12 @@ class UpdateConsumerInvalidEventTest extends BotKafkaTestEnvironment {
     @Test
     @DisplayName("Невалидное событие (id=0, пустые чаты) не вызывает Telegram — уходит в DLT")
     void shouldNotCallTelegramOnInvalidEvent() throws Exception {
-        LinkUpdateEvent invalidEvent = LinkUpdateEvent.newBuilder()
+        ProcessedLinkUpdateEvent invalidEvent = ProcessedLinkUpdateEvent.newBuilder()
                 .setId(0L)
                 .setUrl("https://github.com")
                 .setDescription("Some update")
                 .setTgChatIds(List.of())
+                .setPriority("HIGH")
                 .build();
 
         publish(TOPIC, MOCK_REGISTRY, "0", invalidEvent);

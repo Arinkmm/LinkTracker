@@ -19,6 +19,12 @@ spring:
         spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
         schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
         specific.avro.reader: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+        auto.register.schemas: true
 
 app:
   client:
@@ -35,9 +41,9 @@ app:
   scrapper-client:
     type: grpc
   kafka:
-    topic: link-updates
+    topic: link.processed-updates
     group-id: bot-group
-    dlt-topic: link-updates-dlt
+    dlt-topic: link.processed-updates-dlt
     max-retries: 3
     backoff-ms: 1000
     max-dedup-cache-size: 10000

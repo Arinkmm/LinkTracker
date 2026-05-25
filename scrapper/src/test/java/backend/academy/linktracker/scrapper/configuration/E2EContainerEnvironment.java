@@ -43,6 +43,19 @@ public final class E2EContainerEnvironment {
     public static final GenericContainer<?> WIREMOCK_EXT = new GenericContainer<>(DockerImageName.parse(WIREMOCK_IMAGE))
             .withNetwork(NETWORK)
             .withNetworkAliases(WIREMOCK_EXT_ALIAS)
+            .withCopyToContainer(Transferable.of("""
+                            {
+                              "request": { "method": "POST", "urlPath": "/v1/chat/completions" },
+                              "response": {
+                                "status": 200,
+                                "jsonBody": {
+                                  "choices": [
+                                    { "message": { "content": "AI summary" } }
+                                  ]
+                                }
+                              }
+                            }
+                            """), "/home/wiremock/mappings/ai_summary.json")
             .withExposedPorts(WIREMOCK_PORT)
             .waitingFor(Wait.forHttp("/__admin/mappings").forPort(WIREMOCK_PORT).forStatusCode(200));
 
@@ -100,6 +113,7 @@ public final class E2EContainerEnvironment {
     }
 
     public static final GenericContainer<?> SCRAPPER = buildScrapper();
+    public static final GenericContainer<?> AI_AGENT = buildAiAgent();
     public static final GenericContainer<?> BOT = buildBot();
 
     private static GenericContainer<?> buildScrapper() {
@@ -127,11 +141,42 @@ public final class E2EContainerEnvironment {
                 .withEnv("APP_GITHUB_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
                 .withEnv("APP_STACKOVERFLOW_URL", "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT)
                 .withEnv("APP_CLIENT_TYPE", "kafka")
-                .withEnv("APP_KAFKA_TOPIC", TOPIC)
+                .withEnv("APP_KAFKA_TOPIC", RAW_TOPIC)
                 .withEnv("SPRING_DATA_REDIS_CLUSTER_NODES", "valkey-e2e:6379")
                 .withExposedPorts(SCRAPPER_PORT)
                 .waitingFor(
                         Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200))
+                .withStartupTimeout(Duration.ofSeconds(120));
+    }
+
+    private static GenericContainer<?> buildAiAgent() {
+        return new GenericContainer<>(new ImageFromDockerfile("localhost/ai-agent-e2e:latest", false)
+                        .withFileFromPath("app.jar", Paths.get(AI_AGENT_JAR).toAbsolutePath())
+                        .withDockerfileFromBuilder(builder -> builder.from("eclipse-temurin:25-jre-alpine")
+                                .copy("app.jar", "/app.jar")
+                                .expose(AI_AGENT_PORT)
+                                .entryPoint("java", "-jar", "/app.jar")
+                                .build()))
+                .withNetwork(NETWORK)
+                .withNetworkAliases(AI_AGENT_ALIAS)
+                .dependsOn(KAFKA, SCHEMA_REGISTRY, WIREMOCK_EXT)
+                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
+                .withEnv(
+                        "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL",
+                        "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
+                .withEnv(
+                        "SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL",
+                        "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
+                .withEnv("APP_KAFKA_RAW_TOPIC", RAW_TOPIC)
+                .withEnv("APP_KAFKA_PROCESSED_TOPIC", PROCESSED_TOPIC)
+                .withEnv("AI_AGENT_SUMMARIZATION_THRESHOLD", "10000")
+                .withEnv(
+                        "AI_AGENT_SUMMARIZATION_API_URL",
+                        "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT + "/v1/chat/completions")
+                .withEnv("AI_AGENT_SUMMARIZATION_API_TOKEN", "test-token")
+                .withExposedPorts(AI_AGENT_PORT)
+                .waitingFor(
+                        Wait.forHttp("/actuator/health").forPort(AI_AGENT_PORT).forStatusCode(200))
                 .withStartupTimeout(Duration.ofSeconds(120));
     }
 
@@ -144,11 +189,12 @@ public final class E2EContainerEnvironment {
                                 .entryPoint("java", "-jar", "/app.jar")
                                 .build()))
                 .withNetwork(NETWORK)
-                .dependsOn(KAFKA, SCHEMA_REGISTRY, WIREMOCK_TG, SCRAPPER)
+                .dependsOn(KAFKA, SCHEMA_REGISTRY, WIREMOCK_TG, SCRAPPER, AI_AGENT)
                 .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
                 .withEnv(
                         "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL",
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
+                .withEnv("APP_KAFKA_TOPIC", PROCESSED_TOPIC)
                 .withEnv("APP_TELEGRAM_URL", "http://" + WIREMOCK_TG_ALIAS + ":" + WIREMOCK_PORT + "/bot")
                 .withEnv("APP_UPDATES_TYPE", "kafka")
                 .withEnv("TELEGRAM_TOKEN", "test-token")

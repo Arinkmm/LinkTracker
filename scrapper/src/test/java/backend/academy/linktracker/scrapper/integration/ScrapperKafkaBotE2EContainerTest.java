@@ -49,6 +49,9 @@ class ScrapperKafkaBotE2EContainerTest {
     static final GenericContainer<?> scrapper = E2EContainerEnvironment.SCRAPPER;
 
     @Container
+    static final GenericContainer<?> aiAgent = E2EContainerEnvironment.AI_AGENT;
+
+    @Container
     static final GenericContainer<?> bot = E2EContainerEnvironment.BOT;
 
     private WireMock extWireMock;
