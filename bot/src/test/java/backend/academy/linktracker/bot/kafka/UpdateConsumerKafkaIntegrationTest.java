@@ -4,6 +4,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -18,9 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UpdateConsumerKafkaIntegrationTest extends BotKafkaTestEnvironment {
     private static final String MOCK_REGISTRY = "mock://bot-test-scope";
@@ -39,6 +38,8 @@ class UpdateConsumerKafkaIntegrationTest extends BotKafkaTestEnvironment {
 
     @BeforeEach
     void stubTelegramApi() {
+        reset(telegramSender);
+
         wireMock.stubFor(post(urlPathMatching("/bot.*/setMyCommands"))
                 .willReturn(aResponse()
                         .withStatus(200)

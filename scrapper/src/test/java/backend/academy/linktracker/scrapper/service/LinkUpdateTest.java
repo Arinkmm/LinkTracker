@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.configuration.ExternalApiIntegrationEnvironment;
+import backend.academy.linktracker.scrapper.configuration.TestDatabaseCleaner;
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
@@ -22,11 +23,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@SpringBootTest
 class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
     @Autowired
@@ -52,12 +51,12 @@ class LinkUpdateTest extends ExternalApiIntegrationEnvironment {
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate.execute("TRUNCATE TABLE subscriptions, links, chats RESTART IDENTITY CASCADE");
+        TestDatabaseCleaner.clean(jdbcTemplate);
         reset(botNotifier);
     }
 
     @Test
-    @DisplayName("GitHub Issue: message contains title, author and full body")
+    @DisplayName("GitHub Issue: сообщение содержит название, автора и обрезанное превью")
     void githubUpdate_MessageContainsTitleAuthorAndFullBody() {
         Long chatId = 43L;
         chatRepository.save(chatId);

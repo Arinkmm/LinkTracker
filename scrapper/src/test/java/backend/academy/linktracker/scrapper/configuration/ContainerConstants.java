@@ -20,7 +20,6 @@ public final class ContainerConstants {
     public static final int WIREMOCK_PORT = 8080;
     public static final int SCHEMA_REGISTRY_PORT = 8081;
 
-    public static final String KAFKA_ALIAS = "kafka";
     public static final String SCHEMA_REGISTRY_ALIAS = "schema-registry";
     public static final String WIREMOCK_TG_ALIAS = "wiremock-tg";
     public static final String WIREMOCK_EXT_ALIAS = "wiremock-ext";

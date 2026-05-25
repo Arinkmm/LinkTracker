@@ -14,19 +14,15 @@ import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
 
 public final class E2EContainerEnvironment {
-    public static final Network NETWORK = Network.newNetwork();
+    private static final String E2E_KAFKA_ALIAS = "kafka-e2e";
 
-    public static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
-                    DockerImageName.parse(POSTGRES_IMAGE))
-            .withNetwork(NETWORK)
-            .withNetworkAliases(DB_NETWORK_ALIAS)
-            .withDatabaseName(DB_NAME)
-            .withUsername(DB_USER)
-            .withPassword(DB_PASSWORD);
+    public static final Network NETWORK = SharedPostgresContainer.NETWORK;
+
+    public static final PostgreSQLContainer<?> POSTGRES = SharedPostgresContainer.INSTANCE;
 
     public static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE))
             .withNetwork(NETWORK)
-            .withNetworkAliases(KAFKA_ALIAS)
+            .withNetworkAliases(E2E_KAFKA_ALIAS)
             .withKraft();
 
     public static final GenericContainer<?> SCHEMA_REGISTRY = new GenericContainer<>(
@@ -35,7 +31,7 @@ public final class E2EContainerEnvironment {
             .withNetworkAliases(SCHEMA_REGISTRY_ALIAS)
             .dependsOn(KAFKA)
             .withEnv("SCHEMA_REGISTRY_HOST_NAME", SCHEMA_REGISTRY_ALIAS)
-            .withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://" + KAFKA_ALIAS + ":9092")
+            .withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://" + E2E_KAFKA_ALIAS + ":9092")
             .withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:" + SCHEMA_REGISTRY_PORT)
             .withExposedPorts(SCHEMA_REGISTRY_PORT)
             .waitingFor(Wait.forHttp("/subjects").forStatusCode(200));
@@ -134,7 +130,7 @@ public final class E2EContainerEnvironment {
                 .withEnv("SPRING_LIQUIBASE_ENABLED", "true")
                 .withEnv("SCHEDULER_INTERVAL_MS", "5000")
                 .withEnv("SPRING_LIQUIBASE_CHANGE_LOG", LIQUIBASE_PATH)
-                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
+                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", E2E_KAFKA_ALIAS + ":9092")
                 .withEnv(
                         "SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL",
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
@@ -160,7 +156,7 @@ public final class E2EContainerEnvironment {
                 .withNetwork(NETWORK)
                 .withNetworkAliases(AI_AGENT_ALIAS)
                 .dependsOn(KAFKA, SCHEMA_REGISTRY, WIREMOCK_EXT)
-                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
+                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", E2E_KAFKA_ALIAS + ":9092")
                 .withEnv(
                         "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL",
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)
@@ -190,7 +186,7 @@ public final class E2EContainerEnvironment {
                                 .build()))
                 .withNetwork(NETWORK)
                 .dependsOn(KAFKA, SCHEMA_REGISTRY, WIREMOCK_TG, SCRAPPER, AI_AGENT)
-                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", KAFKA_ALIAS + ":9092")
+                .withEnv("SPRING_KAFKA_BOOTSTRAP_SERVERS", E2E_KAFKA_ALIAS + ":9092")
                 .withEnv(
                         "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL",
                         "http://" + SCHEMA_REGISTRY_ALIAS + ":" + SCHEMA_REGISTRY_PORT)

@@ -13,18 +13,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.utility.DockerImageName;
 
 public abstract class BotKafkaTestEnvironment {
-    static final String KAFKA_IMAGE = "confluentinc/cp-kafka:8.2.0";
-
-    @Container
-    protected static final KafkaContainer kafka = createKafkaContainer();
-
-    private static KafkaContainer createKafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE)).withKraft();
-    }
+    protected static final KafkaContainer kafka = SharedKafkaContainer.INSTANCE;
 
     @RegisterExtension
     protected static final WireMockExtension wireMock = WireMockExtension.newInstance()

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import backend.academy.linktracker.avro.RawLinkUpdateEvent;
 import backend.academy.linktracker.scrapper.configuration.KafkaIntegrationEnvironment;
 import backend.academy.linktracker.scrapper.configuration.SharedKafkaContainer;
+import backend.academy.linktracker.scrapper.configuration.TestDatabaseCleaner;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.properties.KafkaProperties;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
@@ -27,19 +28,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@SpringBootTest
 class OutboxRelayTest extends KafkaIntegrationEnvironment {
     private static final String TEST_TOPIC = "outbox.test.relay";
 
@@ -72,7 +70,7 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate.execute("TRUNCATE subscriptions, outbox_messages, links, chats CASCADE");
+        TestDatabaseCleaner.clean(jdbcTemplate);
         currentChatId = ThreadLocalRandom.current().nextLong(1000, 1000000);
         ReflectionTestUtils.setField(kafkaProperties, "topic", TEST_TOPIC);
 
@@ -84,11 +82,6 @@ class OutboxRelayTest extends KafkaIntegrationEnvironment {
             request.setFilters(List.of());
             testLinkId = linkService.addLink(currentChatId, request).getId();
         });
-    }
-
-    @AfterEach
-    void tearDown() {
-        jdbcTemplate.execute("TRUNCATE subscriptions, outbox_messages, links, chats CASCADE");
     }
 
     @Test

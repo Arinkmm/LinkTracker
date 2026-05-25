@@ -20,16 +20,12 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 class ScrapperKafkaBotE2EContainerTest {
     private static final AtomicLong chatIdGen = new AtomicLong(5_000L);
-
-    @Container
-    static final PostgreSQLContainer<?> postgres = E2EContainerEnvironment.POSTGRES;
 
     @Container
     static final KafkaContainer kafka = E2EContainerEnvironment.KAFKA;
