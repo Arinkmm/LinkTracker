@@ -450,6 +450,19 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                        <excludes>
+                            <exclude>**/*ContainerTest.java</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                        <includes>
+                            <include>**/*ContainerTest.java</include>
+                        </includes>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -494,6 +507,18 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <phase>test-compile</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
