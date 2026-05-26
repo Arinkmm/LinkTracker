@@ -42,7 +42,6 @@ build:
   artifacts:
     expire_in: 1 day
     paths:
-      - .m2/repository/
       - ai-agent/target/
       - api-common/target/
       - bot/target/
