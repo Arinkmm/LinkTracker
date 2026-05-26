@@ -18,26 +18,50 @@ stages:
 
 cache:
   key:
+    prefix: maven
     files:
       - pom.xml
       - .mvn/settings.xml
   paths:
     - .m2/repository/
+  policy: pull
 
 build:
   stage: build
+  cache:
+    key:
+      prefix: maven
+      files:
+        - pom.xml
+        - .mvn/settings.xml
+    paths:
+      - .m2/repository/
+    policy: pull-push
   script:
     - ./mvnw ${MAVEN_ARGS} -T 1C package -DskipTests=true -Djacoco.skip=true
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - .m2/repository/
+      - ai-agent/target/
+      - api-common/target/
+      - bot/target/
+      - build-report-aggregate/target/
+      - scrapper/target/
 
 lint:
   stage: lint
-  needs: []
+  needs:
+    - job: build
+      artifacts: true
   script:
     - ./mvnw ${MAVEN_ARGS} -T 1C compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
 
 test:
   stage: test
-  needs: []
+  needs:
+    - job: build
+      artifacts: true
   services:
     - name: docker:29.0.1-dind
       alias: docker
