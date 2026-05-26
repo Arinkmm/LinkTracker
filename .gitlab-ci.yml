@@ -20,11 +20,6 @@ cache:
   key:
     files:
       - pom.xml
-      - api-common/pom.xml
-      - bot/pom.xml
-      - scrapper/pom.xml
-      - ai-agent/pom.xml
-      - build-report-aggregate/pom.xml
       - .mvn/settings.xml
   paths:
     - .m2/repository/
