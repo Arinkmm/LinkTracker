@@ -42,11 +42,11 @@ build:
   artifacts:
     expire_in: 1 day
     paths:
-      - ai-agent/target/
-      - api-common/target/
-      - bot/target/
-      - build-report-aggregate/target/
-      - scrapper/target/
+      - ai-agent/target/classes/
+      - api-common/target/classes/
+      - api-common/target/generated-sources/
+      - bot/target/classes/
+      - scrapper/target/classes/
 
 lint:
   stage: lint
