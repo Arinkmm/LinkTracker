@@ -17,26 +17,32 @@ stages:
   - test
 
 cache:
-  key: "$CI_COMMIT_REF_SLUG"
+  key:
+    files:
+      - pom.xml
+      - api-common/pom.xml
+      - bot/pom.xml
+      - scrapper/pom.xml
+      - ai-agent/pom.xml
+      - build-report-aggregate/pom.xml
+      - .mvn/settings.xml
   paths:
     - .m2/repository/
 
 build:
   stage: build
   script:
-    - ./mvnw package -DskipTests=true -Djacoco.skip=true
+    - ./mvnw ${MAVEN_ARGS} -T 1C package -DskipTests=true -Djacoco.skip=true
 
 lint:
   stage: lint
-  needs:
-    - build
+  needs: []
   script:
-    - ./mvnw compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
+    - ./mvnw ${MAVEN_ARGS} -T 1C compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
 
 test:
   stage: test
-  needs:
-    - build
+  needs: []
   services:
     - name: docker:29.0.1-dind
       alias: docker
@@ -52,4 +58,4 @@ test:
     - apt-get update && apt-get install -y --no-install-recommends docker.io && rm -rf /var/lib/apt/lists/*
     - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin
   script:
-    - ./mvnw verify
+    - ./mvnw ${MAVEN_ARGS} -T 1C verify
