@@ -96,6 +96,12 @@ public abstract class AiAgentKafkaTestEnvironment {
         registry.add("ai-agent.summarization.api.model", () -> "test-model");
         registry.add("ai-agent.summarization.api.timeout", () -> "2s");
         registry.add("ai-agent.summarization.api.prompt", () -> "Summarize");
+        registry.add("ai-agent.labels.divider", () -> "в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ");
+        registry.add("ai-agent.prioritization.high-keywords[0]", () -> "critical");
+        registry.add("ai-agent.prioritization.high-keywords[1]", () -> "security");
+        registry.add("ai-agent.prioritization.low-keywords[0]", () -> "typo");
+        registry.add("ai-agent.prioritization.low-keywords[1]", () -> "docs");
+        registry.add("ai-agent.grouping.window-ms", () -> "200");
     }
 
     protected <V> void publishAvro(String topic, String key, V value) throws Exception {
@@ -168,5 +174,29 @@ public abstract class AiAgentKafkaTestEnvironment {
             }
         }
         throw new AssertionError("Processed update was not published for key: " + key);
+    }
+
+    protected void assertNoProcessed(String key, Duration timeout) {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "processed-verifier-" + UUID.randomUUID());
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
+        props.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, MOCK_SCHEMA_REGISTRY);
+        props.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
+
+        long deadline = System.currentTimeMillis() + timeout.toMillis();
+        try (KafkaConsumer<String, ProcessedLinkUpdateEvent> consumer = new KafkaConsumer<>(props)) {
+            consumer.subscribe(List.of(PROCESSED_TOPIC));
+            while (System.currentTimeMillis() < deadline) {
+                ConsumerRecords<String, ProcessedLinkUpdateEvent> records = consumer.poll(Duration.ofMillis(200));
+                for (ConsumerRecord<String, ProcessedLinkUpdateEvent> record : records) {
+                    if (key.equals(record.key())) {
+                        throw new AssertionError("Processed update was published for filtered key: " + key);
+                    }
+                }
+            }
+        }
     }
 }

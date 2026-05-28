@@ -1,6 +1,6 @@
 package backend.academy.linktracker.ai.kafka.consumer;
 
-import backend.academy.linktracker.ai.kafka.producer.ProcessedUpdateProducer;
+import backend.academy.linktracker.ai.grouping.UpdateGroupingService;
 import backend.academy.linktracker.ai.processing.UpdateProcessingService;
 import backend.academy.linktracker.avro.RawLinkUpdateEvent;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class RawUpdateConsumer {
     private final UpdateProcessingService processingService;
-    private final ProcessedUpdateProducer processedUpdateProducer;
+    private final UpdateGroupingService groupingService;
     private final Cache<String, Boolean> dedupCache;
 
     @KafkaListener(
@@ -37,7 +37,7 @@ public class RawUpdateConsumer {
                 .addKeyValue("offset", record.offset())
                 .log("Raw update received");
 
-        processingService.process(event).ifPresentOrElse(processedUpdateProducer::publish, () -> log.atInfo()
+        processingService.process(event).ifPresentOrElse(groupingService::submit, () -> log.atInfo()
                 .addKeyValue("id", event.getId())
                 .log("Raw update filtered out"));
     }

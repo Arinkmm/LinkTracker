@@ -22,7 +22,7 @@ class AiAgentKafkaIntegrationTest extends AiAgentKafkaTestEnvironment {
     @DisplayName("Kafka: корректное raw-событие обрабатывается и публикуется в processed-topic")
     void shouldProcessValidRawUpdate() throws Exception {
         stubAiSummary("AI generated summary");
-        String body = "This update is long enough to require AI summarization from external API";
+        String body = "Critical update is long enough to require AI summarization from external API";
         RawLinkUpdateEvent rawEvent = RawLinkUpdateEvent.newBuilder()
                 .setId(1L)
                 .setUrl("https://github.com/test/repo")
@@ -71,6 +71,22 @@ class AiAgentKafkaIntegrationTest extends AiAgentKafkaTestEnvironment {
         ProcessedLinkUpdateEvent processed =
                 consumeProcessed(String.valueOf(validEvent.getId()), Duration.ofSeconds(20));
         assertThat(processed.getDescription()).isEqualTo("Useful update");
+    }
+
+    @Test
+    @DisplayName("Kafka: отфильтрованное raw-событие не публикуется в processed-topic")
+    void shouldNotPublishFilteredRawUpdate() throws Exception {
+        RawLinkUpdateEvent filteredEvent = RawLinkUpdateEvent.newBuilder()
+                .setId(3L)
+                .setUrl("https://github.com/test/repo")
+                .setDescription("This update contains spam content")
+                .setAuthor("real-user")
+                .setTgChatIds(List.of(400L))
+                .build();
+
+        publishAvro(RAW_TOPIC, String.valueOf(filteredEvent.getId()), filteredEvent);
+
+        assertNoProcessed(String.valueOf(filteredEvent.getId()), Duration.ofSeconds(2));
     }
 
     private static void stubAiSummary(String summary) {

@@ -54,3 +54,17 @@ ai-agent:
       model: ${HF_MODEL:openai/gpt-oss-120b:fastest}
       timeout: 10s
       prompt: "Summarize the following update in 2-3 sentences."
+  prioritization:
+    high-keywords:
+      - critical
+      - urgent
+      - breaking
+      - security
+    low-keywords:
+      - minor
+      - typo
+      - chore
+      - docs
+  grouping:
+    window-ms: 45000
+    flush-interval-ms: 5000
