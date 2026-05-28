@@ -11,7 +11,7 @@ RUN mvn -pl bot -am dependency:go-offline
 FROM deps AS build
 WORKDIR /app
 COPY . .
-RUN mvn -pl bot -am package -DskipTests
+RUN mvn -pl bot -am clean package -DskipTests
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app

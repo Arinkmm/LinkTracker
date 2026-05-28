@@ -26,13 +26,12 @@ public class StackOverflowNotificationBuilder extends AbstractNotificationBuilde
         StringBuilder sb = new StringBuilder();
         StackOverflowResponse stackOverflowResponse = (StackOverflowResponse) response;
         NotificationProperties.Labels labels = properties.getLabels();
-        NotificationProperties.Limits limits = properties.getLimits();
 
         for (StackOverflowResponse.Item item : stackOverflowResponse.items()) {
             String question = cleanHtml(item.body());
 
             for (StackOverflowResponse.Answer answer : item.answers()) {
-                String body = truncate(cleanHtml(answer.body()), limits.getStackoverflowAnswer());
+                String body = cleanHtml(answer.body());
                 appendEntity(
                         sb,
                         labels.getTypeAnswer(),
@@ -43,7 +42,7 @@ public class StackOverflowNotificationBuilder extends AbstractNotificationBuilde
             }
 
             for (StackOverflowResponse.Comment comment : item.comments()) {
-                String body = truncate(cleanHtml(comment.body()), limits.getStackoverflowComment());
+                String body = cleanHtml(comment.body());
                 appendEntity(
                         sb,
                         labels.getTypeComment(),

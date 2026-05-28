@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.configuration;
 
-import backend.academy.linktracker.avro.LinkUpdateEvent;
+import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
 import backend.academy.linktracker.bot.properties.KafkaProperties;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -42,9 +42,9 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, LinkUpdateEvent> kafkaListenerContainerFactory(
-            ConsumerFactory<String, LinkUpdateEvent> consumerFactory, DefaultErrorHandler errorHandler) {
-        ConcurrentKafkaListenerContainerFactory<String, LinkUpdateEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, ProcessedLinkUpdateEvent> kafkaListenerContainerFactory(
+            ConsumerFactory<String, ProcessedLinkUpdateEvent> consumerFactory, DefaultErrorHandler errorHandler) {
+        ConcurrentKafkaListenerContainerFactory<String, ProcessedLinkUpdateEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler);

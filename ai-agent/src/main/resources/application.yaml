@@ -4,3 +4,53 @@ server:
 spring:
   application:
     name: ai-agent
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092,localhost:29092,localhost:39092}
+    consumer:
+      group-id: ${app.kafka.group-id}
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+        specific.avro.reader: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+        auto.register.schemas: true
+
+app:
+  kafka:
+    raw-topic: link.raw-updates
+    raw-dlt-topic: link.raw-updates-dlt
+    processed-topic: link.processed-updates
+    group-id: ai-agent-group
+    max-retries: 3
+    backoff-ms: 1000
+    max-dedup-cache-size: 10000
+    dedup-ttl: 1h
+
+ai-agent:
+  labels:
+    description: "Описание: "
+    divider: "────────────────"
+  filtering:
+    stop-words:
+      - spam
+      - ads
+      - promo
+    excluded-authors:
+      - bot-user
+    min-length: 20
+  summarization:
+    threshold: 120
+    api:
+      url: ${HF_API_URL:https://router.huggingface.co/v1/chat/completions}
+      token: ${HF_TOKEN}
+      model: ${HF_MODEL:openai/gpt-oss-120b:fastest}
+      timeout: 10s
+      prompt: "Summarize the following update in 2-3 sentences."

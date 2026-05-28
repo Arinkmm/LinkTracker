@@ -1,7 +1,8 @@
-image: "${GITLAB_DOCKER_PROXY}/eclipse-temurin:25-jdk-alpine"
+image: "${GITLAB_DOCKER_PROXY}/eclipse-temurin:25-jdk"
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_ARGS: "-s ${CI_PROJECT_DIR}/.mvn/settings.xml -P ci"
+  MAVEN_OPTS: "-Dmaven.repo.local=${CI_PROJECT_DIR}/.m2/repository"
   GITLAB_DOCKER_PROXY: "gitlab.education.tbank.ru:443/backend-academy-java-2025/lecture-materials/dependency_proxy/containers"
 
 workflow:
@@ -16,30 +17,50 @@ stages:
   - test
 
 cache:
-  key: "$CI_COMMIT_REF_SLUG"
+  key:
+    prefix: maven
+    files:
+      - pom.xml
+      - .mvn/settings.xml
   paths:
     - .m2/repository/
+  policy: pull
 
 build:
   stage: build
-  before_script:
-    - apk add --no-cache libc6-compat
+  cache:
+    key:
+      prefix: maven
+      files:
+        - pom.xml
+        - .mvn/settings.xml
+    paths:
+      - .m2/repository/
+    policy: pull-push
   script:
-    - ./mvnw package -DskipTests=true -Djacoco.skip=true
+    - ./mvnw ${MAVEN_ARGS} -T 1C package -DskipTests=true -Djacoco.skip=true
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ai-agent/target/classes/
+      - api-common/target/classes/
+      - api-common/target/generated-sources/
+      - bot/target/classes/
+      - scrapper/target/classes/
 
 lint:
   stage: lint
   needs:
-    - build
-  before_script:
-    - apk add --no-cache libc6-compat
+    - job: build
+      artifacts: true
   script:
-    - ./mvnw compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
+    - ./mvnw ${MAVEN_ARGS} -T 1C compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
 
 test:
   stage: test
   needs:
-    - build
+    - job: build
+      artifacts: true
   services:
     - name: docker:29.0.1-dind
       alias: docker
@@ -52,8 +73,7 @@ test:
   tags:
     - dind
   before_script:
-    - apk add --no-cache docker-cli libc6-compat
+    - apt-get update && apt-get install -y --no-install-recommends docker.io && rm -rf /var/lib/apt/lists/*
     - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin
   script:
-    - ./mvnw clean package -DskipTests=true
-    - ./mvnw verify
+    - ./mvnw ${MAVEN_ARGS} -T 1C verify

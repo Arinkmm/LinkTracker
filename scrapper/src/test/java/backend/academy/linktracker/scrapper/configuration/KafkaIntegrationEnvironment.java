@@ -5,8 +5,8 @@ import org.springframework.test.context.DynamicPropertySource;
 
 public abstract class KafkaIntegrationEnvironment extends CacheIntegrationEnvironment {
     protected static final String MOCK_SCHEMA_REGISTRY = "mock://test-scope";
-    protected static final String TEST_TOPIC = "link-updates-test";
-    protected static final String TEST_DLT_TOPIC = "link-updates-test.DLT";
+    protected static final String TEST_TOPIC = "link.raw-updates-test";
+    protected static final String TEST_DLT_TOPIC = "link.raw-updates-test.DLT";
     protected static final String TEST_GROUP_ID = "scrapper-test-group";
 
     @DynamicPropertySource

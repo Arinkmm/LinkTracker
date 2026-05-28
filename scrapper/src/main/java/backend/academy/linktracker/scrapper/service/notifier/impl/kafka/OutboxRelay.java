@@ -1,8 +1,9 @@
 package backend.academy.linktracker.scrapper.service.notifier.impl.kafka;
 
-import backend.academy.linktracker.avro.LinkUpdateEvent;
+import backend.academy.linktracker.avro.RawLinkUpdateEvent;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.properties.KafkaProperties;
+import backend.academy.linktracker.scrapper.properties.NotificationProperties;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
 import backend.academy.linktracker.scrapper.service.user.OutboxMessageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,8 +20,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class OutboxRelay {
     private final OutboxMessageService outboxMessageService;
     private final KafkaProperties kafkaProperties;
-    private final KafkaTemplate<String, LinkUpdateEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final NotificationProperties notificationProperties;
 
     @Scheduled(fixedDelayString = "${app.kafka.outbox-checking-interval-ms}")
     public void runRelay() {
@@ -48,10 +50,11 @@ public class OutboxRelay {
         try {
             LinkUpdate linkUpdate = objectMapper.readValue(message.getPayload(), LinkUpdate.class);
 
-            LinkUpdateEvent linkUpdateEvent = LinkUpdateEvent.newBuilder()
+            RawLinkUpdateEvent linkUpdateEvent = RawLinkUpdateEvent.newBuilder()
                     .setId(linkUpdate.getId())
                     .setUrl(linkUpdate.getUrl().toString())
                     .setDescription(linkUpdate.getDescription())
+                    .setAuthor(extractAuthor(linkUpdate.getDescription()))
                     .setTgChatIds(linkUpdate.getTgChatIds())
                     .build();
 
@@ -82,5 +85,20 @@ public class OutboxRelay {
             outboxMessageService.markAsError(message);
             return CompletableFuture.completedFuture(null);
         }
+    }
+
+    private String extractAuthor(String description) {
+        if (description == null || description.isBlank()) {
+            return "unknown";
+        }
+        String authorLabel = notificationProperties.getLabels().getAuthor();
+        return description
+                .lines()
+                .map(String::trim)
+                .filter(line -> line.startsWith(authorLabel))
+                .map(line -> line.substring(authorLabel.length()).trim())
+                .filter(author -> !author.isBlank())
+                .findFirst()
+                .orElse("unknown");
     }
 }

@@ -24,11 +24,10 @@ public class GitHubNotificationBuilder extends AbstractNotificationBuilder imple
         StringBuilder sb = new StringBuilder();
         GitHubRepoResponses gitHubResponse = (GitHubRepoResponses) response;
         NotificationProperties.Labels labels = properties.getLabels();
-        NotificationProperties.Limits limits = properties.getLimits();
 
         for (GitHubRepoResponse r : gitHubResponse.issues()) {
             String type = r.isPullRequest() ? labels.getTypePr() : labels.getTypeIssue();
-            String body = truncate(cleanMarkdown(r.body()), limits.getGithubBody());
+            String body = cleanMarkdown(r.body());
 
             sb.append(type)
                     .append("\n")

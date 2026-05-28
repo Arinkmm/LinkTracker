@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.scrapper.configuration.CacheIntegrationEnvironment;
+import backend.academy.linktracker.scrapper.configuration.TestDatabaseCleaner;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
@@ -17,12 +18,10 @@ import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-@SpringBootTest
 class CacheIntegrationTest extends CacheIntegrationEnvironment {
     @Autowired
     private LinkService linkService;
@@ -51,7 +50,7 @@ class CacheIntegrationTest extends CacheIntegrationEnvironment {
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate.execute("TRUNCATE TABLE subscriptions, links, chats RESTART IDENTITY CASCADE");
+        TestDatabaseCleaner.clean(jdbcTemplate);
         cacheManager.getCache("links").clear();
         chatService.registerChat(CHAT_ID);
         reset(subscriptionRepository);

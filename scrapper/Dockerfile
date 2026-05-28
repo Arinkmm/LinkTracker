@@ -11,7 +11,7 @@ RUN mvn -pl scrapper -am dependency:go-offline
 FROM deps AS build
 WORKDIR /app
 COPY . .
-RUN mvn -pl scrapper -am package -DskipTests
+RUN mvn -pl scrapper -am clean package -DskipTests
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app

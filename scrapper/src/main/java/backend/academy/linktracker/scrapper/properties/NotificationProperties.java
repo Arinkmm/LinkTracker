@@ -14,7 +14,6 @@ public class NotificationProperties {
     private final String divider;
     private final String dateTimeFormat;
     private final Labels labels;
-    private final Limits limits;
 
     @Getter
     @RequiredArgsConstructor
@@ -29,14 +28,6 @@ public class NotificationProperties {
         private final String typeAnswer;
         private final String typeComment;
         private final String emptyContent;
-    }
-
-    @Getter
-    @RequiredArgsConstructor
-    public static class Limits {
-        private final int githubBody;
-        private final int stackoverflowAnswer;
-        private final int stackoverflowComment;
     }
 
     @Getter

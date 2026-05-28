@@ -134,15 +134,34 @@ services:
         condition: service_healthy
     entrypoint: [ "/bin/sh", "-c" ]
     command: >
-      "kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link-updates --partitions 3 --replication-factor 3 &&
-       kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link-updates-dlt --partitions 3 --replication-factor 3"
+      "kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link.raw-updates --partitions 3 --replication-factor 3 &&
+       kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link.raw-updates-dlt --partitions 3 --replication-factor 3 &&
+       kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link.processed-updates --partitions 3 --replication-factor 3 &&
+       kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic link.processed-updates-dlt --partitions 3 --replication-factor 3"
     networks:
       - kafka-net
 
   valkey-1: &valkey-template
     image: valkey/valkey:8.0
     container_name: valkey-1
-    command: ["valkey-server", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes", "--notify-keyspace-events", "AKE"]
+    command:
+      - valkey-server
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --notify-keyspace-events
+      - AKE
+      - --cluster-announce-hostname
+      - valkey-1
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-preferred-endpoint-type
+      - hostname
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 5s
@@ -150,12 +169,32 @@ services:
       retries: 5
     networks:
       - valkey-net
+    ports:
+      - "6379:6379"
     volumes:
       - valkey-1-data:/data
 
   valkey-2:
     <<: *valkey-template
     container_name: valkey-2
+    command:
+      - valkey-server
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --notify-keyspace-events
+      - AKE
+      - --cluster-announce-hostname
+      - valkey-2
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-preferred-endpoint-type
+      - hostname
     ports:
       - "6380:6379"
     volumes:
@@ -164,6 +203,24 @@ services:
   valkey-3:
     <<: *valkey-template
     container_name: valkey-3
+    command:
+      - valkey-server
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --notify-keyspace-events
+      - AKE
+      - --cluster-announce-hostname
+      - valkey-3
+      - --cluster-announce-port
+      - "6379"
+      - --cluster-preferred-endpoint-type
+      - hostname
     ports:
       - "6381:6379"
     volumes:
@@ -236,6 +293,8 @@ services:
     depends_on:
       scrapper:
         condition: service_started
+      ai-agent:
+        condition: service_started
       schema-registry:
         condition: service_healthy
     environment:
@@ -249,6 +308,27 @@ services:
       - "9090:9090"
     networks:
       - backend
+      - kafka-net
+
+  ai-agent:
+    build:
+      context: .
+      dockerfile: ai-agent/Dockerfile
+    container_name: ai-agent
+    depends_on:
+      schema-registry:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      HF_API_URL: ${HF_API_URL}
+      HF_TOKEN: ${HF_TOKEN}
+      HF_MODEL: ${HF_MODEL}
+    ports:
+      - "8083:8082"
+    networks:
       - kafka-net
 
 networks:

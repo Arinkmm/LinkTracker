@@ -1,0 +1,36 @@
+{
+  "type": "record",
+  "name": "ProcessedLinkUpdateEvent",
+  "namespace": "backend.academy.linktracker.avro",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long",
+      "doc": "Tracked link id"
+    },
+    {
+      "name": "url",
+      "type": "string",
+      "doc": "Tracked link URL"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "doc": "Processed update body text"
+    },
+    {
+      "name": "tgChatIds",
+      "type": {
+        "type": "array",
+        "items": "long"
+      },
+      "doc": "Telegram chat ids"
+    },
+    {
+      "name": "priority",
+      "type": "string",
+      "default": "HIGH",
+      "doc": "Update priority"
+    }
+  ]
+}

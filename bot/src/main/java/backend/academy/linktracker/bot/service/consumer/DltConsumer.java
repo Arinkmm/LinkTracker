@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.service.consumer;
 
-import backend.academy.linktracker.avro.LinkUpdateEvent;
+import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,7 +17,7 @@ public class DltConsumer {
             topics = "${app.kafka.dlt-topic}",
             groupId = "${app.kafka.group-id}-dlt",
             containerFactory = "kafkaListenerContainerFactory")
-    public void consume(LinkUpdateEvent linkUpdateEvent) {
+    public void consume(ProcessedLinkUpdateEvent linkUpdateEvent) {
         log.atError().addKeyValue("linkUpdateEvent", linkUpdateEvent).log("Message moved to DLT");
     }
 }

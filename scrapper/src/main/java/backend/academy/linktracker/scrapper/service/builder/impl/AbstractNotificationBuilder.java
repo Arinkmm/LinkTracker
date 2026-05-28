@@ -13,9 +13,4 @@ public abstract class AbstractNotificationBuilder {
                 DateTimeFormatter.ofPattern(properties.getDateTimeFormat()).withZone(ZoneOffset.UTC);
         return formatter.format(instant);
     }
-
-    protected String truncate(String text, int limit) {
-        if (text.length() <= limit) return text;
-        return text.substring(0, limit) + "...";
-    }
 }
