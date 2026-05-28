@@ -120,7 +120,7 @@ public class UpdateProcessingService {
 
     private boolean isSeparatorLine(String line) {
         String divider = properties.getLabels().getDivider();
-        return divider != null && line.trim().equals(divider);
+        return line.trim().equals(divider);
     }
 
     private void validate(RawLinkUpdateEvent event) {
