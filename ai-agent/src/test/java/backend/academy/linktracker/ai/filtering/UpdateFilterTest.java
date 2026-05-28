@@ -18,7 +18,7 @@ class UpdateFilterTest {
         AiAgentProperties.Api api = new AiAgentProperties.Api("url", "token", "model", Duration.ofSeconds(1), "prompt");
         AiAgentProperties.Summarization summ = new AiAgentProperties.Summarization(10, api);
         AiAgentProperties.Filtering filt = new AiAgentProperties.Filtering(List.of("spam"), List.of("bot-user"), 20);
-        AiAgentProperties.Labels labels = new AiAgentProperties.Labels("Description: ");
+        AiAgentProperties.Labels labels = new AiAgentProperties.Labels("Description: ", "────────────────");
         AiAgentProperties properties = new AiAgentProperties(filt, summ, labels);
         filter = new UpdateFilter(properties);
     }

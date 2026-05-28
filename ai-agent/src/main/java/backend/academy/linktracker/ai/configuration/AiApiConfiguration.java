@@ -14,7 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
@@ -27,13 +26,10 @@ public class AiApiConfiguration {
     @Bean
     public AiApiClient aiApiClient() {
         AiAgentProperties.Api api = properties.getSummarization().getApi();
-        RestClient.Builder builder = baseRestClientBuilder().baseUrl(api.getUrl());
-
-        if (StringUtils.hasText(api.getToken())) {
-            builder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + api.getToken());
-        }
-
-        RestClient restClient = builder.build();
+        RestClient restClient = baseRestClientBuilder()
+                .baseUrl(api.getUrl())
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + api.getToken())
+                .build();
 
         return HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
                 .build()

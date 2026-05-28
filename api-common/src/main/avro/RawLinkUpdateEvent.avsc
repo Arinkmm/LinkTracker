@@ -21,6 +21,7 @@
     {
       "name": "author",
       "type": "string",
+      "default": "unknown",
       "doc": "Update author"
     },
     {

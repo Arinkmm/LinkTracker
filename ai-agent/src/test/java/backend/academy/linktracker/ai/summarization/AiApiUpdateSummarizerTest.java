@@ -61,7 +61,7 @@ class AiApiUpdateSummarizerTest {
                 new AiAgentProperties.Api(apiUrl, "test-token", "test-model", Duration.ofSeconds(5), "Summarize");
         AiAgentProperties.Summarization summ = new AiAgentProperties.Summarization(10, api);
         AiAgentProperties.Filtering filt = new AiAgentProperties.Filtering(List.of(), List.of(), 0);
-        AiAgentProperties.Labels labels = new AiAgentProperties.Labels("Описание: ");
+        AiAgentProperties.Labels labels = new AiAgentProperties.Labels("Описание: ", "────────────────");
         return new AiAgentProperties(filt, summ, labels);
     }
 }

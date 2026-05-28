@@ -37,6 +37,7 @@ app:
 ai-agent:
   labels:
     description: "Описание: "
+    divider: "────────────────"
   filtering:
     stop-words:
       - spam

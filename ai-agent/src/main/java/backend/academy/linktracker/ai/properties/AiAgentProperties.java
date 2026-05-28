@@ -43,5 +43,6 @@ public class AiAgentProperties {
     @RequiredArgsConstructor
     public static class Labels {
         private final String description;
+        private final String divider;
     }
 }

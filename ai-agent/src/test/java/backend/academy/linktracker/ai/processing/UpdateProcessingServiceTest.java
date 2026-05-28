@@ -28,7 +28,7 @@ class UpdateProcessingServiceTest {
         AiAgentProperties.Api api = new AiAgentProperties.Api("url", "token", "model", Duration.ofSeconds(1), "prompt");
         AiAgentProperties.Summarization summ = new AiAgentProperties.Summarization(30, api);
         AiAgentProperties.Filtering filt = new AiAgentProperties.Filtering(List.of(), List.of(), 0);
-        AiAgentProperties.Labels labels = new AiAgentProperties.Labels(DESCRIPTION_LABEL);
+        AiAgentProperties.Labels labels = new AiAgentProperties.Labels(DESCRIPTION_LABEL, "────────────────");
         AiAgentProperties properties = new AiAgentProperties(filt, summ, labels);
         AiApiUpdateSummarizer summarizer = mock(AiApiUpdateSummarizer.class);
         when(summarizer.summarize(anyString())).thenReturn(SUMMARY);

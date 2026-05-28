@@ -2,12 +2,12 @@ package backend.academy.linktracker.ai.filtering;
 
 import backend.academy.linktracker.ai.properties.AiAgentProperties;
 import backend.academy.linktracker.avro.RawLinkUpdateEvent;
-import java.util.Locale;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class UpdateFilter {
@@ -48,9 +48,16 @@ public class UpdateFilter {
     }
 
     private boolean containsStopWord(String description) {
-        String normalizedDescription = description.toLowerCase(Locale.ROOT);
         return properties.getFiltering().getStopWords().stream()
-                .map(word -> word.toLowerCase(Locale.ROOT))
-                .anyMatch(normalizedDescription::contains);
+                .map(String::trim)
+                .filter(word -> !word.isBlank())
+                .map(this::stopWordPattern)
+                .anyMatch(pattern -> pattern.matcher(description).find());
+    }
+
+    private Pattern stopWordPattern(String word) {
+        return Pattern.compile(
+                "(?<![\\p{L}\\p{N}_])" + Pattern.quote(word) + "(?![\\p{L}\\p{N}_])",
+                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     }
 }
