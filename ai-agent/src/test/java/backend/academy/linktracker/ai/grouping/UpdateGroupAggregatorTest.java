@@ -23,13 +23,8 @@ class UpdateGroupAggregatorTest {
         assertThat(grouped.getTgChatIds()).containsExactly(100L);
         assertThat(grouped.getPriority()).isEqualTo("HIGH");
         assertThat(grouped.getDescription()).isEqualTo("""
-                1. id=1
-                url=https://github.com/test/repo1
-                First update
-
-                2. id=2
-                url=https://github.com/test/repo2
-                Second update""");
+                1. First update
+                2. Second update""");
     }
 
     @Test
