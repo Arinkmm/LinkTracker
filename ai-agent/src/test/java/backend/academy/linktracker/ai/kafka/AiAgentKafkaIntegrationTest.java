@@ -47,7 +47,7 @@ class AiAgentKafkaIntegrationTest extends AiAgentKafkaTestEnvironment {
                 .contains("Автор: real-user")
                 .contains("Описание: AI generated summary")
                 .doesNotContain(body);
-        assertThat(processed.getTgChatIds()).containsExactly(100L, 200L);
+        assertThat(processed.getTgChatIds()).hasSize(1).containsAnyOf(100L, 200L);
         assertThat(processed.getPriority()).isEqualTo("HIGH");
     }
 

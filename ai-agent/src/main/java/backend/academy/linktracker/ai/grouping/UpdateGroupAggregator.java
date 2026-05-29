@@ -10,20 +10,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class UpdateGroupAggregator {
 
-    public ProcessedLinkUpdateEvent aggregate(List<ProcessedLinkUpdateEvent> events) {
+    public ProcessedLinkUpdateEvent aggregate(UpdateGroup group) {
+        List<ProcessedLinkUpdateEvent> events = group.events();
         if (events.isEmpty()) {
             throw new IllegalArgumentException("events must not be empty");
-        }
-        if (events.size() == 1) {
-            return events.getFirst();
         }
 
         ProcessedLinkUpdateEvent first = events.getFirst();
         return ProcessedLinkUpdateEvent.newBuilder()
                 .setId(first.getId())
                 .setUrl(first.getUrl())
-                .setDescription(numberedDescription(events))
-                .setTgChatIds(first.getTgChatIds())
+                .setDescription(events.size() == 1 ? first.getDescription() : numberedDescription(events))
+                .setTgChatIds(List.of(group.chatId()))
                 .setPriority(maxPriority(events).name())
                 .build();
     }

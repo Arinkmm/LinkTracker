@@ -13,35 +13,54 @@ class UpdateGroupAggregatorTest {
     @Test
     @DisplayName("Группировка: несколько обновлений объединяются в нумерованный список")
     void shouldGroupSeveralUpdates() {
-        ProcessedLinkUpdateEvent first = event(1L, "First update", "LOW");
-        ProcessedLinkUpdateEvent second = event(2L, "Second update", "HIGH");
+        ProcessedLinkUpdateEvent first = event(1L, "https://github.com/test/repo1", "First update", "LOW");
+        ProcessedLinkUpdateEvent second = event(2L, "https://github.com/test/repo2", "Second update", "HIGH");
+        UpdateGroup group = group(100L, first, second);
 
-        ProcessedLinkUpdateEvent grouped = aggregator.aggregate(List.of(first, second));
+        ProcessedLinkUpdateEvent grouped = aggregator.aggregate(group);
 
         assertThat(grouped.getId()).isEqualTo(1L);
         assertThat(grouped.getTgChatIds()).containsExactly(100L);
         assertThat(grouped.getPriority()).isEqualTo("HIGH");
         assertThat(grouped.getDescription()).isEqualTo("""
-                1. First update
-                2. Second update""");
+                1. id=1
+                url=https://github.com/test/repo1
+                First update
+
+                2. id=2
+                url=https://github.com/test/repo2
+                Second update""");
     }
 
     @Test
     @DisplayName("Группировка: одиночное обновление возвращается без изменений")
     void shouldKeepSingleUpdateUnchanged() {
-        ProcessedLinkUpdateEvent event = event(1L, "Only update", "MEDIUM");
+        ProcessedLinkUpdateEvent event = event(1L, "https://github.com/test/repo", "Only update", "MEDIUM");
+        UpdateGroup group = group(100L, event);
 
-        ProcessedLinkUpdateEvent result = aggregator.aggregate(List.of(event));
+        ProcessedLinkUpdateEvent result = aggregator.aggregate(group);
 
-        assertThat(result).isSameAs(event);
+        assertThat(result.getId()).isEqualTo(event.getId());
+        assertThat(result.getUrl()).isEqualTo(event.getUrl());
+        assertThat(result.getDescription()).isEqualTo(event.getDescription());
+        assertThat(result.getTgChatIds()).containsExactly(100L);
+        assertThat(result.getPriority()).isEqualTo(event.getPriority());
     }
 
-    private static ProcessedLinkUpdateEvent event(long id, String description, String priority) {
+    private static UpdateGroup group(long chatId, ProcessedLinkUpdateEvent... events) {
+        UpdateGroup group = new UpdateGroup(chatId, java.time.Instant.now());
+        for (ProcessedLinkUpdateEvent event : events) {
+            group.add(event);
+        }
+        return group;
+    }
+
+    private static ProcessedLinkUpdateEvent event(long id, String url, String description, String priority) {
         return ProcessedLinkUpdateEvent.newBuilder()
                 .setId(id)
-                .setUrl("https://github.com/test/repo")
+                .setUrl(url)
                 .setDescription(description)
-                .setTgChatIds(List.of(100L))
+                .setTgChatIds(List.of(100L, 200L))
                 .setPriority(priority)
                 .build();
     }

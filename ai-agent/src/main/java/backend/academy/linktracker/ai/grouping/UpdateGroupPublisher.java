@@ -14,7 +14,7 @@ class UpdateGroupPublisher {
     private final ProcessedUpdateProducer producer;
 
     void publish(UpdateGroup group) {
-        ProcessedLinkUpdateEvent event = aggregator.aggregate(group.events());
+        ProcessedLinkUpdateEvent event = aggregator.aggregate(group);
         log.atInfo()
                 .addKeyValue("id", event.getId())
                 .addKeyValue("priority", event.getPriority())

@@ -6,26 +6,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class UpdateGroup {
+    private final long chatId;
     private final Instant createdAt;
-    private final List<ProcessedLinkUpdateEvent> events;
+    private final List<ProcessedLinkUpdateEvent> events = new ArrayList<>();
 
-    UpdateGroup(Instant createdAt) {
-        this(createdAt, List.of());
-    }
-
-    private UpdateGroup(Instant createdAt, List<ProcessedLinkUpdateEvent> events) {
+    UpdateGroup(long chatId, Instant createdAt) {
+        this.chatId = chatId;
         this.createdAt = createdAt;
-        this.events = List.copyOf(events);
     }
 
-    UpdateGroup add(ProcessedLinkUpdateEvent event) {
-        List<ProcessedLinkUpdateEvent> updatedEvents = new ArrayList<>(events);
-        updatedEvents.add(event);
-        return new UpdateGroup(createdAt, updatedEvents);
+    void add(ProcessedLinkUpdateEvent event) {
+        events.add(event);
+    }
+
+    long chatId() {
+        return chatId;
     }
 
     List<ProcessedLinkUpdateEvent> events() {
-        return events;
+        return List.copyOf(events);
     }
 
     boolean isExpired(Instant now, long windowMs) {
