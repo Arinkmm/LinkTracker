@@ -2,6 +2,7 @@ package backend.academy.linktracker.ai.processing;
 
 import backend.academy.linktracker.ai.exception.AiSummarizationException;
 import backend.academy.linktracker.ai.filtering.UpdateFilter;
+import backend.academy.linktracker.ai.prioritization.UpdatePrioritizer;
 import backend.academy.linktracker.ai.properties.AiAgentProperties;
 import backend.academy.linktracker.ai.summarization.AiApiUpdateSummarizer;
 import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
@@ -17,9 +18,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class UpdateProcessingService {
-    private static final String DEFAULT_PRIORITY = "HIGH"; // Пока заглушка для этого ДЗ
-
     private final UpdateFilter updateFilter;
+    private final UpdatePrioritizer prioritizer;
     private final AiApiUpdateSummarizer updateSummarizer;
     private final AiAgentProperties properties;
 
@@ -36,7 +36,7 @@ public class UpdateProcessingService {
                 .setUrl(event.getUrl())
                 .setDescription(processedDescription)
                 .setTgChatIds(event.getTgChatIds())
-                .setPriority(DEFAULT_PRIORITY)
+                .setPriority(prioritizer.prioritize(event.getDescription()).name())
                 .build();
 
         return Optional.of(processedEvent);

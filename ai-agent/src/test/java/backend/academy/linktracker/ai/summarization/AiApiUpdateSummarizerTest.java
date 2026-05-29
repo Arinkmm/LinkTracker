@@ -62,6 +62,9 @@ class AiApiUpdateSummarizerTest {
         AiAgentProperties.Summarization summ = new AiAgentProperties.Summarization(10, api);
         AiAgentProperties.Filtering filt = new AiAgentProperties.Filtering(List.of(), List.of(), 0);
         AiAgentProperties.Labels labels = new AiAgentProperties.Labels("Описание: ", "────────────────");
-        return new AiAgentProperties(filt, summ, labels);
+        AiAgentProperties.Prioritization prioritization =
+                new AiAgentProperties.Prioritization(List.of("critical"), List.of("typo"));
+        AiAgentProperties.Grouping grouping = new AiAgentProperties.Grouping(100, 10);
+        return new AiAgentProperties(filt, summ, labels, prioritization, grouping);
     }
 }

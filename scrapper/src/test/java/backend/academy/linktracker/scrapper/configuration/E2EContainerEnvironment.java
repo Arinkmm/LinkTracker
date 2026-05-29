@@ -169,6 +169,8 @@ public final class E2EContainerEnvironment {
                 .withEnv("APP_KAFKA_RAW_TOPIC", RAW_TOPIC)
                 .withEnv("APP_KAFKA_PROCESSED_TOPIC", PROCESSED_TOPIC)
                 .withEnv("AI_AGENT_SUMMARIZATION_THRESHOLD", "10000")
+                .withEnv("AI_AGENT_GROUPING_WINDOW_MS", "1000")
+                .withEnv("AI_AGENT_GROUPING_FLUSH_INTERVAL_MS", "500")
                 .withEnv(
                         "AI_AGENT_SUMMARIZATION_API_URL",
                         "http://" + WIREMOCK_EXT_ALIAS + ":" + WIREMOCK_PORT + "/v1/chat/completions")

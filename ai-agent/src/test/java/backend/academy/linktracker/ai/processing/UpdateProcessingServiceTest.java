@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.ai.filtering.UpdateFilter;
+import backend.academy.linktracker.ai.prioritization.UpdatePrioritizer;
 import backend.academy.linktracker.ai.properties.AiAgentProperties;
 import backend.academy.linktracker.ai.summarization.AiApiUpdateSummarizer;
 import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
@@ -29,11 +30,15 @@ class UpdateProcessingServiceTest {
         AiAgentProperties.Summarization summ = new AiAgentProperties.Summarization(30, api);
         AiAgentProperties.Filtering filt = new AiAgentProperties.Filtering(List.of(), List.of(), 0);
         AiAgentProperties.Labels labels = new AiAgentProperties.Labels(DESCRIPTION_LABEL, "────────────────");
-        AiAgentProperties properties = new AiAgentProperties(filt, summ, labels);
+        AiAgentProperties.Prioritization prioritization =
+                new AiAgentProperties.Prioritization(List.of("critical"), List.of("typo"));
+        AiAgentProperties.Grouping grouping = new AiAgentProperties.Grouping(100, 10);
+        AiAgentProperties properties = new AiAgentProperties(filt, summ, labels, prioritization, grouping);
         AiApiUpdateSummarizer summarizer = mock(AiApiUpdateSummarizer.class);
         when(summarizer.summarize(anyString())).thenReturn(SUMMARY);
 
-        service = new UpdateProcessingService(new UpdateFilter(properties), summarizer, properties);
+        service = new UpdateProcessingService(
+                new UpdateFilter(properties), new UpdatePrioritizer(properties), summarizer, properties);
     }
 
     @Test

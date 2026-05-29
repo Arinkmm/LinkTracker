@@ -13,6 +13,8 @@ public class AiAgentProperties {
     private final Filtering filtering;
     private final Summarization summarization;
     private final Labels labels;
+    private final Prioritization prioritization;
+    private final Grouping grouping;
 
     @Getter
     @RequiredArgsConstructor
@@ -44,5 +46,19 @@ public class AiAgentProperties {
     public static class Labels {
         private final String description;
         private final String divider;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class Prioritization {
+        private final List<String> highKeywords;
+        private final List<String> lowKeywords;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class Grouping {
+        private final long windowMs;
+        private final long flushIntervalMs;
     }
 }

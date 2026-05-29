@@ -19,7 +19,10 @@ class UpdateFilterTest {
         AiAgentProperties.Summarization summ = new AiAgentProperties.Summarization(10, api);
         AiAgentProperties.Filtering filt = new AiAgentProperties.Filtering(List.of("spam"), List.of("bot-user"), 20);
         AiAgentProperties.Labels labels = new AiAgentProperties.Labels("Description: ", "────────────────");
-        AiAgentProperties properties = new AiAgentProperties(filt, summ, labels);
+        AiAgentProperties.Prioritization prioritization =
+                new AiAgentProperties.Prioritization(List.of("critical"), List.of("typo"));
+        AiAgentProperties.Grouping grouping = new AiAgentProperties.Grouping(100, 10);
+        AiAgentProperties properties = new AiAgentProperties(filt, summ, labels, prioritization, grouping);
         filter = new UpdateFilter(properties);
     }
 
