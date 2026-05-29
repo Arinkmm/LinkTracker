@@ -2,6 +2,7 @@ package backend.academy.linktracker.scrapper.service.notifier.impl.kafka;
 
 import backend.academy.linktracker.avro.RawLinkUpdateEvent;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.properties.KafkaProperties;
 import backend.academy.linktracker.scrapper.properties.NotificationProperties;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
@@ -23,6 +24,7 @@ public class OutboxRelay {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final NotificationProperties notificationProperties;
+    private final ScrapperMetrics metrics;
 
     @Scheduled(fixedDelayString = "${app.kafka.outbox-checking-interval-ms}")
     public void runRelay() {
@@ -60,9 +62,11 @@ public class OutboxRelay {
 
             log.atInfo().addKeyValue("messageId", message.getId()).log("Sending link update event");
 
+            long start = System.nanoTime();
             return kafkaTemplate
                     .send(kafkaProperties.getTopic(), String.valueOf(linkUpdateEvent.getId()), linkUpdateEvent)
                     .handle((result, ex) -> {
+                        metrics.recordRequestDuration("llm_agent", "kafka", (System.nanoTime() - start) / 1_000_000.0);
                         if (ex != null) {
                             log.atError()
                                     .setCause(ex)

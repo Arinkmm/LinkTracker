@@ -13,6 +13,8 @@ public interface LinkRepository {
 
     Optional<Link> findByUrl(URI url);
 
+    List<Link> findAll();
+
     void remove(Long id);
 
     void removeIfOrphan(Long id);

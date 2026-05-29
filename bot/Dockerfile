@@ -17,4 +17,5 @@ FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /app/bot/target/bot-0.0.1.jar /app/app.jar
 EXPOSE 8080
+EXPOSE 8011
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

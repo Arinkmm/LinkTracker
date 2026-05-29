@@ -11,6 +11,7 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.commands.Command;
 import backend.academy.linktracker.bot.commands.impl.HelpCommand;
 import backend.academy.linktracker.bot.commands.impl.StartCommand;
+import backend.academy.linktracker.bot.metrics.BotMetrics;
 import backend.academy.linktracker.bot.model.InternalCommand;
 import backend.academy.linktracker.bot.properties.CommandProperties;
 import backend.academy.linktracker.bot.properties.MessagesProperties;
@@ -24,6 +25,7 @@ import backend.academy.linktracker.bot.service.user.UserService;
 import backend.academy.linktracker.bot.util.MessageValidator;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.utility.BotUtils;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.HashMap;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +83,8 @@ class TelegramBotProcessStartingCommandTest {
 
         CommandRegistry registry = new CommandRegistry(List.of(start, help));
 
-        CommandHandler commandHandler = new CommandHandler(registry, userService, telegramSender);
+        CommandHandler commandHandler =
+                new CommandHandler(registry, userService, telegramSender, new BotMetrics(new SimpleMeterRegistry()));
         UnknownCommandHandler unknownCommandHandler = new UnknownCommandHandler(telegramSender, messagesProperties);
         MessageValidator messageValidator = new MessageValidator();
 

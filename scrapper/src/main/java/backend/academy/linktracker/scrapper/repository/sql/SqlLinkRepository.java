@@ -55,6 +55,12 @@ public class SqlLinkRepository implements LinkRepository {
     }
 
     @Override
+    public List<Link> findAll() {
+        String sql = "SELECT * FROM links";
+        return namedParameterJdbcTemplate.query(sql, mapper);
+    }
+
+    @Override
     public void remove(Long id) {
         String sql = "DELETE FROM links WHERE id = :id";
         namedParameterJdbcTemplate.update(sql, new MapSqlParameterSource("id", id));

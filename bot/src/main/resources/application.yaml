@@ -1,6 +1,31 @@
 server:
   port: 8080
 
+management:
+  server:
+    port: 8011
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health,prometheus
+      path-mapping:
+        prometheus: metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    pushgateway:
+      enabled: ${METRICS_PUSHGATEWAY_ENABLED:false}
+      url: ${METRICS_PUSHGATEWAY_URL:http://localhost:9091}
+      job: ${spring.application.name}
+      app-type: bot
+      interval-ms: 15000
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 10ms,50ms,100ms,250ms,500ms,1s,2s,5s
+
 spring:
   application:
     name: bot

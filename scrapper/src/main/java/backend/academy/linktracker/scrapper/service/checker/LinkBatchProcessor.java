@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.service.checker;
 
 import backend.academy.linktracker.scrapper.dto.Link;
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.service.provider.LinkTimeProvider;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class LinkBatchProcessor {
     private final List<LinkTimeProvider> providers;
     private final LinkUpdateProcessor linkUpdateProcessor;
+    private final ScrapperMetrics metrics;
 
     public List<Link> processBatch(List<Link> links) {
         log.atInfo().addKeyValue("batchSize", links.size()).log("Starting batch check");
@@ -50,7 +52,9 @@ public class LinkBatchProcessor {
                     .addKeyValue("count", providerLinks.size())
                     .log("Requesting batch from provider");
 
-            List<LinkTimeProvider.ResponseWithLink> results = provider.getResponseBatch(providerLinks);
+            String source = metrics.trackedSource(providerLinks.getFirst().url());
+            List<LinkTimeProvider.ResponseWithLink> results = metrics.recordRequestDuration(
+                    "external_source", source, () -> provider.getResponseBatch(providerLinks));
 
             log.atDebug()
                     .addKeyValue("provider", providerName)

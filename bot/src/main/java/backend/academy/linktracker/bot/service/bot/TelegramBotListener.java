@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot.service.bot;
 
+import backend.academy.linktracker.bot.metrics.BotMetrics;
 import backend.academy.linktracker.bot.service.handler.UpdateHandler;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
@@ -13,10 +14,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TelegramBotListener implements UpdatesListener {
     private final UpdateHandler updateHandler;
+    private final BotMetrics metrics;
 
     @Override
     public int process(List<Update> updates) {
         for (Update update : updates) {
+            metrics.incrementTelegramRequest("telegram_update");
             try {
                 updateHandler.process(update);
             } catch (Exception e) {

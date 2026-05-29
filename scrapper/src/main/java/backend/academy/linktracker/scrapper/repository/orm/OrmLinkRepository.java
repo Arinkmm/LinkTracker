@@ -36,6 +36,11 @@ public class OrmLinkRepository implements LinkRepository {
     }
 
     @Override
+    public List<Link> findAll() {
+        return jpaLinkRepository.findAll().stream().map(this::toDto).toList();
+    }
+
+    @Override
     public void remove(Long id) {
         jpaLinkRepository.deleteById(id);
     }

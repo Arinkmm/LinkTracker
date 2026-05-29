@@ -1,0 +1,62 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: link-tracker-memory
+    folder: Link Tracker
+    interval: 1m
+    rules:
+      - uid: link-tracker-high-jvm-heap
+        title: High JVM heap usage
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: Prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: Prometheus
+              editorMode: code
+              expr: sum(jvm_memory_used_bytes{area="heap"}) by (application) / sum(jvm_memory_max_bytes{area="heap"}) by (application)
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions: []
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: max
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions: []
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0.8
+              type: math
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        annotations:
+          description: JVM heap usage is higher than 80% for at least 2 minutes.
+          summary: High JVM heap usage
+        labels:
+          severity: warning
+        isPaused: false

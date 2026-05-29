@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.service.consumer;
 
 import backend.academy.linktracker.avro.ProcessedLinkUpdateEvent;
+import backend.academy.linktracker.bot.metrics.BotMetrics;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UpdateConsumer {
     private final TelegramSender telegramSender;
+    private final BotMetrics metrics;
 
     private final Cache<String, Boolean> dedupCache;
 
@@ -40,7 +42,10 @@ public class UpdateConsumer {
                 .addKeyValue("priority", event.getPriority())
                 .log("Message received");
 
-        event.getTgChatIds().forEach(chatId -> telegramSender.sendMessage(chatId, event.getDescription()));
+        event.getTgChatIds().forEach(chatId -> {
+            int sentMessages = telegramSender.sendMessage(chatId, event.getDescription());
+            metrics.incrementSentNotification(sentMessages);
+        });
     }
 
     private void validate(ProcessedLinkUpdateEvent event) {
