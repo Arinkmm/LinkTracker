@@ -79,7 +79,7 @@ class ScrapperIntegrationContainerTest {
             .withEnv("GITHUB_TOKEN", "test-token")
             .withEnv("STACKOVERFLOW_KEY", "test-key")
             .withEnv("STACKOVERFLOW_ACCESS_KEY", "test-access-token")
-            .waitingFor(Wait.forHttp("/actuator/health")
+            .waitingFor(Wait.forHttp("/health")
                     .forPort(ContainerConstants.SCRAPPER_PORT)
                     .forStatusCode(200))
             .withStartupTimeout(Duration.ofSeconds(120));
