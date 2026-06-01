@@ -18,20 +18,25 @@ public class ChatService {
 
     @Transactional
     public void registerChat(Long id) {
-        if (metrics.recordRequestDuration("database", "chats", () -> chatRepository.exists(id))) {
+        if (metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(id))) {
             throw new ChatAlreadyExistsException();
         }
-        metrics.recordRequestDuration("database", "chats", () -> chatRepository.save(id));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.save(id));
     }
 
     @Transactional
     @CacheEvict(value = "links", key = "#id")
     public void deleteChat(Long id) {
-        if (!metrics.recordRequestDuration("database", "chats", () -> chatRepository.exists(id))) {
+        if (!metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(id))) {
             throw new ChatNotFoundException();
         }
 
-        metrics.recordRequestDuration("database", "chats", () -> chatRepository.delete(id));
-        metrics.recordRequestDuration("database", "links", linkRepository::removeOrphans);
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.delete(id));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_LINKS, linkRepository::removeOrphans);
     }
 }

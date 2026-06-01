@@ -54,7 +54,7 @@ public class LinkBatchProcessor {
 
             String source = metrics.trackedSource(providerLinks.getFirst().url());
             List<LinkTimeProvider.ResponseWithLink> results = metrics.recordRequestDuration(
-                    "external_source", source, () -> provider.getResponseBatch(providerLinks));
+                    ScrapperMetrics.SCOPE_EXTERNAL_SOURCE, source, () -> provider.getResponseBatch(providerLinks));
 
             log.atDebug()
                     .addKeyValue("provider", providerName)

@@ -28,41 +28,59 @@ public class LinkService {
     @Transactional
     @CacheEvict(value = "links", key = "#chatId")
     public LinkResponse addLink(Long chatId, AddLinkRequest request) {
-        if (!metrics.recordRequestDuration("database", "chats", () -> chatRepository.exists(chatId))) {
+        if (!metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(chatId))) {
             throw new ChatNotFoundException();
         }
 
-        Link link = metrics.recordRequestDuration("database", "links", () -> linkRepository.save(request.getLink()));
+        Link link = metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_LINKS,
+                () -> linkRepository.save(request.getLink()));
 
         if (metrics.recordRequestDuration(
-                "database", "subscriptions", () -> subscriptionRepository.exists(link.id(), chatId))) {
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_SUBSCRIPTIONS,
+                () -> subscriptionRepository.exists(link.id(), chatId))) {
             throw new LinkAlreadyTrackedException();
         }
 
         metrics.recordRequestDuration(
-                "database", "subscriptions", () -> subscriptionRepository.save(chatId, link.id(), request.getTags()));
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_SUBSCRIPTIONS,
+                () -> subscriptionRepository.save(chatId, link.id(), request.getTags()));
         return mapToResponse(link, request.getTags());
     }
 
     @Transactional
     @CacheEvict(value = "links", key = "#chatId")
     public LinkResponse removeLink(Long chatId, RemoveLinkRequest request) {
-        if (!metrics.recordRequestDuration("database", "chats", () -> chatRepository.exists(chatId))) {
+        if (!metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(chatId))) {
             throw new ChatNotFoundException();
         }
 
         Link link = metrics.recordRequestDuration(
-                        "database", "links", () -> linkRepository.findByUrl(request.getLink()))
+                        ScrapperMetrics.SCOPE_DATABASE,
+                        ScrapperMetrics.TYPE_LINKS,
+                        () -> linkRepository.findByUrl(request.getLink()))
                 .orElseThrow(ChatNotFoundException::new);
 
         if (!metrics.recordRequestDuration(
-                "database", "subscriptions", () -> subscriptionRepository.exists(link.id(), chatId))) {
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_SUBSCRIPTIONS,
+                () -> subscriptionRepository.exists(link.id(), chatId))) {
             throw new ChatNotFoundException();
         }
 
         metrics.recordRequestDuration(
-                "database", "subscriptions", () -> subscriptionRepository.remove(chatId, link.id()));
-        metrics.recordRequestDuration("database", "links", () -> linkRepository.removeIfOrphan(link.id()));
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_SUBSCRIPTIONS,
+                () -> subscriptionRepository.remove(chatId, link.id()));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_LINKS,
+                () -> linkRepository.removeIfOrphan(link.id()));
 
         return mapToResponse(link, List.of());
     }
@@ -70,7 +88,8 @@ public class LinkService {
     @Transactional(readOnly = true)
     @Cacheable(value = "links", key = "#chatId")
     public ListLinksResponse getLinks(Long chatId) {
-        if (!metrics.recordRequestDuration("database", "chats", () -> chatRepository.exists(chatId))) {
+        if (!metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(chatId))) {
             throw new ChatNotFoundException();
         }
 
@@ -82,17 +101,21 @@ public class LinkService {
         do {
             int currentPage = page;
             batch = metrics.recordRequestDuration(
-                    "database",
-                    "subscriptions",
+                    ScrapperMetrics.SCOPE_DATABASE,
+                    ScrapperMetrics.TYPE_SUBSCRIPTIONS,
                     () -> subscriptionRepository.findSubscriptionByChatId(chatId, currentPage, size));
             allSubscriptions.addAll(batch);
             page++;
         } while (batch.size() == size);
 
         List<Long> linkIds = allSubscriptions.stream().map(Subscription::linkId).toList();
-        Map<Long, Link> linksMap =
-                metrics.recordRequestDuration("database", "links", () -> linkRepository.findByIds(linkIds)).stream()
-                        .collect(Collectors.toMap(Link::id, link -> link));
+        Map<Long, Link> linksMap = metrics
+                .recordRequestDuration(
+                        ScrapperMetrics.SCOPE_DATABASE,
+                        ScrapperMetrics.TYPE_LINKS,
+                        () -> linkRepository.findByIds(linkIds))
+                .stream()
+                .collect(Collectors.toMap(Link::id, link -> link));
 
         List<LinkResponse> responseLinks = allSubscriptions.stream()
                 .map(sub -> mapToResponse(linksMap.get(sub.linkId()), sub.tags()))
@@ -108,12 +131,17 @@ public class LinkService {
     @Transactional(readOnly = true)
     public List<Link> getStaleLinks(Instant threshold, int page, int size) {
         return metrics.recordRequestDuration(
-                "database", "links", () -> linkRepository.findStaleLinks(threshold, page, size));
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_LINKS,
+                () -> linkRepository.findStaleLinks(threshold, page, size));
     }
 
     @Transactional
     public void updateLastChecked(Long id, Instant time) {
-        metrics.recordRequestDuration("database", "links", () -> linkRepository.updateLastChecked(id, time));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_LINKS,
+                () -> linkRepository.updateLastChecked(id, time));
     }
 
     private LinkResponse mapToResponse(Link link, List<String> tags) {

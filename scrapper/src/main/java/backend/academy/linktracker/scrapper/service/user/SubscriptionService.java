@@ -17,6 +17,8 @@ public class SubscriptionService {
     @Transactional(readOnly = true)
     public List<Subscription> getSubscriptionByLinkId(long linkId, int page, int size) {
         return metrics.recordRequestDuration(
-                "database", "subscriptions", () -> subscriptionRepository.findSubscriptionByLinkId(linkId, page, size));
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_SUBSCRIPTIONS,
+                () -> subscriptionRepository.findSubscriptionByLinkId(linkId, page, size));
     }
 }

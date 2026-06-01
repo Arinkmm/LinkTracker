@@ -21,7 +21,7 @@ public class LinkController implements LinksApi {
 
     @Override
     public ResponseEntity<ListLinksResponse> linksGet(Long tgChatId) {
-        metrics.incrementApiRequest("links_get");
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_GET);
         log.atDebug().addKeyValue("id", tgChatId).log("Getting links");
 
         return ResponseEntity.ok(service.getLinks(tgChatId));
@@ -29,7 +29,7 @@ public class LinkController implements LinksApi {
 
     @Override
     public ResponseEntity<LinkResponse> linksPost(Long tgChatId, AddLinkRequest addLinkRequest) {
-        metrics.incrementApiRequest("links_post");
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_POST);
         log.atInfo()
                 .addKeyValue("id", tgChatId)
                 .addKeyValue("url", addLinkRequest.getLink())
@@ -45,7 +45,7 @@ public class LinkController implements LinksApi {
 
     @Override
     public ResponseEntity<LinkResponse> linksDelete(Long tgChatId, RemoveLinkRequest removeLinkRequest) {
-        metrics.incrementApiRequest("links_delete");
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_DELETE);
         log.atInfo()
                 .addKeyValue("id", tgChatId)
                 .addKeyValue("url", removeLinkRequest.getLink())

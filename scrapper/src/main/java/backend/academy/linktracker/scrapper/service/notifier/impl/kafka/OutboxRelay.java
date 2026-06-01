@@ -66,7 +66,10 @@ public class OutboxRelay {
             return kafkaTemplate
                     .send(kafkaProperties.getTopic(), String.valueOf(linkUpdateEvent.getId()), linkUpdateEvent)
                     .handle((result, ex) -> {
-                        metrics.recordRequestDuration("llm_agent", "kafka", (System.nanoTime() - start) / 1_000_000.0);
+                        metrics.recordRequestDuration(
+                                ScrapperMetrics.SCOPE_LLM_AGENT,
+                                ScrapperMetrics.TYPE_KAFKA,
+                                (System.nanoTime() - start) / 1_000_000.0);
                         if (ex != null) {
                             log.atError()
                                     .setCause(ex)

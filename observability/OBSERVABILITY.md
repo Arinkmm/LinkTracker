@@ -94,35 +94,35 @@ sum by (command) (rate(command_requests_total{application=~"$application"}[5m]))
 ### Активные Ссылки
 
 ```promql
-links_on_track_total{application=~"$application", tracked_source=~"github|stackoverflow"}
+links_on_track{application=~"$application", tracked_source=~"github|stackoverflow"}
 ```
 
 ### Scrape Duration P50/P95/P99
 
 ```promql
-histogram_quantile(0.50, sum by (le, scope_type) (rate(request_duration_ms_total_bucket{application=~"$application", scope="external_source"}[5m])))
+histogram_quantile(0.50, sum by (le, scope_type) (rate(request_duration_ms_bucket{application=~"$application", scope="external_source"}[5m])))
 ```
 
 ```promql
-histogram_quantile(0.95, sum by (le, scope_type) (rate(request_duration_ms_total_bucket{application=~"$application", scope="external_source"}[5m])))
+histogram_quantile(0.95, sum by (le, scope_type) (rate(request_duration_ms_bucket{application=~"$application", scope="external_source"}[5m])))
 ```
 
 ```promql
-histogram_quantile(0.99, sum by (le, scope_type) (rate(request_duration_ms_total_bucket{application=~"$application", scope="external_source"}[5m])))
+histogram_quantile(0.99, sum by (le, scope_type) (rate(request_duration_ms_bucket{application=~"$application", scope="external_source"}[5m])))
 ```
 
 ### Bot Command Duration P50/P95/P99
 
 ```promql
-histogram_quantile(0.50, sum by (le, command) (rate(command_duration_ms_total_bucket{application=~"$application"}[5m])))
+histogram_quantile(0.50, sum by (le, command) (rate(command_duration_ms_bucket{application=~"$application"}[5m])))
 ```
 
 ```promql
-histogram_quantile(0.95, sum by (le, command) (rate(command_duration_ms_total_bucket{application=~"$application"}[5m])))
+histogram_quantile(0.95, sum by (le, command) (rate(command_duration_ms_bucket{application=~"$application"}[5m])))
 ```
 
 ```promql
-histogram_quantile(0.99, sum by (le, command) (rate(command_duration_ms_total_bucket{application=~"$application"}[5m])))
+histogram_quantile(0.99, sum by (le, command) (rate(command_duration_ms_bucket{application=~"$application"}[5m])))
 ```
 
 ### Telegram Requests

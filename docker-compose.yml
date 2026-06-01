@@ -279,7 +279,7 @@ services:
       KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       SPRING_LIQUIBASE_ENABLED: "false"
       METRICS_PUSHGATEWAY_ENABLED: "true"
-      METRICS_PUSHGATEWAY_URL: http://pushgateway:9091
+      METRICS_PUSHGATEWAY_ADDRESS: pushgateway:9091
     ports:
       - "8081:8081"
       - "9091:9091"
@@ -307,7 +307,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       METRICS_PUSHGATEWAY_ENABLED: "true"
-      METRICS_PUSHGATEWAY_URL: http://pushgateway:9091
+      METRICS_PUSHGATEWAY_ADDRESS: pushgateway:9091
     ports:
       - "8080:8080"
       - "8011:8011"

@@ -19,7 +19,7 @@ public class TelegramBotListener implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         for (Update update : updates) {
-            metrics.incrementTelegramRequest("telegram_update");
+            metrics.incrementTelegramRequest(BotMetrics.REQUEST_TYPE_TELEGRAM_UPDATE);
             try {
                 updateHandler.process(update);
             } catch (Exception e) {

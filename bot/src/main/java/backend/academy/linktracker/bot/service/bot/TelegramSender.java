@@ -68,7 +68,7 @@ public class TelegramSender {
     }
 
     private boolean executeMessage(Long id, String text) {
-        metrics.incrementTelegramRequest("send_message");
+        metrics.incrementTelegramRequest(BotMetrics.REQUEST_TYPE_SEND_MESSAGE);
         SendResponse response = bot.execute(new SendMessage(id, text));
         if (!response.isOk()) {
             log.atError()

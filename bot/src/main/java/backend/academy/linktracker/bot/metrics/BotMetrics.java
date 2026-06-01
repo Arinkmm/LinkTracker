@@ -8,25 +8,39 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class BotMetrics {
+    public static final String REQUEST_TYPE_COMMAND = "command";
+    public static final String REQUEST_TYPE_HTTP_UPDATE = "http_update";
+    public static final String REQUEST_TYPE_SEND_MESSAGE = "send_message";
+    public static final String REQUEST_TYPE_TELEGRAM_UPDATE = "telegram_update";
+    public static final String SCOPE_SCRAPPER_SYNC_API = "scrapper_sync_api";
+
+    private static final String COMMAND_REQUESTS_METRIC = "command_requests_total";
+    private static final String COMMAND_DURATION_METRIC = "command_duration_ms";
+    private static final String SENT_NOTIFICATION_METRIC = "sent_notification_total";
+    private static final String TELEGRAM_REQUESTS_METRIC = "telegram_requests_total";
+    private static final String TAG_COMMAND = "command";
+    private static final String TAG_REQUEST_TYPE = "request_type";
+    private static final String TAG_SCOPE = "scope";
+    private static final String TAG_SCOPE_TYPE = "scope_type";
     private static final double[] COMMAND_DURATION_BUCKETS_MS = {10, 50, 100, 250, 500, 1000, 2000, 5000};
 
     private final MeterRegistry meterRegistry;
 
     public void incrementCommandRequest(String command) {
         meterRegistry
-                .counter("command_requests_total", "command", command, "request_type", "command")
+                .counter(COMMAND_REQUESTS_METRIC, TAG_COMMAND, command, TAG_REQUEST_TYPE, REQUEST_TYPE_COMMAND)
                 .increment();
     }
 
     public void incrementTelegramRequest(String requestType) {
         meterRegistry
-                .counter("telegram_requests_total", "request_type", requestType)
+                .counter(TELEGRAM_REQUESTS_METRIC, TAG_REQUEST_TYPE, requestType)
                 .increment();
     }
 
     public void incrementSentNotification(double amount) {
         if (amount > 0) {
-            meterRegistry.counter("sent_notification_total").increment(amount);
+            meterRegistry.counter(SENT_NOTIFICATION_METRIC).increment(amount);
         }
     }
 
@@ -40,11 +54,11 @@ public class BotMetrics {
     }
 
     private void recordCommandDuration(String command, String scope, String scopeType, double durationMs) {
-        DistributionSummary.builder("command_duration_ms")
+        DistributionSummary.builder(COMMAND_DURATION_METRIC)
                 .serviceLevelObjectives(COMMAND_DURATION_BUCKETS_MS)
-                .tag("command", command)
-                .tag("scope", scope)
-                .tag("scope_type", scopeType)
+                .tag(TAG_COMMAND, command)
+                .tag(TAG_SCOPE, scope)
+                .tag(TAG_SCOPE_TYPE, scopeType)
                 .register(meterRegistry)
                 .record(durationMs);
     }

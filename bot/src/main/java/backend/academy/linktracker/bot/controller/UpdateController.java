@@ -20,7 +20,7 @@ public class UpdateController implements UpdatesApi {
 
     @Override
     public ResponseEntity<Void> updatesPost(LinkUpdate update) {
-        metrics.incrementTelegramRequest("http_update");
+        metrics.incrementTelegramRequest(BotMetrics.REQUEST_TYPE_HTTP_UPDATE);
         log.atInfo()
                 .addKeyValue("chat_count", update.getTgChatIds().size())
                 .addKeyValue("description", update.getDescription())

@@ -30,7 +30,7 @@ public class CommandHandler {
         log.atDebug().addKeyValue("id", id).addKeyValue("command", commandText).log("Executing command");
 
         metrics.incrementCommandRequest(commandText);
-        metrics.recordCommandDuration(commandText, "scrapper_sync_api", commandText, () -> {
+        metrics.recordCommandDuration(commandText, BotMetrics.SCOPE_SCRAPPER_SYNC_API, commandText, () -> {
             userService.deleteState(id);
             userService.deleteUrl(id);
 

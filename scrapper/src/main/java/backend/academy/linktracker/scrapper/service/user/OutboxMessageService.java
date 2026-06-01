@@ -19,20 +19,28 @@ public class OutboxMessageService {
 
     @Transactional
     public void addMessage(OutboxMessageEntity entity) {
-        metrics.recordRequestDuration("database", "outbox_messages", () -> outboxMessageRepository.save(entity));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.save(entity));
     }
 
     @Transactional
     public List<OutboxMessageEntity> getOutboxMessages(int maxRetries, int limit) {
         return metrics.recordRequestDuration(
-                "database", "outbox_messages", () -> outboxMessageRepository.findAll(maxRetries, limit));
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.findAll(maxRetries, limit));
     }
 
     @Transactional
     public void markAsSent(OutboxMessageEntity message) {
         message.setStatus(OutboxStatus.SENT);
         message.setUpdatedAt(Instant.now());
-        metrics.recordRequestDuration("database", "outbox_messages", () -> outboxMessageRepository.update(message));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.update(message));
     }
 
     @Transactional
@@ -40,12 +48,17 @@ public class OutboxMessageService {
         message.setStatus(OutboxStatus.ERROR);
         message.setRetryCount(message.getRetryCount() + 1);
         message.setUpdatedAt(Instant.now());
-        metrics.recordRequestDuration("database", "outbox_messages", () -> outboxMessageRepository.update(message));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.update(message));
     }
 
     @Transactional
     public void deleteOldSentMessages(int days) {
         metrics.recordRequestDuration(
-                "database", "outbox_messages", () -> outboxMessageRepository.deleteOldSentMessages(days));
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.deleteOldSentMessages(days));
     }
 }

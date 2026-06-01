@@ -17,7 +17,7 @@ public class ChatController implements TgChatApi {
 
     @Override
     public ResponseEntity<Void> tgChatIdPost(Long id) {
-        metrics.incrementApiRequest("tg_chat_post");
+        metrics.incrementApiRequest(ScrapperMetrics.API_TG_CHAT_POST);
         log.atInfo().addKeyValue("id", id).log("Registering telegram chat");
 
         service.registerChat(id);
@@ -26,7 +26,7 @@ public class ChatController implements TgChatApi {
 
     @Override
     public ResponseEntity<Void> tgChatIdDelete(Long id) {
-        metrics.incrementApiRequest("tg_chat_delete");
+        metrics.incrementApiRequest(ScrapperMetrics.API_TG_CHAT_DELETE);
         log.atInfo().addKeyValue("id", id).log("Deleting telegram chat");
 
         service.deleteChat(id);
