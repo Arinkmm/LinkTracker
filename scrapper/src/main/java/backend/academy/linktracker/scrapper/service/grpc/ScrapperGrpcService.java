@@ -5,6 +5,7 @@ import backend.academy.linktracker.grpc.AddLinkRequest;
 import backend.academy.linktracker.grpc.LinkResponse;
 import backend.academy.linktracker.grpc.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.exception.*;
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.service.mapper.GrpcMapper;
 import backend.academy.linktracker.scrapper.service.user.ChatService;
 import backend.academy.linktracker.scrapper.service.user.LinkService;
@@ -21,9 +22,11 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
     private final ChatService chatService;
     private final LinkService linkService;
     private final GrpcMapper mapper;
+    private final ScrapperMetrics metrics;
 
     @Override
     public void registerChat(RegisterChatRequest request, StreamObserver<EmptyResponse> responseObserver) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_TG_CHAT_POST);
         Long id = request.getId();
 
         log.atDebug().addKeyValue("id", id).log("gRPC registerChat");
@@ -42,6 +45,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
 
     @Override
     public void deleteChat(DeleteChatRequest request, StreamObserver<EmptyResponse> responseObserver) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_TG_CHAT_DELETE);
         Long id = request.getId();
 
         log.atDebug().addKeyValue("id", id).log("gRPC deleteChat");
@@ -60,6 +64,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
 
     @Override
     public void addLink(AddLinkRequest request, StreamObserver<LinkResponse> responseObserver) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_POST);
         Long id = request.getTgChatId();
 
         log.atDebug()
@@ -92,6 +97,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
 
     @Override
     public void removeLink(RemoveLinkRequest request, StreamObserver<LinkResponse> responseObserver) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_DELETE);
         Long id = request.getTgChatId();
 
         log.atDebug()
@@ -115,6 +121,7 @@ public class ScrapperGrpcService extends ScrapperServiceGrpc.ScrapperServiceImpl
 
     @Override
     public void getLinks(GetLinksRequest request, StreamObserver<ListLinksResponse> responseObserver) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_GET);
         Long id = request.getTgChatId();
 
         log.atDebug().addKeyValue("id", id).log("gRPC getLinks");

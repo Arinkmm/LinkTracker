@@ -28,7 +28,9 @@ public class UpdateController implements UpdatesApi {
 
         update.getTgChatIds().forEach(id -> {
             int sentMessages = telegramSender.sendMessage(id, update.getDescription());
-            metrics.incrementSentNotification(sentMessages);
+            if (sentMessages > 0) {
+                metrics.incrementSentNotification();
+            }
         });
 
         return ResponseEntity.ok().build();

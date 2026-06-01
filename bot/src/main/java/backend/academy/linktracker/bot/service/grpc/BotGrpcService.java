@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot.service.grpc;
 
+import backend.academy.linktracker.bot.metrics.BotMetrics;
 import backend.academy.linktracker.bot.service.bot.TelegramSender;
 import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.grpc.EmptyResponse;
@@ -17,11 +18,18 @@ import org.springframework.grpc.server.service.GrpcService;
 @Slf4j
 public class BotGrpcService extends BotServiceGrpc.BotServiceImplBase {
     private final TelegramSender telegramSender;
+    private final BotMetrics metrics;
 
     @Override
     public void sendUpdate(LinkUpdate req, StreamObserver<EmptyResponse> resp) {
         try {
-            req.getTgChatIdsList().forEach(id -> telegramSender.sendMessage(id, req.getDescription()));
+            metrics.incrementTelegramRequest(BotMetrics.REQUEST_TYPE_GRPC_UPDATE);
+            req.getTgChatIdsList().forEach(id -> {
+                int sentMessages = telegramSender.sendMessage(id, req.getDescription());
+                if (sentMessages > 0) {
+                    metrics.incrementSentNotification();
+                }
+            });
             resp.onNext(EmptyResponse.getDefaultInstance());
             resp.onCompleted();
         } catch (Exception e) {

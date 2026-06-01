@@ -44,7 +44,9 @@ public class UpdateConsumer {
 
         event.getTgChatIds().forEach(chatId -> {
             int sentMessages = telegramSender.sendMessage(chatId, event.getDescription());
-            metrics.incrementSentNotification(sentMessages);
+            if (sentMessages > 0) {
+                metrics.incrementSentNotification();
+            }
         });
     }
 

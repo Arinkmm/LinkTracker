@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BotMetrics {
     public static final String REQUEST_TYPE_COMMAND = "command";
+    public static final String REQUEST_TYPE_GRPC_UPDATE = "grpc_update";
     public static final String REQUEST_TYPE_HTTP_UPDATE = "http_update";
     public static final String REQUEST_TYPE_SEND_MESSAGE = "send_message";
     public static final String REQUEST_TYPE_TELEGRAM_UPDATE = "telegram_update";
@@ -38,10 +39,8 @@ public class BotMetrics {
                 .increment();
     }
 
-    public void incrementSentNotification(double amount) {
-        if (amount > 0) {
-            meterRegistry.counter(SENT_NOTIFICATION_METRIC).increment(amount);
-        }
+    public void incrementSentNotification() {
+        meterRegistry.counter(SENT_NOTIFICATION_METRIC).increment();
     }
 
     public void recordCommandDuration(String command, String scope, String scopeType, Runnable action) {
