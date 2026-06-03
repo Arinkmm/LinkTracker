@@ -1,81 +1,262 @@
-# LinkTracker
+# Link Tracker
 
-LinkTracker – Telegram-бот, который отслеживает изменения на веб-страницах и оперативно информирует пользователя о них.
+Link Tracker - это Telegram-бот и набор backend-сервисов для отслеживания обновлений в GitHub и Stack Overflow. Пользователь добавляет ссылку в боте, а система периодически проверяет источник, обрабатывает обновления и отправляет уведомления обратно в Telegram.
 
----
+Проект сделан как микросервисное Java-приложение: Bot отвечает за Telegram-интерфейс, Scrapper хранит подписки и проверяет внешние API, AI Agent фильтрует/группирует/суммаризирует обновления, а общие HTTP/gRPC/Kafka-контракты лежат в `api-common`.
 
-## Как запустить
+## Возможности
 
-### 1. Заполнение переменных окружения
+- Поддержка Telegram-команд: `/start`, `/help`, `/track`, `/untrack`, `/list`, `/cancel`.
+- Отслеживание GitHub-репозиториев через GitHub Issues/Pull Requests API.
+- Отслеживание вопросов Stack Overflow, включая новые ответы и комментарии.
+- Теги для подписок и фильтрация списка ссылок командой `/list <tag>`.
+- Доставка обновлений через Kafka с Avro-сообщениями и Schema Registry.
+- gRPC и HTTP-клиенты между сервисами.
+- Outbox-паттерн для надежной отправки уведомлений из Scrapper.
+- Кеширование подписок через Valkey/Redis-кластер и локальный L1-кеш.
+- Rate limiting, retry и circuit breaker на внешних и внутренних вызовах.
+- AI Agent для фильтрации, приоритизации, группировки и краткого пересказа обновлений.
 
-Найдите в корне проекта файл `.env.dist` и создайте рядом файл `.env` с вашими переменными из шаблона
+## Архитектура
 
-### 2. Получение токена
+```mermaid
+flowchart LR
+    user["Пользователь Telegram"] --> telegram["Telegram Bot API"]
+    telegram --> bot["Bot service"]
 
-Если у вас нет бота, создайте его в Telegram через [@BotFather](https://t.me/BotFather) и скопируйте полученный API Token
+    bot -- "HTTP/gRPC: подписки" --> scrapper["Scrapper service"]
+    scrapper --> postgres[("PostgreSQL")]
+    scrapper --> valkey[("Valkey / Redis cluster")]
 
-### 3. Настройка БД
+    scrapper -- "GitHub API" --> github["GitHub"]
+    scrapper -- "Stack Exchange API" --> stackoverflow["Stack Overflow"]
 
-Укажите username и password для подключения к бд, которая будет взаимодействовать с приложением, и само url на БД
+    scrapper -- "RawLinkUpdateEvent" --> kafka[("Kafka")]
+    kafka --> ai["AI Agent"]
+    ai -- "ProcessedLinkUpdateEvent" --> kafka
+    kafka --> bot
+    bot --> telegram
+```
 
-### 4. Взаимодействие со сторонним API
+### Модули
 
-Необходимо получить `github_token` для работы с Github API (https://docs.github.com/en/rest), а также для работы со StackOverflow API (https://api.stackexchange.com/) `stackoverflow_key` - публичный ключ для идентификации приложения и `stackoverflow_access_key` - токен доступа конкретного пользователя
+| Модуль | Назначение |
+| --- | --- |
+| `bot` | Telegram-бот, обработка команд, отправка уведомлений пользователям |
+| `scrapper` | Управление чатами и подписками, проверка GitHub/Stack Overflow, outbox, кеширование |
+| `ai-agent` | Kafka consumer/producer для фильтрации, группировки, приоритизации и суммаризации обновлений |
+| `api-common` | OpenAPI, protobuf, Avro-схемы и сгенерированные общие DTO/API |
 
-Приложение готово к работе!
+## Стек
 
----
+- Java 25
+- Spring Boot 4.0.2
+- Maven 3.9.12
+- PostgreSQL 17
+- Liquibase
+- Confluent Platform 8.2.0: Kafka + Schema Registry
+- Avro
+- gRPC / Protobuf
+- OpenAPI / Springdoc
+- Valkey 8.0 / Redis-compatible cluster
+- Resilience4j
+- WireMock
+- Testcontainers
 
-## Отчет о результатах нагрузочного тестирования
+## Быстрый старт
 
-### Условия тестирования
+### Требования
 
-Нагрузочное тестирование проводилось с помощью **Apache JMeter** для оценки эффективности различных стратегий кэширования в сервисе Scrapper.
-*   **Количество потоков (Threads):** 16
-*   **Ramp-up:** 60 секунд
-*   **Длительность нагрузки:** 300 секунд
-*   **Профиль нагрузки:** Смешанный (операции `GET`, `POST` и `DELETE` к эндпоинту `/links`)
-*   **Объем данных:** Предварительно заполнено 100 000 ссылок (~100 на пользователя)
+- JDK 25
+- Docker и Docker Compose
+- Telegram bot token от [@BotFather](https://t.me/BotFather)
+- GitHub token
+- Stack Exchange key и access token
+- Hugging Face-compatible API token для AI Agent
 
-### Сводная таблица метрик (Total)
+### Запуск через Docker Compose
 
-| Сценарий       | Тип кэширования          | Throughput (RPS) | Error %   | Avg Latency (ms) | 99th pct (ms) | Max Latency (ms) |
-|:---------------|:-------------------------|:-----------------|:----------|:-----------------|:--------------|:-----------------|
-| **Сценарий 1** | Без кэша                 | 148.43           | 0.02%     | 102.95           | 25.00         | 43 084           |
-| **Сценарий 2** | **L1 + L2 (Near Cache)** | **1 042.24**     | **0.00%** | **13.74**        | **30.00**     | **1 659**        |
-| **Сценарий 3** | **L2 (Redis)**           | **1 164.62**     | **0.00%** | **12.90**        | **24.00**     | **1 260**        |
+1. Создайте локальный `.env` из шаблона:
 
----
+```powershell
+Copy-Item .env.dist .env
+```
 
-### Анализ результатов
+Для Linux/macOS:
 
-#### 1. Сценарий 1: Без кэширования
+```bash
+cp .env.dist .env
+```
 
-![result-no-cache.png](scrapper/load-test/images/result-no-cache.png)
+2. Заполните `.env`. Минимальный пример для Docker Compose:
 
-Показал минимальную пропускную способность (148.43 RPS) и наличие ошибок (0.02%). Основным ограничением является время отклика СУБД при конкурентных запросах, что приводит к критическому росту **Max Latency (43 сек)**
+```dotenv
+DB_USER=linktracker
+DB_PASSWORD=linktracker
+DB_NAME=linktracker
+DB_DRIVER=org.postgresql.Driver
 
-#### 2. Сценарий 2: L1 + L2 (Near Cache)
+TELEGRAM_TOKEN=<telegram-bot-token>
+GITHUB_TOKEN=<github-token>
+STACKOVERFLOW_KEY=<stackexchange-key>
+STACKOVERFLOW_ACCESS_KEY=<stackexchange-access-token>
 
-![result-client-side-caching](scrapper/load-test/images/result-client-side-caching.png)
+KAFKA_SCHEMA_REGISTRY_URL=http://schema-registry:8081
 
-Внедрение двухуровневой системы на базе Caffeine (L1) и Redis (L2) позволило достичь стабильных **1 042.24 RPS**
-*   **Производительность:** Среднее время отклика сократилось до **13.74 мс**, а максимальные задержки стабилизировались на уровне **1.6 сек** благодаря оптимизации объема объектов в Heap-памяти и настройке `l1Capacity`
-*   **Архитектурный компромисс:** Незначительное снижение RPS относительно чистого Redis обусловлено накладными расходами на поддержку консистентности через Pub/Sub сообщения и десериализацию объектов для локального хранения. Однако это решение радикально снижает нагрузку на сетевой интерфейс и Redis-кластер
+HF_API_URL=https://router.huggingface.co/v1/chat/completions
+HF_TOKEN=<hf-token>
+HF_MODEL=openai/gpt-oss-120b:fastest
+```
 
-#### 3. Сценарий 3: L2 (Redis)
+3. Соберите и запустите проект:
 
-![result-redis](scrapper/load-test/images/result-redis.png)
+```powershell
+docker compose up --build -d
+```
 
-Продемонстрировал пиковую пропускную способность (**1 164.62 RPS**).
-*   **Результаты:** Минимальное среднее время отклика (12.9 мс) и наиболее низкий 99-й перцентиль (24 мс).
-*   **Преимущество:** Вынос кэша в отдельную инфраструктуру обеспечивает максимальную масштабируемость при минимальном потреблении ресурсов JVM приложения
+4. Проверьте, что контейнеры поднялись:
 
----
+```powershell
+docker compose ps
+```
 
-### Итоговый вывод
+Для остановки окружения:
 
-Внедрение двухуровневого кэширования (L1+L2) признано наиболее сбалансированным решением. Несмотря на небольшую потерю в пиковом Throughput по сравнению с чистым Redis, данная конфигурация обеспечивает:
-1.  **Снижение сетевого трафика:** Большая часть запросов на чтение обслуживается мгновенно из памяти приложения (L1)
-2.  **Защиту инфраструктуры:** L1-слой выступает буфером, предотвращая перегрузку Redis-кластера при резких всплесках нагрузки
-3.  **Стабильность:** Ограничение размера локального кэша и использование механизма инвалидации через Pub/Sub гарантируют отсутствие длительных пауз Garbage Collector при сохранении высокой актуальности данных
+```powershell
+docker compose down
+```
+
+Если нужно удалить и данные PostgreSQL/Valkey:
+
+```powershell
+docker compose down -v
+```
+
+### Локальный запуск из IDE или Maven
+
+Поднимите инфраструктуру:
+
+```powershell
+docker compose up -d postgres liquibase-migrations kafka-1 kafka-2 kafka-3 schema-registry kafka-init valkey-1 valkey-2 valkey-3 valkey-init
+```
+
+Для локального запуска сервисов вне Docker используйте host-адреса:
+
+```dotenv
+DB_URL=jdbc:postgresql://localhost:5432/linktracker
+KAFKA_BOOTSTRAP_SERVERS=localhost:19092,localhost:29092,localhost:39092
+KAFKA_SCHEMA_REGISTRY_URL=http://localhost:8082
+REDIS_CLUSTER_NODES=localhost:6379,localhost:6380,localhost:6381
+APP_BOT_URL=http://localhost:8080
+APP_SCRAPPER_URL=http://localhost:8081
+APP_GRPC_HOST=localhost
+SPRING_LIQUIBASE_ENABLED=true
+```
+
+Сгенерируйте общие контракты:
+
+```powershell
+.\mvnw.cmd -pl api-common -am generate-sources
+```
+
+Запустите сервисы в отдельных терминалах:
+
+```powershell
+.\mvnw.cmd -pl scrapper -am spring-boot:run
+.\mvnw.cmd -pl ai-agent -am spring-boot:run
+.\mvnw.cmd -pl bot -am spring-boot:run
+```
+
+Для Linux/macOS замените `.\mvnw.cmd` на `./mvnw`.
+
+## Переменные окружения
+
+| Переменная | Назначение |
+| --- | --- |
+| `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_DRIVER`, `DB_URL` | Подключение к PostgreSQL |
+| `TELEGRAM_TOKEN` | Токен Telegram-бота |
+| `GITHUB_TOKEN` | Токен для GitHub REST API |
+| `STACKOVERFLOW_KEY`, `STACKOVERFLOW_ACCESS_KEY` | Доступ к Stack Exchange API |
+| `REDIS_CLUSTER_NODES` | Узлы Valkey/Redis-кластера |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka bootstrap servers |
+| `KAFKA_SCHEMA_REGISTRY_URL` | URL Confluent Schema Registry |
+| `APP_BOT_URL`, `APP_SCRAPPER_URL`, `APP_GRPC_HOST` | Адреса внутренних сервисов |
+| `SPRING_LIQUIBASE_ENABLED` | Включение Liquibase внутри приложения |
+| `HF_API_URL`, `HF_TOKEN`, `HF_MODEL` | Настройки AI API для суммаризации |
+
+## Порты
+
+| Компонент | URL |
+| --- | --- |
+| Bot HTTP API | <http://localhost:8080> |
+| Bot health | <http://localhost:8011/health> |
+| Scrapper HTTP API | <http://localhost:8081> |
+| Scrapper health | <http://localhost:8081/health> |
+| AI Agent | <http://localhost:8083> |
+| Schema Registry | <http://localhost:8082> |
+
+Swagger UI доступен у HTTP-сервисов по пути `/swagger-ui/index.html`.
+
+## API и контракты
+
+### Scrapper API
+
+OpenAPI-спецификация: [`api-common/src/main/resources/scrapper-api.yaml`](api-common/src/main/resources/scrapper-api.yaml)
+
+| Метод | Endpoint | Описание |
+| --- | --- | --- |
+| `POST` | `/tg-chat/{id}` | Зарегистрировать Telegram-чат |
+| `DELETE` | `/tg-chat/{id}` | Удалить Telegram-чат |
+| `GET` | `/links` | Получить список отслеживаемых ссылок |
+| `POST` | `/links` | Добавить ссылку в отслеживание |
+| `DELETE` | `/links` | Убрать ссылку из отслеживания |
+
+### Bot API
+
+OpenAPI-спецификация: [`api-common/src/main/resources/bot-api.yaml`](api-common/src/main/resources/bot-api.yaml)
+
+| Метод | Endpoint | Описание |
+| --- | --- | --- |
+| `POST` | `/updates` | Принять обновление ссылки и отправить уведомление в Telegram |
+
+### gRPC
+
+Protobuf-контракт: [`api-common/src/main/proto/linktracker.proto`](api-common/src/main/proto/linktracker.proto)
+
+- `ScrapperService`: регистрация/удаление чата, добавление/удаление ссылок, получение списка ссылок.
+- `BotService`: отправка обновления пользователю.
+
+### Kafka / Avro
+
+Avro-схемы:
+
+- [`RawLinkUpdateEvent.avsc`](api-common/src/main/avro/RawLinkUpdateEvent.avsc)
+- [`ProcessedLinkUpdateEvent.avsc`](api-common/src/main/avro/ProcessedLinkUpdateEvent.avsc)
+
+Топики:
+
+| Топик | Назначение |
+| --- | --- |
+| `link.raw-updates` | Сырые обновления от Scrapper |
+| `link.raw-updates-dlt` | Dead-letter topic для сырых обновлений |
+| `link.processed-updates` | Обработанные AI Agent обновления для Bot |
+| `link.processed-updates-dlt` | Dead-letter topic для обработанных обновлений |
+
+## Скриншоты
+
+### Команды `/start` и `/help`
+![img.png](images/img.png)
+
+### Команда `/track` - начало отслеживания ссылки с тегами
+![img_1.png](images/img_1.png)
+
+### Команда `/list` - ссылки указаны вместе с привязанными тегами
+![img_2.png](images/img_2.png)
+
+### Уведомление об обновлении по ссылке
+![img_3.png](images/img_3.png)
+
+## Поддержка и контакты
+Остались вопросы? Нужна помощь с настройкой? Нашли баг?
+
+Email: **mairabeeva42@gmail.com** | Telegram: @arinkmm
