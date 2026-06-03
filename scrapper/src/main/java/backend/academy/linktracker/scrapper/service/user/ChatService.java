@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.service.user;
 
 import backend.academy.linktracker.scrapper.exception.*;
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,23 +14,29 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatService {
     private final ChatRepository chatRepository;
     private final LinkRepository linkRepository;
+    private final ScrapperMetrics metrics;
 
     @Transactional
     public void registerChat(Long id) {
-        if (chatRepository.exists(id)) {
+        if (metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(id))) {
             throw new ChatAlreadyExistsException();
         }
-        chatRepository.save(id);
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.save(id));
     }
 
     @Transactional
     @CacheEvict(value = "links", key = "#id")
     public void deleteChat(Long id) {
-        if (!chatRepository.exists(id)) {
+        if (!metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.exists(id))) {
             throw new ChatNotFoundException();
         }
 
-        chatRepository.delete(id);
-        linkRepository.removeOrphans();
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_CHATS, () -> chatRepository.delete(id));
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE, ScrapperMetrics.TYPE_LINKS, linkRepository::removeOrphans);
     }
 }

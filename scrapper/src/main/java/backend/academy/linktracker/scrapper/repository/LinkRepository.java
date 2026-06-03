@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.dto.Link;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface LinkRepository {
@@ -12,6 +13,8 @@ public interface LinkRepository {
     List<Link> findByIds(List<Long> ids);
 
     Optional<Link> findByUrl(URI url);
+
+    Map<String, Long> countBySource();
 
     void remove(Long id);
 

@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.scrapper.client.bot.BotClient;
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.properties.KafkaProperties;
 import backend.academy.linktracker.scrapper.properties.NotificationProperties;
 import backend.academy.linktracker.scrapper.service.notifier.BotNotifier;
@@ -49,9 +50,10 @@ public class NotifierConfiguration {
             KafkaProperties kafkaProperties,
             KafkaTemplate<String, Object> kafkaTemplate,
             ObjectMapper objectMapper,
-            NotificationProperties notificationProperties) {
+            NotificationProperties notificationProperties,
+            ScrapperMetrics metrics) {
         return new OutboxRelay(
-                outboxMessageService, kafkaProperties, kafkaTemplate, objectMapper, notificationProperties);
+                outboxMessageService, kafkaProperties, kafkaTemplate, objectMapper, notificationProperties, metrics);
     }
 
     @Bean

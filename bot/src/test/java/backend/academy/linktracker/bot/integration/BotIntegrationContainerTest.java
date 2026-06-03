@@ -57,12 +57,12 @@ class BotIntegrationContainerTest {
                                 .build()))
                 .dependsOn(wiremockContainer)
                 .withNetwork(NETWORK)
-                .withExposedPorts(8080)
+                .withExposedPorts(8080, 8011)
                 .withEnv("APP_TELEGRAM_URL", "http://wiremock:8080/bot")
                 .withEnv("APP_SCRAPPER_CLIENT_TYPE", "http")
                 .withEnv("APP_UPDATES_TYPE", "http")
                 .withEnv("APP_TELEGRAM_TOKEN", "test-token")
-                .waitingFor(Wait.forHttp("/actuator/health").forPort(8080).forStatusCode(200))
+                .waitingFor(Wait.forHttp("/health").forPort(8011).forStatusCode(200))
                 .withStartupTimeout(Duration.ofSeconds(120));
     }
 

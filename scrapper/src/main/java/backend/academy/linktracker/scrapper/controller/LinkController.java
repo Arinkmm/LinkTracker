@@ -5,6 +5,7 @@ import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.service.user.LinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class LinkController implements LinksApi {
     private final LinkService service;
+    private final ScrapperMetrics metrics;
 
     @Override
     public ResponseEntity<ListLinksResponse> linksGet(Long tgChatId) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_GET);
         log.atDebug().addKeyValue("id", tgChatId).log("Getting links");
 
         return ResponseEntity.ok(service.getLinks(tgChatId));
@@ -26,6 +29,7 @@ public class LinkController implements LinksApi {
 
     @Override
     public ResponseEntity<LinkResponse> linksPost(Long tgChatId, AddLinkRequest addLinkRequest) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_POST);
         log.atInfo()
                 .addKeyValue("id", tgChatId)
                 .addKeyValue("url", addLinkRequest.getLink())
@@ -41,6 +45,7 @@ public class LinkController implements LinksApi {
 
     @Override
     public ResponseEntity<LinkResponse> linksDelete(Long tgChatId, RemoveLinkRequest removeLinkRequest) {
+        metrics.incrementApiRequest(ScrapperMetrics.API_LINKS_DELETE);
         log.atInfo()
                 .addKeyValue("id", tgChatId)
                 .addKeyValue("url", removeLinkRequest.getLink())

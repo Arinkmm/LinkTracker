@@ -1,7 +1,9 @@
 package backend.academy.linktracker.scrapper.repository.orm;
 
 import backend.academy.linktracker.scrapper.repository.orm.entity.LinkEntity;
+import backend.academy.linktracker.scrapper.repository.orm.projection.TrackedLinkSourceCount;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +18,22 @@ public interface JpaLinkRepository extends JpaRepository<LinkEntity, Long> {
     @Query(
             "SELECT l FROM LinkEntity l WHERE l.lastChecked IS NULL OR l.lastChecked < :threshold ORDER BY l.lastChecked ASC NULLS FIRST")
     Page<LinkEntity> findStaleLinks(@Param("threshold") Instant threshold, Pageable pageable);
+
+    @Query(value = """
+        SELECT
+            CASE
+                WHEN host = 'github.com' THEN 'github'
+                WHEN host = 'stackoverflow.com' OR host LIKE '%.stackoverflow.com' THEN 'stackoverflow'
+                ELSE 'other'
+            END AS "trackedSource",
+            COUNT(*) AS total
+        FROM (
+            SELECT split_part(regexp_replace(lower(url), '^https?://(www\\.)?', ''), '/', 1) AS host
+            FROM links
+        ) hosts
+        GROUP BY 1
+        """, nativeQuery = true)
+    List<TrackedLinkSourceCount> countBySource();
 
     @Modifying
     @Query("""

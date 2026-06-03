@@ -6,7 +6,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +54,31 @@ public class SqlLinkRepository implements LinkRepository {
             log.atWarn().addKeyValue("url", url.toString()).log("No such link found");
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Map<String, Long> countBySource() {
+        String sql = """
+        SELECT
+            CASE
+                WHEN host = 'github.com' THEN 'github'
+                WHEN host = 'stackoverflow.com' OR host LIKE '%.stackoverflow.com' THEN 'stackoverflow'
+                ELSE 'other'
+            END AS tracked_source,
+            COUNT(*) AS total
+        FROM (
+            SELECT split_part(regexp_replace(lower(url), '^https?://(www\\.)?', ''), '/', 1) AS host
+            FROM links
+        ) hosts
+        GROUP BY 1
+        """;
+        return namedParameterJdbcTemplate.query(sql, rs -> {
+            Map<String, Long> counts = new HashMap<>();
+            while (rs.next()) {
+                counts.put(rs.getString("tracked_source"), rs.getLong("total"));
+            }
+            return counts;
+        });
     }
 
     @Override

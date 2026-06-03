@@ -3,10 +3,13 @@ package backend.academy.linktracker.scrapper.repository.orm;
 import backend.academy.linktracker.scrapper.dto.Link;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.orm.entity.LinkEntity;
+import backend.academy.linktracker.scrapper.repository.orm.projection.TrackedLinkSourceCount;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 
@@ -33,6 +36,12 @@ public class OrmLinkRepository implements LinkRepository {
     @Override
     public Optional<Link> findByUrl(URI url) {
         return jpaLinkRepository.findByUrl(url.toString()).map(this::toDto);
+    }
+
+    @Override
+    public Map<String, Long> countBySource() {
+        return jpaLinkRepository.countBySource().stream()
+                .collect(Collectors.toMap(TrackedLinkSourceCount::getTrackedSource, TrackedLinkSourceCount::getTotal));
     }
 
     @Override

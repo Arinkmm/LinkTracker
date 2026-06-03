@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot.service.bot;
 
+import backend.academy.linktracker.bot.metrics.BotMetrics;
 import backend.academy.linktracker.bot.properties.SenderProperties;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -16,25 +17,29 @@ import org.springframework.stereotype.Service;
 public class TelegramSender {
     private final TelegramBot bot;
     private final SenderProperties senderProperties;
+    private final BotMetrics metrics;
 
-    public void sendMessage(Long id, String text) {
-        if (text == null || text.isEmpty()) return;
+    public int sendMessage(Long id, String text) {
+        if (text == null || text.isEmpty()) return 0;
 
         if (text.length() <= senderProperties.getMessageLimit()) {
-            executeMessage(id, text);
-            return;
+            return executeMessage(id, text) ? 1 : 0;
         }
 
         log.info("Message for chat {} is too long ({} chars). Splitting...", id, text.length());
 
         List<String> chunks = splitMessage(text);
+        int sentMessages = 0;
         for (int i = 0; i < chunks.size(); i++) {
             String part = chunks.get(i);
             if (i < chunks.size() - 1) {
                 part += "\n\n" + senderProperties.getContinuer();
             }
-            executeMessage(id, part);
+            if (executeMessage(id, part)) {
+                sentMessages++;
+            }
         }
+        return sentMessages;
     }
 
     private List<String> splitMessage(String text) {
@@ -62,13 +67,16 @@ public class TelegramSender {
         return chunks;
     }
 
-    private void executeMessage(Long id, String text) {
+    private boolean executeMessage(Long id, String text) {
+        metrics.incrementTelegramRequest(BotMetrics.REQUEST_TYPE_SEND_MESSAGE);
         SendResponse response = bot.execute(new SendMessage(id, text));
         if (!response.isOk()) {
             log.atError()
                     .addKeyValue("error_code", response.errorCode())
                     .addKeyValue("description", response.description())
                     .log("Failed to send message");
+            return false;
         }
+        return true;
     }
 }

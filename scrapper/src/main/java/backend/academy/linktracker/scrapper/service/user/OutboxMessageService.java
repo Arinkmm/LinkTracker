@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper.service.user;
 
+import backend.academy.linktracker.scrapper.metrics.ScrapperMetrics;
 import backend.academy.linktracker.scrapper.repository.OutboxMessageRepository;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxMessageEntity;
 import backend.academy.linktracker.scrapper.repository.orm.entity.OutboxStatus;
@@ -14,22 +15,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class OutboxMessageService {
 
     private final OutboxMessageRepository outboxMessageRepository;
+    private final ScrapperMetrics metrics;
 
     @Transactional
     public void addMessage(OutboxMessageEntity entity) {
-        outboxMessageRepository.save(entity);
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.save(entity));
     }
 
     @Transactional
     public List<OutboxMessageEntity> getOutboxMessages(int maxRetries, int limit) {
-        return outboxMessageRepository.findAll(maxRetries, limit);
+        return metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.findAll(maxRetries, limit));
     }
 
     @Transactional
     public void markAsSent(OutboxMessageEntity message) {
         message.setStatus(OutboxStatus.SENT);
         message.setUpdatedAt(Instant.now());
-        outboxMessageRepository.update(message);
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.update(message));
     }
 
     @Transactional
@@ -37,11 +48,17 @@ public class OutboxMessageService {
         message.setStatus(OutboxStatus.ERROR);
         message.setRetryCount(message.getRetryCount() + 1);
         message.setUpdatedAt(Instant.now());
-        outboxMessageRepository.update(message);
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.update(message));
     }
 
     @Transactional
     public void deleteOldSentMessages(int days) {
-        outboxMessageRepository.deleteOldSentMessages(days);
+        metrics.recordRequestDuration(
+                ScrapperMetrics.SCOPE_DATABASE,
+                ScrapperMetrics.TYPE_OUTBOX_MESSAGES,
+                () -> outboxMessageRepository.deleteOldSentMessages(days));
     }
 }

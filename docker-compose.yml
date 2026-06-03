@@ -277,6 +277,9 @@ services:
       REDIS_CLUSTER_NODES: valkey-1:6379,valkey-2:6379,valkey-3:6379
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      SPRING_LIQUIBASE_ENABLED: "false"
+      METRICS_PUSHGATEWAY_ENABLED: "true"
+      METRICS_PUSHGATEWAY_ADDRESS: pushgateway:9091
     ports:
       - "8081:8081"
       - "9091:9091"
@@ -303,8 +306,11 @@ services:
       APP_GRPC_HOST: scrapper
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      METRICS_PUSHGATEWAY_ENABLED: "true"
+      METRICS_PUSHGATEWAY_ADDRESS: pushgateway:9091
     ports:
       - "8080:8080"
+      - "8011:8011"
       - "9090:9090"
     networks:
       - backend
@@ -331,6 +337,50 @@ services:
     networks:
       - kafka-net
 
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    container_name: prometheus
+    depends_on:
+      bot:
+        condition: service_started
+      scrapper:
+        condition: service_started
+      pushgateway:
+        condition: service_started
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - backend
+
+  pushgateway:
+    image: prom/pushgateway:v1.11.2
+    container_name: pushgateway
+    ports:
+      - "9093:9091"
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
@@ -344,3 +394,4 @@ volumes:
   valkey-1-data:
   valkey-2-data:
   valkey-3-data:
+  grafana-data:

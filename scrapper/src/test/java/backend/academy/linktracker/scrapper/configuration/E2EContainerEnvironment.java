@@ -143,8 +143,7 @@ public final class E2EContainerEnvironment {
                 .withEnv("APP_KAFKA_TOPIC", RAW_TOPIC)
                 .withEnv("SPRING_DATA_REDIS_CLUSTER_NODES", "valkey-e2e:6379")
                 .withExposedPorts(SCRAPPER_PORT)
-                .waitingFor(
-                        Wait.forHttp("/actuator/health").forPort(SCRAPPER_PORT).forStatusCode(200))
+                .waitingFor(Wait.forHttp("/health").forPort(SCRAPPER_PORT).forStatusCode(200))
                 .withStartupTimeout(Duration.ofSeconds(120));
     }
 
@@ -200,8 +199,8 @@ public final class E2EContainerEnvironment {
                 .withEnv("APP_UPDATES_TYPE", "kafka")
                 .withEnv("TELEGRAM_TOKEN", "test-token")
                 .withEnv("APP_SCRAPPER_URL", "http://" + SCRAPPER_ALIAS + ":" + SCRAPPER_PORT)
-                .withExposedPorts(BOT_PORT)
-                .waitingFor(Wait.forHttp("/actuator/health").forPort(BOT_PORT).forStatusCode(200))
+                .withExposedPorts(BOT_PORT, 8011)
+                .waitingFor(Wait.forHttp("/health").forPort(8011).forStatusCode(200))
                 .withStartupTimeout(Duration.ofSeconds(120));
     }
 
