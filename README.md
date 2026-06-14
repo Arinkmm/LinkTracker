@@ -1,30 +1,30 @@
 # Link Tracker
 
-Link Tracker - это Telegram-бот и набор backend-сервисов для отслеживания обновлений в GitHub и Stack Overflow. Пользователь добавляет ссылку в боте, а система периодически проверяет источник, обрабатывает обновления и отправляет уведомления обратно в Telegram.
+Link Tracker is a Telegram bot and a set of backend services for tracking updates on GitHub and Stack Overflow. A user adds a link in the bot, and the system periodically checks the source, processes updates, and sends notifications back to Telegram.
 
-Проект сделан как микросервисное Java-приложение: Bot отвечает за Telegram-интерфейс, Scrapper хранит подписки и проверяет внешние API, AI Agent фильтрует/группирует/суммаризирует обновления, а общие HTTP/gRPC/Kafka-контракты лежат в `api-common`.
+The project is a microservice Java application: Bot handles the Telegram interface, Scrapper stores subscriptions and checks external APIs, AI Agent filters/groups/summarizes updates, and shared HTTP/gRPC/Kafka contracts live in `api-common`.
 
-## Возможности
+## Features
 
-- Поддержка Telegram-команд: `/start`, `/help`, `/track`, `/untrack`, `/list`, `/cancel`.
-- Отслеживание GitHub-репозиториев через GitHub Issues/Pull Requests API.
-- Отслеживание вопросов Stack Overflow, включая новые ответы и комментарии.
-- Теги для подписок и фильтрация списка ссылок командой `/list <tag>`.
-- Доставка обновлений через Kafka с Avro-сообщениями и Schema Registry.
-- gRPC и HTTP-клиенты между сервисами.
-- Outbox-паттерн для надежной отправки уведомлений из Scrapper.
-- Кеширование подписок через Valkey/Redis-кластер и локальный L1-кеш.
-- Rate limiting, retry и circuit breaker на внешних и внутренних вызовах.
-- AI Agent для фильтрации, приоритизации, группировки и краткого пересказа обновлений.
+- Telegram command support: `/start`, `/help`, `/track`, `/untrack`, `/list`, `/cancel`.
+- GitHub repository tracking via the GitHub Issues/Pull Requests API.
+- Stack Overflow question tracking, including new answers and comments.
+- Tags for subscriptions and link list filtering with `/list <tag>`.
+- Update delivery via Kafka with Avro messages and Schema Registry.
+- gRPC and HTTP clients between services.
+- Outbox pattern for reliable notification delivery from Scrapper.
+- Subscription caching via Valkey/Redis cluster and a local L1 cache.
+- Rate limiting, retry, and circuit breaker on external and internal calls.
+- AI Agent for filtering, prioritizing, grouping, and summarizing updates.
 
-## Архитектура
+## Architecture
 
 ```mermaid
 flowchart LR
-    user["Пользователь Telegram"] --> telegram["Telegram Bot API"]
+    user["Telegram User"] --> telegram["Telegram Bot API"]
     telegram --> bot["Bot service"]
 
-    bot -- "HTTP/gRPC: подписки" --> scrapper["Scrapper service"]
+    bot -- "HTTP/gRPC: subscriptions" --> scrapper["Scrapper service"]
     scrapper --> postgres[("PostgreSQL")]
     scrapper --> valkey[("Valkey / Redis cluster")]
 
@@ -38,16 +38,16 @@ flowchart LR
     bot --> telegram
 ```
 
-### Модули
+### Modules
 
-| Модуль | Назначение |
+| Module | Purpose |
 | --- | --- |
-| `bot` | Telegram-бот, обработка команд, отправка уведомлений пользователям |
-| `scrapper` | Управление чатами и подписками, проверка GitHub/Stack Overflow, outbox, кеширование |
-| `ai-agent` | Kafka consumer/producer для фильтрации, группировки, приоритизации и суммаризации обновлений |
-| `api-common` | OpenAPI, protobuf, Avro-схемы и сгенерированные общие DTO/API |
+| `bot` | Telegram bot, command handling, sending notifications to users |
+| `scrapper` | Chat and subscription management, GitHub/Stack Overflow polling, outbox, caching |
+| `ai-agent` | Kafka consumer/producer for filtering, grouping, prioritizing, and summarizing updates |
+| `api-common` | OpenAPI, protobuf, Avro schemas, and generated shared DTOs/APIs |
 
-## Стек
+## Stack
 
 - Java 25
 - Spring Boot 4.0.2
@@ -63,32 +63,32 @@ flowchart LR
 - WireMock
 - Testcontainers
 
-## Быстрый старт
+## Quick Start
 
-### Требования
+### Requirements
 
 - JDK 25
-- Docker и Docker Compose
-- Telegram bot token от [@BotFather](https://t.me/BotFather)
+- Docker and Docker Compose
+- Telegram bot token from [@BotFather](https://t.me/BotFather)
 - GitHub token
-- Stack Exchange key и access token
-- Hugging Face-compatible API token для AI Agent
+- Stack Exchange key and access token
+- Hugging Face-compatible API token for AI Agent
 
-### Запуск через Docker Compose
+### Running with Docker Compose
 
-1. Создайте локальный `.env` из шаблона:
+1. Create a local `.env` from the template:
 
 ```powershell
 Copy-Item .env.dist .env
 ```
 
-Для Linux/macOS:
+On Linux/macOS:
 
 ```bash
 cp .env.dist .env
 ```
 
-2. Заполните `.env`. Минимальный пример для Docker Compose:
+2. Fill in `.env`. Minimal example for Docker Compose:
 
 ```dotenv
 DB_USER=linktracker
@@ -108,39 +108,39 @@ HF_TOKEN=<hf-token>
 HF_MODEL=openai/gpt-oss-120b:fastest
 ```
 
-3. Соберите и запустите проект:
+3. Build and start the project:
 
 ```powershell
 docker compose up --build -d
 ```
 
-4. Проверьте, что контейнеры поднялись:
+4. Check that all containers are running:
 
 ```powershell
 docker compose ps
 ```
 
-Для остановки окружения:
+To stop the environment:
 
 ```powershell
 docker compose down
 ```
 
-Если нужно удалить и данные PostgreSQL/Valkey:
+To also remove PostgreSQL/Valkey data:
 
 ```powershell
 docker compose down -v
 ```
 
-### Локальный запуск из IDE или Maven
+### Running Locally from IDE or Maven
 
-Поднимите инфраструктуру:
+Start the infrastructure:
 
 ```powershell
 docker compose up -d postgres liquibase-migrations kafka-1 kafka-2 kafka-3 schema-registry kafka-init valkey-1 valkey-2 valkey-3 valkey-init
 ```
 
-Для локального запуска сервисов вне Docker используйте host-адреса:
+For running services locally outside Docker, use host addresses:
 
 ```dotenv
 DB_URL=jdbc:postgresql://localhost:5432/linktracker
@@ -153,13 +153,13 @@ APP_GRPC_HOST=localhost
 SPRING_LIQUIBASE_ENABLED=true
 ```
 
-Сгенерируйте общие контракты:
+Generate shared contracts:
 
 ```powershell
 .\mvnw.cmd -pl api-common -am generate-sources
 ```
 
-Запустите сервисы в отдельных терминалах:
+Start services in separate terminals:
 
 ```powershell
 .\mvnw.cmd -pl scrapper -am spring-boot:run
@@ -167,26 +167,26 @@ SPRING_LIQUIBASE_ENABLED=true
 .\mvnw.cmd -pl bot -am spring-boot:run
 ```
 
-Для Linux/macOS замените `.\mvnw.cmd` на `./mvnw`.
+On Linux/macOS, replace `.\mvnw.cmd` with `./mvnw`.
 
-## Переменные окружения
+## Environment Variables
 
-| Переменная | Назначение |
+| Variable | Purpose |
 | --- | --- |
-| `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_DRIVER`, `DB_URL` | Подключение к PostgreSQL |
-| `TELEGRAM_TOKEN` | Токен Telegram-бота |
-| `GITHUB_TOKEN` | Токен для GitHub REST API |
-| `STACKOVERFLOW_KEY`, `STACKOVERFLOW_ACCESS_KEY` | Доступ к Stack Exchange API |
-| `REDIS_CLUSTER_NODES` | Узлы Valkey/Redis-кластера |
+| `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_DRIVER`, `DB_URL` | PostgreSQL connection |
+| `TELEGRAM_TOKEN` | Telegram bot token |
+| `GITHUB_TOKEN` | Token for GitHub REST API |
+| `STACKOVERFLOW_KEY`, `STACKOVERFLOW_ACCESS_KEY` | Stack Exchange API access |
+| `REDIS_CLUSTER_NODES` | Valkey/Redis cluster nodes |
 | `KAFKA_BOOTSTRAP_SERVERS` | Kafka bootstrap servers |
-| `KAFKA_SCHEMA_REGISTRY_URL` | URL Confluent Schema Registry |
-| `APP_BOT_URL`, `APP_SCRAPPER_URL`, `APP_GRPC_HOST` | Адреса внутренних сервисов |
-| `SPRING_LIQUIBASE_ENABLED` | Включение Liquibase внутри приложения |
-| `HF_API_URL`, `HF_TOKEN`, `HF_MODEL` | Настройки AI API для суммаризации |
+| `KAFKA_SCHEMA_REGISTRY_URL` | Confluent Schema Registry URL |
+| `APP_BOT_URL`, `APP_SCRAPPER_URL`, `APP_GRPC_HOST` | Internal service addresses |
+| `SPRING_LIQUIBASE_ENABLED` | Enable Liquibase inside the application |
+| `HF_API_URL`, `HF_TOKEN`, `HF_MODEL` | AI API settings for summarization |
 
-## Порты
+## Ports
 
-| Компонент | URL |
+| Component | URL |
 | --- | --- |
 | Bot HTTP API | <http://localhost:8080> |
 | Bot health | <http://localhost:8011/health> |
@@ -195,68 +195,69 @@ SPRING_LIQUIBASE_ENABLED=true
 | AI Agent | <http://localhost:8083> |
 | Schema Registry | <http://localhost:8082> |
 
-Swagger UI доступен у HTTP-сервисов по пути `/swagger-ui/index.html`.
+Swagger UI is available on HTTP services at `/swagger-ui/index.html`.
 
-## API и контракты
+## API and Contracts
 
 ### Scrapper API
 
-OpenAPI-спецификация: [`api-common/src/main/resources/scrapper-api.yaml`](api-common/src/main/resources/scrapper-api.yaml)
+OpenAPI specification: [`api-common/src/main/resources/scrapper-api.yaml`](api-common/src/main/resources/scrapper-api.yaml)
 
-| Метод | Endpoint | Описание |
+| Method | Endpoint | Description |
 | --- | --- | --- |
-| `POST` | `/tg-chat/{id}` | Зарегистрировать Telegram-чат |
-| `DELETE` | `/tg-chat/{id}` | Удалить Telegram-чат |
-| `GET` | `/links` | Получить список отслеживаемых ссылок |
-| `POST` | `/links` | Добавить ссылку в отслеживание |
-| `DELETE` | `/links` | Убрать ссылку из отслеживания |
+| `POST` | `/tg-chat/{id}` | Register a Telegram chat |
+| `DELETE` | `/tg-chat/{id}` | Delete a Telegram chat |
+| `GET` | `/links` | Get the list of tracked links |
+| `POST` | `/links` | Add a link to tracking |
+| `DELETE` | `/links` | Remove a link from tracking |
 
 ### Bot API
 
-OpenAPI-спецификация: [`api-common/src/main/resources/bot-api.yaml`](api-common/src/main/resources/bot-api.yaml)
+OpenAPI specification: [`api-common/src/main/resources/bot-api.yaml`](api-common/src/main/resources/bot-api.yaml)
 
-| Метод | Endpoint | Описание |
+| Method | Endpoint | Description |
 | --- | --- | --- |
-| `POST` | `/updates` | Принять обновление ссылки и отправить уведомление в Telegram |
+| `POST` | `/updates` | Accept a link update and send a notification to Telegram |
 
 ### gRPC
 
-Protobuf-контракт: [`api-common/src/main/proto/linktracker.proto`](api-common/src/main/proto/linktracker.proto)
+Protobuf contract: [`api-common/src/main/proto/linktracker.proto`](api-common/src/main/proto/linktracker.proto)
 
-- `ScrapperService`: регистрация/удаление чата, добавление/удаление ссылок, получение списка ссылок.
-- `BotService`: отправка обновления пользователю.
+- `ScrapperService`: register/delete chat, add/remove links, get link list.
+- `BotService`: send an update to the user.
 
 ### Kafka / Avro
 
-Avro-схемы:
+Avro schemas:
 
 - [`RawLinkUpdateEvent.avsc`](api-common/src/main/avro/RawLinkUpdateEvent.avsc)
 - [`ProcessedLinkUpdateEvent.avsc`](api-common/src/main/avro/ProcessedLinkUpdateEvent.avsc)
 
-Топики:
+Topics:
 
-| Топик | Назначение |
+| Topic | Purpose |
 | --- | --- |
-| `link.raw-updates` | Сырые обновления от Scrapper |
-| `link.raw-updates-dlt` | Dead-letter topic для сырых обновлений |
-| `link.processed-updates` | Обработанные AI Agent обновления для Bot |
-| `link.processed-updates-dlt` | Dead-letter topic для обработанных обновлений |
+| `link.raw-updates` | Raw updates from Scrapper |
+| `link.raw-updates-dlt` | Dead-letter topic for raw updates |
+| `link.processed-updates` | Updates processed by AI Agent, delivered to Bot |
+| `link.processed-updates-dlt` | Dead-letter topic for processed updates |
 
-## Скриншоты
+## Screenshots
 
-### Команды `/start` и `/help`
+### `/start` and `/help` Commands
 ![img.png](images/img.png)
 
-### Команда `/track` - начало отслеживания ссылки с тегами
+### `/track` Command — Starting to Track a Link with Tags
 ![img_1.png](images/img_1.png)
 
-### Команда `/list` - ссылки указаны вместе с привязанными тегами
+### `/list` Command — Links Shown with Their Associated Tags
 ![img_2.png](images/img_2.png)
 
-### Уведомление об обновлении по ссылке
+### Link Update Notification
 ![img_3.png](images/img_3.png)
 
-## Поддержка и контакты
-Остались вопросы? Нужна помощь с настройкой? Нашли баг?
+## Support & Contact
+
+Have questions? Need help with setup? Found a bug?
 
 Email: **mairabeeva42@gmail.com** | Telegram: @arinkmm
